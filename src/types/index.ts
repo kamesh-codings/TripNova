@@ -12,6 +12,10 @@ export interface TrustedContact {
 export interface UserProfile {
   id: string;
   name: string;
+  email?: string;
+  googleId?: string;
+  avatarUrl?: string;
+  nativeCurrency?: string; // Default: 'INR'
   dob: string;
   age: number;
   gender: 'Male' | 'Female' | 'Non-Binary' | 'Prefer not to say';
@@ -27,6 +31,89 @@ export interface UserProfile {
   trustedContacts: TrustedContact[]; // 5 trusted contacts
   interestedTopPicks: string[]; // e.g. ["Heritage & Temples", "Hill Stations", "Beach & Coastal", "Adventure", "Food & Culture"]
   isRegistered: boolean;
+}
+
+export type ProviderCategory = 
+  | 'transport'
+  | 'tour_guide'
+  | 'homestay'
+  | 'emergency_medical'
+  | 'rental_agency';
+
+export interface BaseProviderInfo {
+  id: string;
+  providerName: string;
+  businessName: string;
+  email: string;
+  phone: string;
+  category: ProviderCategory;
+  operatingCity: string;
+  operatingState: string;
+  nativeCurrency: string;
+  isVerified: boolean;
+  registeredAt: string;
+}
+
+// Category 1: Transport & Drivers
+export interface TransportProviderDetails {
+  vehicleType: 'Auto Rickshaw' | 'Sedan Cab' | 'SUV' | 'Tourist Van / Bus' | 'Bike Taxi';
+  vehicleRegNumber: string;
+  driverLicenseNumber: string;
+  commercialBadgeNumber: string;
+  operatingStand: string;
+  baseTariffPerKm: number;
+  hasAC: boolean;
+  seatingCapacity: number;
+}
+
+// Category 2: Tour Guides
+export interface TourGuideDetails {
+  guideLicenseType: 'Govt Certified National Guide' | 'State Tourism Guide' | 'Local Heritage Expert';
+  guideBadgeNumber: string;
+  specialization: 'Heritage & Temples' | 'Hill Stations & Treks' | 'Wildlife & Eco-Tour' | 'Food & Culture';
+  languagesSpoken: string[];
+  experienceYears: number;
+  hourlyRate: number;
+  dailyRate: number;
+  hasFirstAidCert: boolean;
+}
+
+// Category 3: Homestay & Hospitality
+export interface HomestayDetails {
+  propertyType: 'Heritage Cottage' | 'Mountain Villa' | 'Traditional Homestay' | 'Eco-Camp / Resort';
+  homestayRegNumber: string;
+  totalRooms: number;
+  amenities: string[];
+  nightlyRateMin: number;
+  nightlyRateMax: number;
+  address: string;
+  fssaiLicense?: string;
+}
+
+// Category 4: Emergency & Medical Assistance
+export interface EmergencyMedicalDetails {
+  serviceType: 'Private Ambulance Operator' | '24/7 Urgent Clinic / Hospital' | '24/7 Pharmacy' | 'Emergency Rescue Unit';
+  medicalLicenseNumber: string;
+  emergencyHotline: string;
+  availableVehiclesOrBeds: number;
+  serviceRadiusKm: number;
+  equipmentSupported: string[];
+}
+
+// Category 5: Rental & Activity Agency
+export interface RentalAgencyDetails {
+  agencyType: 'Trekking & Camping Gear' | 'Two-Wheeler & Bicycle Rental' | 'Boating & Safari Agency';
+  gstOrMsmeNumber: string;
+  itemsOffered: string[];
+  insuranceIncluded: boolean;
+}
+
+export interface ServiceProviderProfile extends BaseProviderInfo {
+  transportDetails?: TransportProviderDetails;
+  tourGuideDetails?: TourGuideDetails;
+  homestayDetails?: HomestayDetails;
+  emergencyMedicalDetails?: EmergencyMedicalDetails;
+  rentalAgencyDetails?: RentalAgencyDetails;
 }
 
 export type TransportMode = 'Flight' | 'Train' | 'Bus' | 'Cab / Taxi' | 'Self-Drive / Rental';

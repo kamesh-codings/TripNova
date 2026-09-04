@@ -1,7 +1,8 @@
-import { UserProfile, TripPlan } from '../types';
+import { UserProfile, TripPlan, ServiceProviderProfile } from '../types';
 import { DEFAULT_USER_PROFILE } from '../data/mockData';
 
 const PROFILE_KEY = 'tripnova_user_profile';
+const PROVIDER_KEY = 'tripnova_provider_profile';
 const TRIPS_KEY = 'tripnova_saved_trips';
 const SOS_HISTORY_KEY = 'tripnova_sos_logs';
 
@@ -33,6 +34,37 @@ export const deleteStoredProfile = (): void => {
     localStorage.removeItem(PROFILE_KEY);
   } catch (e) {
     console.error('Failed to delete user profile', e);
+  }
+};
+
+export const getStoredProviderProfile = (): ServiceProviderProfile | null => {
+  try {
+    const data = localStorage.getItem(PROVIDER_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (parsed && typeof parsed === 'object') {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse provider profile', e);
+  }
+  return null;
+};
+
+export const saveStoredProviderProfile = (profile: ServiceProviderProfile): void => {
+  try {
+    localStorage.setItem(PROVIDER_KEY, JSON.stringify(profile));
+  } catch (e) {
+    console.error('Failed to save provider profile', e);
+  }
+};
+
+export const deleteStoredProviderProfile = (): void => {
+  try {
+    localStorage.removeItem(PROVIDER_KEY);
+  } catch (e) {
+    console.error('Failed to delete provider profile', e);
   }
 };
 

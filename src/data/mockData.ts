@@ -3,6 +3,10 @@ import { EmergencyPhrase, SafetyPlace, CountryRule, LocalGuide, UserProfile } fr
 export const DEFAULT_USER_PROFILE: UserProfile = {
   id: 'usr_guest_01',
   name: '',
+  email: '',
+  googleId: '',
+  avatarUrl: '',
+  nativeCurrency: 'INR',
   dob: '',
   age: 0,
   gender: 'Male',
