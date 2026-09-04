@@ -40,6 +40,10 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const [formData, setFormData] = useState<UserProfile>(() => ({
     id: userProfile.id || `usr_${Date.now()}`,
     name: userProfile.name || '',
+    email: userProfile.email || '',
+    googleId: userProfile.googleId || '',
+    avatarUrl: userProfile.avatarUrl || '',
+    nativeCurrency: userProfile.nativeCurrency || 'INR',
     dob: userProfile.dob || '',
     age: userProfile.age || 0,
     gender: userProfile.gender || 'Male',
@@ -68,6 +72,10 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       setFormData({
         id: userProfile.id || `usr_${Date.now()}`,
         name: userProfile.name || '',
+        email: userProfile.email || '',
+        googleId: userProfile.googleId || '',
+        avatarUrl: userProfile.avatarUrl || '',
+        nativeCurrency: userProfile.nativeCurrency || 'INR',
         dob: userProfile.dob || '',
         age: userProfile.age || 0,
         gender: userProfile.gender || 'Male',
@@ -243,6 +251,44 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     <option value="Female" style={{ background: '#090e17' }}>Female</option>
                     <option value="Non-Binary" style={{ background: '#090e17' }}>Non-Binary</option>
                     <option value="Prefer not to say" style={{ background: '#090e17' }}>Prefer not to say</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Google Email & Native Currency */}
+              <div className="grid grid-2 gap-3">
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                    Google / Primary Email *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="e.g. kamesh.travel@gmail.com"
+                    className="input-glass"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                    Native Currency *
+                  </label>
+                  <select
+                    value={formData.nativeCurrency}
+                    onChange={e => setFormData({ ...formData, nativeCurrency: e.target.value })}
+                    className="input-glass"
+                  >
+                    <option value="INR" style={{ background: '#090e17' }}>INR - Indian Rupee (₹)</option>
+                    <option value="USD" style={{ background: '#090e17' }}>USD - US Dollar ($)</option>
+                    <option value="EUR" style={{ background: '#090e17' }}>EUR - Euro (€)</option>
+                    <option value="GBP" style={{ background: '#090e17' }}>GBP - British Pound (£)</option>
+                    <option value="AED" style={{ background: '#090e17' }}>AED - UAE Dirham (د.إ)</option>
+                    <option value="SGD" style={{ background: '#090e17' }}>SGD - Singapore Dollar (S$)</option>
+                    <option value="JPY" style={{ background: '#090e17' }}>JPY - Japanese Yen (¥)</option>
+                    <option value="AUD" style={{ background: '#090e17' }}>AUD - Australian Dollar (A$)</option>
+                    <option value="CAD" style={{ background: '#090e17' }}>CAD - Canadian Dollar (C$)</option>
+                    <option value="CHF" style={{ background: '#090e17' }}>CHF - Swiss Franc (Fr)</option>
                   </select>
                 </div>
               </div>

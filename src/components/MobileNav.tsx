@@ -6,7 +6,8 @@ import {
   ShieldAlert, 
   Scale, 
   Languages,
-  Landmark
+  Landmark,
+  User
 } from 'lucide-react';
 
 interface MobileNavProps {

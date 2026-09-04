@@ -8,27 +8,32 @@ import { SafetyHub } from './components/SafetyHub';
 import { AntiScamEstimator } from './components/AntiScamEstimator';
 import { TravelTools } from './components/TravelTools';
 import { RegistrationModal } from './components/RegistrationModal';
+import { ServiceProviderModal } from './components/ServiceProviderModal';
 import { ProfileView } from './components/ProfileView';
 import { NovaAIBot } from './components/NovaAIBot';
 import { WelcomeGateway } from './components/WelcomeGateway';
 import { SpotsExplorer } from './components/SpotsExplorer';
-import { UserProfile, TripPlan } from './types';
+import { UserProfile, TripPlan, ServiceProviderProfile } from './types';
 import { DEFAULT_USER_PROFILE } from './data/mockData';
 import { 
   getStoredProfile, 
   saveStoredProfile, 
   deleteStoredProfile,
+  getStoredProviderProfile,
+  saveStoredProviderProfile,
+  deleteStoredProviderProfile,
   getStoredTrips, 
   saveStoredTrips 
 } from './utils/storage';
 import { syncUserProfile } from './utils/api';
-import { Sparkles, UserPlus, CheckCircle } from 'lucide-react';
+import { Sparkles, UserPlus, CheckCircle, ShieldCheck } from 'lucide-react';
 
 const GATEWAY_SHOWN_KEY = 'tripnova_gateway_dismissed';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [userProfile, setUserProfile] = useState<UserProfile>(getStoredProfile);
+  const [providerProfile, setProviderProfile] = useState<ServiceProviderProfile | null>(getStoredProviderProfile);
   const [trips, setTrips] = useState<TripPlan[]>(getStoredTrips);
   
   // Flash Toast Message
@@ -37,12 +42,14 @@ export const App: React.FC = () => {
   // Gateway state
   const [isGatewayOpen, setIsGatewayOpen] = useState<boolean>(() => {
     const profile = getStoredProfile();
-    if (profile && profile.isRegistered) return false;
+    const provider = getStoredProviderProfile();
+    if ((profile && profile.isRegistered) || provider) return false;
     const dismissed = sessionStorage.getItem(GATEWAY_SHOWN_KEY);
     return !dismissed;
   });
 
   const [isRegisterOpen, setIsRegisterOpen] = useState<boolean>(false);
+  const [isProviderRegisterOpen, setIsProviderRegisterOpen] = useState<boolean>(false);
   const [isSOSModalOpen, setIsSOSModalOpen] = useState<boolean>(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState<boolean>(false);
 
@@ -63,12 +70,25 @@ export const App: React.FC = () => {
     setActiveTab('dashboard');
   };
 
+  const handleSelectProviderRegisterFromGateway = () => {
+    sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
+    setIsGatewayOpen(false);
+    setIsProviderRegisterOpen(true);
+  };
+
   const handleSaveProfile = (updatedProfile: UserProfile) => {
     setUserProfile(updatedProfile);
     saveStoredProfile(updatedProfile);
     syncUserProfile(updatedProfile).catch(() => {});
     sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
     showToast('Tourist Profile successfully registered and synced with database!');
+  };
+
+  const handleSaveProviderProfile = (newProviderProfile: ServiceProviderProfile) => {
+    setProviderProfile(newProviderProfile);
+    saveStoredProviderProfile(newProviderProfile);
+    sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
+    showToast(`Service Provider (${newProviderProfile.businessName}) successfully registered & verified!`);
   };
 
   const handleDeleteProfile = () => {
@@ -160,9 +180,11 @@ export const App: React.FC = () => {
         {activeTab === 'dashboard' && (
           <Dashboard
             userProfile={userProfile}
+            providerProfile={providerProfile}
             activeTrip={activeTrip}
             onNavigateTab={setActiveTab}
             onOpenRegister={() => setIsRegisterOpen(true)}
+            onOpenProviderRegister={() => setIsProviderRegisterOpen(true)}
             onOpenSOS={() => setIsSOSModalOpen(true)}
           />
         )}
@@ -241,14 +263,15 @@ export const App: React.FC = () => {
         <Sparkles style={{ width: '22px', height: '22px' }} />
       </button>
 
-      {/* 1. Welcome Gateway: Register vs Explore on Start */}
+      {/* 1. Welcome Gateway: 3 Options (Consumer Register vs Explore vs Provider Register) */}
       <WelcomeGateway
         isOpen={isGatewayOpen}
         onSelectRegister={handleSelectRegisterFromGateway}
         onSelectExplore={handleSelectExploreFromGateway}
+        onSelectProviderRegister={handleSelectProviderRegisterFromGateway}
       />
 
-      {/* 2. Registration Modal */}
+      {/* 2. Consumer / Tourist Registration Modal */}
       <RegistrationModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
@@ -256,7 +279,15 @@ export const App: React.FC = () => {
         onSaveProfile={handleSaveProfile}
       />
 
-      {/* 3. Nova AI Concierge */}
+      {/* 3. Service Provider Registration Modal */}
+      <ServiceProviderModal
+        isOpen={isProviderRegisterOpen}
+        onClose={() => setIsProviderRegisterOpen(false)}
+        onSaveProviderProfile={handleSaveProviderProfile}
+        existingProfile={providerProfile}
+      />
+
+      {/* 4. Nova AI Concierge */}
       <NovaAIBot
         isOpen={isChatbotOpen}
         onClose={() => setIsChatbotOpen(false)}
@@ -265,7 +296,7 @@ export const App: React.FC = () => {
         onNavigateTab={setActiveTab}
       />
 
-      {/* 4. Mobile Bottom Navigation */}
+      {/* 5. Mobile Bottom Navigation */}
       <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );

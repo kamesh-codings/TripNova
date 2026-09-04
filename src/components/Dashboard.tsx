@@ -19,22 +19,26 @@ import {
   Zap,
   PhoneCall
 } from 'lucide-react';
-import { UserProfile, TripPlan } from '../types';
+import { UserProfile, TripPlan, ServiceProviderProfile } from '../types';
 import { TOP_PICKS_CATEGORIES, NEARBY_HOSPITALS } from '../data/mockData';
 
 interface DashboardProps {
   userProfile: UserProfile;
+  providerProfile?: ServiceProviderProfile | null;
   activeTrip?: TripPlan;
   onNavigateTab: (tab: string) => void;
   onOpenRegister: () => void;
+  onOpenProviderRegister?: () => void;
   onOpenSOS: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
   userProfile,
+  providerProfile,
   activeTrip,
   onNavigateTab,
   onOpenRegister,
+  onOpenProviderRegister,
   onOpenSOS
 }) => {
   const filteredCategories = TOP_PICKS_CATEGORIES.filter(cat => {
@@ -233,6 +237,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {providerProfile ? (
+            <button
+              onClick={onOpenProviderRegister}
+              className="btn-secondary"
+              style={{ padding: '8px 14px', fontSize: '0.78rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+            >
+              <ShieldCheck style={{ width: '14px', height: '14px' }} /> Partner: {providerProfile.businessName}
+            </button>
+          ) : (
+            onOpenProviderRegister && (
+              <button
+                onClick={onOpenProviderRegister}
+                className="btn-secondary"
+                style={{ padding: '8px 14px', fontSize: '0.76rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)' }}
+                title="Register as Auto/Cab Driver, Tour Guide, Homestay, or Medical Partner"
+              >
+                <ShieldCheck style={{ width: '14px', height: '14px' }} /> Partner Portal
+              </button>
+            )
+          )}
+
           {userProfile.isRegistered ? (
             <>
               <button
@@ -256,7 +281,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="btn-primary"
               style={{ padding: '8px 18px', fontSize: '0.8rem' }}
             >
-              <User style={{ width: '15px', height: '15px' }} /> Register Profile
+              <User style={{ width: '15px', height: '15px' }} /> Register Tourist Profile
             </button>
           )}
         </div>
