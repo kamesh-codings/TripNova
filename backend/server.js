@@ -19,6 +19,7 @@ const authRoutes = require('./routes/auth');
 const locationsRoutes = require('./routes/locations');
 const placesRoutes = require('./routes/places');
 const usersRoutes = require('./routes/users');
+const providersRoutes = require('./routes/providers');
 const tripsRoutes = require('./routes/trips');
 const safetyRoutes = require('./routes/safety');
 const aiRoutes = require('./routes/ai');
@@ -58,6 +59,7 @@ app.get('/', (req, res) => {
       locations: '/api/locations',
       places: '/api/places',
       users: '/api/users/:id',
+      providers: '/api/providers',
       trips: '/api/trips',
       safety: '/api/safety/contacts',
       ai: '/api/ai/chat',
@@ -98,6 +100,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/locations', optionalApiKey, locationsRoutes);
 app.use('/api/places', optionalApiKey, placesRoutes);
 app.use('/api/users', optionalApiKey, usersRoutes);
+app.use('/api/providers', optionalApiKey, providersRoutes);
 app.use('/api/trips', optionalApiKey, tripsRoutes);
 app.use('/api/safety', optionalApiKey, safetyRoutes);
 app.use('/api/ai', optionalApiKey, aiRoutes);

@@ -26,7 +26,7 @@ import {
   getStoredTrips, 
   saveStoredTrips 
 } from './utils/storage';
-import { syncUserProfile } from './utils/api';
+import { syncUserProfile, syncProviderProfile } from './utils/api';
 import { Sparkles, UserPlus, CheckCircle, ShieldCheck } from 'lucide-react';
 
 const GATEWAY_SHOWN_KEY = 'tripnova_gateway_dismissed';
@@ -86,6 +86,7 @@ export const App: React.FC = () => {
         locationCoordinates: { latitude: loc.latitude, longitude: loc.longitude }
       };
       saveStoredProfile(updated);
+      syncUserProfile(updated).catch(() => {});
       return updated;
     });
     showToast(`📍 Live Location Detected: ${loc.city}, ${loc.state}`);
@@ -98,6 +99,7 @@ export const App: React.FC = () => {
         preferredLanguage: lang
       };
       saveStoredProfile(updated);
+      syncUserProfile(updated).catch(() => {});
       return updated;
     });
     showToast(`🌐 Webpage Language set to ${lang}`);
@@ -114,6 +116,7 @@ export const App: React.FC = () => {
   const handleSaveProviderProfile = (newProviderProfile: ServiceProviderProfile) => {
     setProviderProfile(newProviderProfile);
     saveStoredProviderProfile(newProviderProfile);
+    syncProviderProfile(newProviderProfile).catch(() => {});
     sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
     showToast(`Service Provider (${newProviderProfile.businessName}) successfully registered & verified!`);
   };

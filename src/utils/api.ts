@@ -215,22 +215,101 @@ export async function fetchSafetyContacts(locationId?: string): Promise<SafetyCo
   return [];
 }
 
-// Sync user profile with backend
+// Sync & Register Tourist profile with backend MySQL database
 export async function syncUserProfile(profile: any): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/users/sync`, {
+    const res = await fetch(`${API_BASE_URL}/auth/register-tourist`, {
       method: 'POST',
       headers: defaultHeaders,
-      body: JSON.stringify({
-        id: profile.id,
-        name: profile.name,
-        travel_style: 'solo',
-        home_currency: 'INR'
-      }),
-      signal: AbortSignal.timeout(3500)
+      body: JSON.stringify(profile),
+      signal: AbortSignal.timeout(4000)
     });
     return res.ok;
   } catch (err) {
     return false;
   }
 }
+
+// Register or update Service Provider profile with MySQL database
+export async function syncProviderProfile(provider: any): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/register-provider`, {
+      method: 'POST',
+      headers: defaultHeaders,
+      body: JSON.stringify(provider),
+      signal: AbortSignal.timeout(4000)
+    });
+    return res.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Authenticate against backend MySQL database
+export async function loginWithBackendAPI(identifier: string, passwordAttempt: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: defaultHeaders,
+      body: JSON.stringify({ identifier, password: passwordAttempt }),
+      signal: AbortSignal.timeout(4000)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) return data;
+    }
+  } catch (err) {
+    // Falls back to local offline storage authentication
+  }
+  return null;
+}
+
+// Trigger password reset OTP
+export async function requestPasswordResetAPI(email: string): Promise<{ success: boolean; code?: string; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: defaultHeaders,
+      body: JSON.stringify({ email }),
+      signal: AbortSignal.timeout(4000)
+    });
+    return await res.json();
+  } catch (err) {
+    return { success: false, message: 'Server offline' };
+  }
+}
+
+// Complete password reset
+export async function completePasswordResetAPI(email: string, code: string, newPassword: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: defaultHeaders,
+      body: JSON.stringify({ email, code, newPassword }),
+      signal: AbortSignal.timeout(4000)
+    });
+    return res.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Fetch all registered service providers from MySQL database
+export async function fetchProvidersFromAPI(category?: string, city?: string): Promise<any[]> {
+  try {
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (city) params.append('city', city);
+
+    const url = `${API_BASE_URL}/providers?${params.toString()}`;
+    const res = await fetch(url, { headers: defaultHeaders, signal: AbortSignal.timeout(4000) });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.data && Array.isArray(json.data)) return json.data;
+    }
+  } catch (err) {
+    // Silent fallback
+  }
+  return [];
+}
+
