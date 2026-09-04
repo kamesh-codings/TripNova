@@ -38,7 +38,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'safety-hub', label: 'Safety Hub', icon: ShieldAlert },
     { id: 'anti-scam', label: 'Fare Guard', icon: Scale },
     { id: 'tools', label: 'Travel Tools', icon: Languages },
-    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   return (
@@ -48,6 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div 
           className="brand-logo"
           onClick={() => setActiveTab('dashboard')}
+          title="TripNova Home"
         >
           <div className="brand-icon-box">
             <div className="brand-icon-inner">
@@ -63,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center Nav Links for Desktop */}
+        {/* Center Nav Links for Desktop - Broad Spanning Layout */}
         <nav className="nav-links-box hide-mobile">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -103,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenChatbot}
             className="btn-secondary hide-mobile"
-            style={{ padding: '7px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+            style={{ padding: '8px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
             title="Open Nova AI Travel Concierge"
           >
             <Sparkles style={{ width: '15px', height: '15px', color: '#c084fc' }} />
@@ -114,14 +114,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenSOS}
             className="btn-sos"
-            style={{ padding: '7px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+            style={{ padding: '8px 16px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
             title="Instant SOS to 5 Trusted Contacts"
           >
             <PhoneCall style={{ width: '15px', height: '15px' }} />
             <span>SOS</span>
           </button>
 
-          {/* Profile / Register */}
+          {/* Integrated Top-Right My Profile / Register Button */}
           <button
             onClick={() => {
               if (userProfile.isRegistered) {
@@ -130,34 +130,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onOpenRegister();
               }
             }}
-            className="btn-secondary"
-            style={{ 
-              padding: '5px 10px',
-              borderColor: userProfile.isRegistered ? 'rgba(16, 185, 129, 0.4)' : 'rgba(99, 102, 241, 0.4)',
-              whiteSpace: 'nowrap'
-            }}
+            className={`navbar-profile-btn ${activeTab === 'profile' ? 'active' : ''}`}
+            title={userProfile.isRegistered ? 'Open My Profile & Travel Documents' : 'Register Tourist Profile'}
           >
-            <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: '#1e293b',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              color: '#38bdf8',
-              flexShrink: 0
-            }}>
-              {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '13px', height: '13px' }} />}
-            </div>
-            <div style={{ textAlign: 'left', lineHeight: 1.1 }} className="hide-mobile">
-              <span style={{ fontSize: '0.74rem', fontWeight: 700, display: 'block' }}>
+            {userProfile.avatarUrl ? (
+              <img 
+                src={userProfile.avatarUrl} 
+                alt={userProfile.name} 
+                className="profile-avatar-img"
+              />
+            ) : (
+              <div className="profile-avatar-initial">
+                {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '14px', height: '14px' }} />}
+              </div>
+            )}
+            <div className="profile-info-block hide-mobile">
+              <span className="profile-name-text">
                 {userProfile.isRegistered ? (userProfile.name.split(' ')[0] || 'My Profile') : 'Register'}
               </span>
-              <span style={{ fontSize: '0.62rem', color: '#94a3b8' }}>
-                {userProfile.isRegistered ? `Blood: ${userProfile.bloodGroup}` : 'Tourist Form'}
+              <span className="profile-sub-text">
+                {userProfile.isRegistered 
+                  ? (userProfile.nativeCurrency ? `${userProfile.nativeCurrency} • Profile` : 'My Profile') 
+                  : 'Tourist Form'}
               </span>
             </div>
           </button>
