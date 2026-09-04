@@ -237,27 +237,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {providerProfile ? (
-            <button
-              onClick={onOpenProviderRegister}
-              className="btn-secondary"
-              style={{ padding: '8px 14px', fontSize: '0.78rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)' }}
-            >
-              <ShieldCheck style={{ width: '14px', height: '14px' }} /> Partner: {providerProfile.businessName}
-            </button>
-          ) : (
-            onOpenProviderRegister && (
-              <button
-                onClick={onOpenProviderRegister}
-                className="btn-secondary"
-                style={{ padding: '8px 14px', fontSize: '0.76rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)' }}
-                title="Register as Auto/Cab Driver, Tour Guide, Homestay, or Medical Partner"
-              >
-                <ShieldCheck style={{ width: '14px', height: '14px' }} /> Partner Portal
-              </button>
-            )
-          )}
-
           {userProfile.isRegistered ? (
             <>
               <button
