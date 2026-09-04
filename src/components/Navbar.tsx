@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'safety-hub', label: 'Safety Hub', icon: ShieldAlert },
     { id: 'anti-scam', label: 'Fare Guard', icon: Scale },
     { id: 'tools', label: 'Travel Tools', icon: Languages },
-    { id: 'profile', label: 'My Profile', icon: User },
+    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   return (
@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="brand-title">TripNova</span>
-              <span className="badge badge-blue">AI Safety</span>
+              <span className="badge badge-blue hide-mobile" style={{ fontSize: '0.68rem', padding: '1px 6px' }}>AI Safety</span>
             </div>
             <p className="brand-subtitle hide-mobile">Smart AI Travel Companion</p>
           </div>
@@ -73,11 +73,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`nav-link-btn ${isActive ? 'active' : ''}`}
+                title={item.label}
               >
                 <Icon style={{ 
-                  width: '16px', 
-                  height: '16px', 
-                  color: isActive ? '#ffffff' : item.highlight ? '#f87171' : '#38bdf8' 
+                  width: '15px', 
+                  height: '15px', 
+                  color: isActive ? '#ffffff' : item.highlight ? '#f87171' : '#38bdf8',
+                  flexShrink: 0
                 }} />
                 <span>{item.label}</span>
                 {item.highlight && (
@@ -86,7 +88,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     height: '6px',
                     borderRadius: '50%',
                     backgroundColor: '#ef4444',
-                    display: 'inline-block'
+                    display: 'inline-block',
+                    flexShrink: 0
                   }} />
                 )}
               </button>
@@ -94,16 +97,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-3">
+        {/* Right Actions - Anchored and Protected */}
+        <div className="navbar-actions">
           {/* AI Bot Button */}
           <button
             onClick={onOpenChatbot}
             className="btn-secondary hide-mobile"
-            style={{ padding: '8px 14px' }}
+            style={{ padding: '7px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
             title="Open Nova AI Travel Concierge"
           >
-            <Sparkles style={{ width: '16px', height: '16px', color: '#c084fc' }} />
+            <Sparkles style={{ width: '15px', height: '15px', color: '#c084fc' }} />
             <span>Nova AI</span>
           </button>
 
@@ -111,9 +114,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenSOS}
             className="btn-sos"
+            style={{ padding: '7px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
             title="Instant SOS to 5 Trusted Contacts"
           >
-            <PhoneCall style={{ width: '16px', height: '16px' }} />
+            <PhoneCall style={{ width: '15px', height: '15px' }} />
             <span>SOS</span>
           </button>
 
@@ -128,8 +132,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             className="btn-secondary"
             style={{ 
-              padding: '6px 12px',
-              borderColor: userProfile.isRegistered ? 'rgba(16, 185, 129, 0.4)' : 'rgba(99, 102, 241, 0.4)'
+              padding: '5px 10px',
+              borderColor: userProfile.isRegistered ? 'rgba(16, 185, 129, 0.4)' : 'rgba(99, 102, 241, 0.4)',
+              whiteSpace: 'nowrap'
             }}
           >
             <div style={{
@@ -142,15 +147,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               justifyContent: 'center',
               fontSize: '11px',
               fontWeight: 'bold',
-              color: '#38bdf8'
+              color: '#38bdf8',
+              flexShrink: 0
             }}>
-              {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '14px', height: '14px' }} />}
+              {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '13px', height: '13px' }} />}
             </div>
             <div style={{ textAlign: 'left', lineHeight: 1.1 }} className="hide-mobile">
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block' }}>
+              <span style={{ fontSize: '0.74rem', fontWeight: 700, display: 'block' }}>
                 {userProfile.isRegistered ? (userProfile.name.split(' ')[0] || 'My Profile') : 'Register'}
               </span>
-              <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+              <span style={{ fontSize: '0.62rem', color: '#94a3b8' }}>
                 {userProfile.isRegistered ? `Blood: ${userProfile.bloodGroup}` : 'Tourist Form'}
               </span>
             </div>

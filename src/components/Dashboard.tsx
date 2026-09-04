@@ -10,7 +10,14 @@ import {
   HeartPulse, 
   Calendar, 
   User,
-  Edit3
+  Edit3,
+  ShieldCheck,
+  Languages,
+  Clock,
+  CloudSun,
+  Activity,
+  Zap,
+  PhoneCall
 } from 'lucide-react';
 import { UserProfile, TripPlan } from '../types';
 import { TOP_PICKS_CATEGORIES, NEARBY_HOSPITALS } from '../data/mockData';
@@ -38,16 +45,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const displayPicks = filteredCategories.length > 0 ? filteredCategories : TOP_PICKS_CATEGORIES;
 
   return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-      {/* Hero Welcome Card */}
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+      {/* Hero Welcome Card - Clean, Spacious & Premium */}
       <div className="hero-card">
-        <div style={{ maxWidth: '780px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '980px' }}>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="badge badge-blue">
               <Sparkles style={{ width: '13px', height: '13px' }} /> Next-Gen Tourist Guardian
             </span>
             <span className={`badge ${userProfile.isRegistered ? 'badge-green' : 'badge-amber'}`}>
-              {userProfile.isRegistered ? `Active Tourist: ${userProfile.name}` : 'Explore Mode Active'}
+              {userProfile.isRegistered ? `🛡️ Active Tourist: ${userProfile.name} (Protected)` : '🧭 Explore Mode Active'}
+            </span>
+            <span className="badge badge-purple hide-mobile">
+              <ShieldCheck style={{ width: '13px', height: '13px' }} /> 99.8% AI Safety Shield
             </span>
           </div>
 
@@ -56,10 +66,80 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <span className="text-gradient">Travel with Zero Fear.</span>
           </h1>
 
-          <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.6 }}>
+          <p style={{ color: '#cbd5e1', fontSize: '1rem', lineHeight: 1.65, maxWidth: '850px' }}>
             Your all-in-one AI travel companion. Plan personalized itineraries, eliminate transport overcharging with Fare Guard, and carry an offline digital Emergency Card with instant voice translation.
           </p>
 
+          {/* Clean Feature Pillars Strip */}
+          <div className="flex items-center gap-2 flex-wrap" style={{ paddingTop: '2px' }}>
+            <span style={{ 
+              fontSize: '0.76rem', 
+              padding: '4px 10px', 
+              borderRadius: '8px', 
+              background: 'rgba(245, 158, 11, 0.12)', 
+              color: '#fbbf24', 
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Scale style={{ width: '13px', height: '13px' }} /> Anti-Scam Fare Guard
+            </span>
+            <span style={{ 
+              fontSize: '0.76rem', 
+              padding: '4px 10px', 
+              borderRadius: '8px', 
+              background: 'rgba(56, 189, 248, 0.12)', 
+              color: '#38bdf8', 
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Languages style={{ width: '13px', height: '13px' }} /> 10+ Voice Engines
+            </span>
+            <span style={{ 
+              fontSize: '0.76rem', 
+              padding: '4px 10px', 
+              borderRadius: '8px', 
+              background: 'rgba(168, 85, 247, 0.12)', 
+              color: '#c084fc', 
+              border: '1px solid rgba(168, 85, 247, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Clock style={{ width: '13px', height: '13px' }} /> 195 World Clocks
+            </span>
+            <span style={{ 
+              fontSize: '0.76rem', 
+              padding: '4px 10px', 
+              borderRadius: '8px', 
+              background: 'rgba(16, 185, 129, 0.12)', 
+              color: '#34d399', 
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <CloudSun style={{ width: '13px', height: '13px' }} /> Satellite Weather & AQI
+            </span>
+            <span style={{ 
+              fontSize: '0.76rem', 
+              padding: '4px 10px', 
+              borderRadius: '8px', 
+              background: 'rgba(239, 68, 68, 0.12)', 
+              color: '#f87171', 
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <HeartPulse style={{ width: '13px', height: '13px' }} /> Offline Medical E-Card
+            </span>
+          </div>
+
+          {/* Primary & Secondary Action CTAs */}
           <div className="flex items-center gap-3 flex-wrap" style={{ paddingTop: '8px' }}>
             <button
               onClick={() => onNavigateTab('planner')}
@@ -72,7 +152,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="btn-secondary"
               style={{ color: '#fca5a5', borderColor: 'rgba(239, 68, 68, 0.4)' }}
             >
-              <HeartPulse style={{ width: '18px', height: '18px', color: '#ef4444' }} /> View Tourist Emergency Card
+              <HeartPulse style={{ width: '18px', height: '18px', color: '#ef4444' }} /> Emergency Card
+            </button>
+            <button
+              onClick={() => onNavigateTab('anti-scam')}
+              className="btn-secondary"
+              style={{ color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+            >
+              <Scale style={{ width: '18px', height: '18px', color: '#fbbf24' }} /> Calculate Fair Fare
             </button>
 
             {userProfile.isRegistered ? (
@@ -81,7 +168,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="btn-secondary"
                 style={{ color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' }}
               >
-                <User style={{ width: '18px', height: '18px' }} /> View & Edit Profile
+                <User style={{ width: '18px', height: '18px' }} /> View Profile
               </button>
             ) : (
               <button
@@ -89,17 +176,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 className="btn-secondary"
                 style={{ color: '#38bdf8' }}
               >
-                <User style={{ width: '18px', height: '18px' }} /> Complete Registration
+                <User style={{ width: '18px', height: '18px' }} /> Register Profile
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Profile Overview Card (Problem 3) */}
+      {/* Profile Overview Card */}
       <div className="glass-panel" style={{
-        padding: '20px 24px',
-        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 27, 75, 0.5) 100%)',
+        padding: '18px 24px',
+        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 27, 75, 0.6) 100%)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         alignItems: 'center',
@@ -107,10 +194,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div style={{
-            width: '44px',
-            height: '44px',
+            width: '46px',
+            height: '46px',
             borderRadius: '14px',
             background: 'rgba(56, 189, 248, 0.15)',
             border: '1px solid rgba(56, 189, 248, 0.3)',
@@ -121,18 +208,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
             fontSize: '18px',
             fontWeight: 800
           }}>
-            {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '20px', height: '20px' }} />}
+            {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '22px', height: '22px' }} />}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>
                 {userProfile.isRegistered ? userProfile.name : 'Guest Profile'}
               </h3>
               <span className={`badge ${userProfile.isRegistered ? 'badge-green' : 'badge-amber'}`}>
                 {userProfile.isRegistered ? 'Registered' : 'Not Registered'}
               </span>
+              {userProfile.isRegistered && (
+                <span className="badge badge-blue" style={{ fontSize: '0.68rem' }}>
+                  ID: {userProfile.id ? userProfile.id.slice(-6).toUpperCase() : 'TRP-849'}
+                </span>
+              )}
             </div>
-            <p style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+            <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
               {userProfile.isRegistered 
                 ? `Blood: ${userProfile.bloodGroup} • ${userProfile.trustedContacts.length} Emergency Contacts • ${userProfile.govtIdType}`
                 : 'Register your personal & medical details for the offline emergency card.'}
@@ -140,7 +232,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {userProfile.isRegistered ? (
             <>
               <button

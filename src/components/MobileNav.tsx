@@ -23,6 +23,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab })
     { id: 'safety-hub', label: 'Safety', icon: ShieldAlert },
     { id: 'anti-scam', label: 'Fare Guard', icon: Scale },
     { id: 'tools', label: 'Tools', icon: Languages },
+    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   return (
@@ -33,10 +34,15 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab })
       left: 0,
       right: 0,
       zIndex: 50,
-      background: 'rgba(7, 11, 20, 0.95)',
-      backdropFilter: 'blur(20px)',
+      background: 'rgba(7, 11, 20, 0.96)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
       borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-      padding: '8px 12px'
+      paddingTop: '6px',
+      paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
+      paddingLeft: '4px',
+      paddingRight: '4px',
+      boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)'
     }} className="mobile-only-nav">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
         {items.map((item) => {
@@ -51,16 +57,19 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab })
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'none',
+                background: isActive ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
+                borderRadius: '10px',
                 border: 'none',
                 cursor: 'pointer',
                 color: isActive ? '#38bdf8' : '#94a3b8',
                 fontWeight: isActive ? 700 : 500,
-                padding: '4px 8px'
+                padding: '4px 6px',
+                minWidth: '44px',
+                transition: 'all 0.15s ease'
               }}
             >
               <div style={{ position: 'relative' }}>
-                <Icon style={{ width: '20px', height: '20px' }} />
+                <Icon style={{ width: '18px', height: '18px', color: isActive ? '#38bdf8' : '#94a3b8' }} />
                 {item.highlight && (
                   <span style={{
                     position: 'absolute',
@@ -73,7 +82,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab })
                   }} />
                 )}
               </div>
-              <span style={{ fontSize: '10px', marginTop: '2px' }}>{item.label}</span>
+              <span style={{ fontSize: '9.5px', marginTop: '2px', lineHeight: 1 }}>{item.label}</span>
             </button>
           );
         })}
