@@ -96,66 +96,66 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
   const [businessName, setBusinessName] = useState(existingProfile?.businessName || '');
   const [email, setEmail] = useState(existingProfile?.email || '');
   const [phone, setPhone] = useState(existingProfile?.phone || '');
-  const [operatingCity, setOperatingCity] = useState(existingProfile?.operatingCity || 'Ooty & Nilgiri Hills');
-  const [operatingState, setOperatingState] = useState(existingProfile?.operatingState || 'Tamil Nadu (TN), India');
+  const [operatingCity, setOperatingCity] = useState(existingProfile?.operatingCity || '');
+  const [operatingState, setOperatingState] = useState(existingProfile?.operatingState || '');
   const [nativeCurrency, setNativeCurrency] = useState(existingProfile?.nativeCurrency || 'INR');
 
   // 1. Transport Details State
   const [transportData, setTransportData] = useState<TransportProviderDetails>(() => ({
-    vehicleType: existingProfile?.transportDetails?.vehicleType || 'Auto Rickshaw',
+    vehicleType: existingProfile?.transportDetails?.vehicleType || ('' as any),
     vehicleRegNumber: existingProfile?.transportDetails?.vehicleRegNumber || '',
     driverLicenseNumber: existingProfile?.transportDetails?.driverLicenseNumber || '',
     commercialBadgeNumber: existingProfile?.transportDetails?.commercialBadgeNumber || '',
-    operatingStand: existingProfile?.transportDetails?.operatingStand || 'Central Railway Station Stand',
-    baseTariffPerKm: existingProfile?.transportDetails?.baseTariffPerKm || 18,
+    operatingStand: existingProfile?.transportDetails?.operatingStand || '',
+    baseTariffPerKm: existingProfile?.transportDetails?.baseTariffPerKm || 0,
     hasAC: existingProfile?.transportDetails?.hasAC ?? false,
-    seatingCapacity: existingProfile?.transportDetails?.seatingCapacity || 3
+    seatingCapacity: existingProfile?.transportDetails?.seatingCapacity || 0
   }));
 
   // 2. Tour Guide Details State
   const [guideData, setGuideData] = useState<TourGuideDetails>(() => ({
-    guideLicenseType: existingProfile?.tourGuideDetails?.guideLicenseType || 'Govt Certified National Guide',
+    guideLicenseType: existingProfile?.tourGuideDetails?.guideLicenseType || ('' as any),
     guideBadgeNumber: existingProfile?.tourGuideDetails?.guideBadgeNumber || '',
-    specialization: existingProfile?.tourGuideDetails?.specialization || 'Heritage & Temples',
-    languagesSpoken: existingProfile?.tourGuideDetails?.languagesSpoken || ['English', 'Tamil'],
-    experienceYears: existingProfile?.tourGuideDetails?.experienceYears || 5,
-    hourlyRate: existingProfile?.tourGuideDetails?.hourlyRate || 350,
-    dailyRate: existingProfile?.tourGuideDetails?.dailyRate || 2200,
-    hasFirstAidCert: existingProfile?.tourGuideDetails?.hasFirstAidCert ?? true
+    specialization: existingProfile?.tourGuideDetails?.specialization || ('' as any),
+    languagesSpoken: existingProfile?.tourGuideDetails?.languagesSpoken || [],
+    experienceYears: existingProfile?.tourGuideDetails?.experienceYears || 0,
+    hourlyRate: existingProfile?.tourGuideDetails?.hourlyRate || 0,
+    dailyRate: existingProfile?.tourGuideDetails?.dailyRate || 0,
+    hasFirstAidCert: existingProfile?.tourGuideDetails?.hasFirstAidCert ?? false
   }));
 
   // 3. Homestay Details State
   const [homestayData, setHomestayData] = useState<HomestayDetails>(() => ({
-    propertyType: existingProfile?.homestayDetails?.propertyType || 'Heritage Cottage',
+    propertyType: existingProfile?.homestayDetails?.propertyType || ('' as any),
     homestayRegNumber: existingProfile?.homestayDetails?.homestayRegNumber || '',
-    totalRooms: existingProfile?.homestayDetails?.totalRooms || 4,
-    amenities: existingProfile?.homestayDetails?.amenities || ['Wi-Fi', 'Hot Water', 'Home Cooked Meals', 'First Aid Kit'],
-    nightlyRateMin: existingProfile?.homestayDetails?.nightlyRateMin || 1800,
-    nightlyRateMax: existingProfile?.homestayDetails?.nightlyRateMax || 4500,
+    totalRooms: existingProfile?.homestayDetails?.totalRooms || 0,
+    amenities: existingProfile?.homestayDetails?.amenities || [],
+    nightlyRateMin: existingProfile?.homestayDetails?.nightlyRateMin || 0,
+    nightlyRateMax: existingProfile?.homestayDetails?.nightlyRateMax || 0,
     address: existingProfile?.homestayDetails?.address || '',
     fssaiLicense: existingProfile?.homestayDetails?.fssaiLicense || ''
   }));
 
   // 4. Emergency Medical State
   const [emergencyData, setEmergencyData] = useState<EmergencyMedicalDetails>(() => ({
-    serviceType: existingProfile?.emergencyMedicalDetails?.serviceType || 'Private Ambulance Operator',
+    serviceType: existingProfile?.emergencyMedicalDetails?.serviceType || ('' as any),
     medicalLicenseNumber: existingProfile?.emergencyMedicalDetails?.medicalLicenseNumber || '',
     emergencyHotline: existingProfile?.emergencyMedicalDetails?.emergencyHotline || '',
-    availableVehiclesOrBeds: existingProfile?.emergencyMedicalDetails?.availableVehiclesOrBeds || 2,
-    serviceRadiusKm: existingProfile?.emergencyMedicalDetails?.serviceRadiusKm || 35,
-    equipmentSupported: existingProfile?.emergencyMedicalDetails?.equipmentSupported || ['Oxygen Support', 'Basic Trauma Kit', 'Wheelchair']
+    availableVehiclesOrBeds: existingProfile?.emergencyMedicalDetails?.availableVehiclesOrBeds || 0,
+    serviceRadiusKm: existingProfile?.emergencyMedicalDetails?.serviceRadiusKm || 0,
+    equipmentSupported: existingProfile?.emergencyMedicalDetails?.equipmentSupported || []
   }));
 
   // 5. Rental Agency State
   const [rentalData, setRentalData] = useState<RentalAgencyDetails>(() => ({
-    agencyType: existingProfile?.rentalAgencyDetails?.agencyType || 'Two-Wheeler & Bicycle Rental',
+    agencyType: existingProfile?.rentalAgencyDetails?.agencyType || ('' as any),
     gstOrMsmeNumber: existingProfile?.rentalAgencyDetails?.gstOrMsmeNumber || '',
-    itemsOffered: existingProfile?.rentalAgencyDetails?.itemsOffered || ['Honda Activa 125', 'Royal Enfield 350', 'Trek Bicycles'],
-    insuranceIncluded: existingProfile?.rentalAgencyDetails?.insuranceIncluded ?? true
+    itemsOffered: existingProfile?.rentalAgencyDetails?.itemsOffered || [],
+    insuranceIncluded: existingProfile?.rentalAgencyDetails?.insuranceIncluded ?? false
   }));
 
-  // Fair-Fare & Safety Commitment Checkbox
-  const [hasAgreedCommitment, setHasAgreedCommitment] = useState(true);
+  // Fair-Fare & Safety Commitment Checkbox (unclicked by default)
+  const [hasAgreedCommitment, setHasAgreedCommitment] = useState(false);
   const [createdProfile, setCreatedProfile] = useState<ServiceProviderProfile | null>(existingProfile || null);
 
   if (!isOpen) return null;
@@ -434,10 +434,11 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         Vehicle Type *
                       </label>
                       <select
-                        value={transportData.vehicleType}
+                        value={transportData.vehicleType || ''}
                         onChange={e => setTransportData({ ...transportData, vehicleType: e.target.value as any })}
                         className="input-glass"
                       >
+                        <option value="" disabled style={{ background: '#090e17' }}>-- Select Vehicle Type --</option>
                         <option value="Auto Rickshaw" style={{ background: '#090e17' }}>Auto Rickshaw (3-Wheeler)</option>
                         <option value="Sedan Cab" style={{ background: '#090e17' }}>Sedan Cab (Etios, Dzire)</option>
                         <option value="SUV" style={{ background: '#090e17' }}>SUV (Innova, Ertiga)</option>
@@ -501,7 +502,7 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         required
                         value={transportData.operatingStand}
                         onChange={e => setTransportData({ ...transportData, operatingStand: e.target.value })}
-                        placeholder="e.g. Ooty Central Stand"
+                        placeholder="e.g. Central Railway Station Stand"
                         className="input-glass"
                       />
                     </div>
@@ -515,8 +516,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         required
                         min={10}
                         max={100}
-                        value={transportData.baseTariffPerKm}
+                        value={transportData.baseTariffPerKm || ''}
                         onChange={e => setTransportData({ ...transportData, baseTariffPerKm: Number(e.target.value) })}
+                        placeholder="e.g. 18"
                         className="input-glass"
                       />
                     </div>
@@ -527,11 +529,12 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                       </label>
                       <div className="flex items-center gap-3" style={{ height: '42px' }}>
                         <select
-                          value={transportData.seatingCapacity}
+                          value={transportData.seatingCapacity || 0}
                           onChange={e => setTransportData({ ...transportData, seatingCapacity: Number(e.target.value) })}
                           className="input-glass"
                           style={{ flex: 1 }}
                         >
+                          <option value={0} disabled style={{ background: '#090e17' }}>-- Select Seating --</option>
                           <option value={1} style={{ background: '#090e17' }}>1 Pax (Bike)</option>
                           <option value={3} style={{ background: '#090e17' }}>3 Pax (Auto)</option>
                           <option value={4} style={{ background: '#090e17' }}>4 Pax (Sedan)</option>
@@ -561,10 +564,11 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         Guide License Certification *
                       </label>
                       <select
-                        value={guideData.guideLicenseType}
+                        value={guideData.guideLicenseType || ''}
                         onChange={e => setGuideData({ ...guideData, guideLicenseType: e.target.value as any })}
                         className="input-glass"
                       >
+                        <option value="" disabled style={{ background: '#090e17' }}>-- Select Certification --</option>
                         <option value="Govt Certified National Guide" style={{ background: '#090e17' }}>Govt Certified National Guide</option>
                         <option value="State Tourism Guide" style={{ background: '#090e17' }}>State Tourism Board Certified Guide</option>
                         <option value="Local Heritage Expert" style={{ background: '#090e17' }}>Local Heritage & Culture Expert</option>
@@ -592,10 +596,11 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         Primary Specialization *
                       </label>
                       <select
-                        value={guideData.specialization}
+                        value={guideData.specialization || ''}
                         onChange={e => setGuideData({ ...guideData, specialization: e.target.value as any })}
                         className="input-glass"
                       >
+                        <option value="" disabled style={{ background: '#090e17' }}>-- Select Specialization --</option>
                         <option value="Heritage & Temples" style={{ background: '#090e17' }}>Heritage & Temples</option>
                         <option value="Hill Stations & Treks" style={{ background: '#090e17' }}>Hill Stations & Mountain Treks</option>
                         <option value="Wildlife & Eco-Tour" style={{ background: '#090e17' }}>Wildlife Safari & Eco-Tours</option>
@@ -611,8 +616,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         type="number"
                         min={1}
                         max={40}
-                        value={guideData.experienceYears}
+                        value={guideData.experienceYears || ''}
                         onChange={e => setGuideData({ ...guideData, experienceYears: Number(e.target.value) })}
+                        placeholder="e.g. 5"
                         className="input-glass"
                       />
                     </div>
@@ -625,8 +631,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                       </label>
                       <input
                         type="number"
-                        value={guideData.hourlyRate}
+                        value={guideData.hourlyRate || ''}
                         onChange={e => setGuideData({ ...guideData, hourlyRate: Number(e.target.value) })}
+                        placeholder="e.g. 350"
                         className="input-glass"
                       />
                     </div>
@@ -637,8 +644,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                       </label>
                       <input
                         type="number"
-                        value={guideData.dailyRate}
+                        value={guideData.dailyRate || ''}
                         onChange={e => setGuideData({ ...guideData, dailyRate: Number(e.target.value) })}
+                        placeholder="e.g. 2200"
                         className="input-glass"
                       />
                     </div>
@@ -671,10 +679,11 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         Property Type *
                       </label>
                       <select
-                        value={homestayData.propertyType}
+                        value={homestayData.propertyType || ''}
                         onChange={e => setHomestayData({ ...homestayData, propertyType: e.target.value as any })}
                         className="input-glass"
                       >
+                        <option value="" disabled style={{ background: '#090e17' }}>-- Select Property Type --</option>
                         <option value="Heritage Cottage" style={{ background: '#090e17' }}>Heritage Cottage / Bungalow</option>
                         <option value="Mountain Villa" style={{ background: '#090e17' }}>Mountain View Villa</option>
                         <option value="Traditional Homestay" style={{ background: '#090e17' }}>Traditional Village Homestay</option>
@@ -706,8 +715,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         type="number"
                         min={1}
                         max={30}
-                        value={homestayData.totalRooms}
+                        value={homestayData.totalRooms || ''}
                         onChange={e => setHomestayData({ ...homestayData, totalRooms: Number(e.target.value) })}
+                        placeholder="e.g. 4"
                         className="input-glass"
                       />
                     </div>
@@ -718,8 +728,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                       </label>
                       <input
                         type="number"
-                        value={homestayData.nightlyRateMin}
+                        value={homestayData.nightlyRateMin || ''}
                         onChange={e => setHomestayData({ ...homestayData, nightlyRateMin: Number(e.target.value) })}
+                        placeholder="e.g. 1800"
                         className="input-glass"
                       />
                     </div>
@@ -730,8 +741,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                       </label>
                       <input
                         type="number"
-                        value={homestayData.nightlyRateMax}
+                        value={homestayData.nightlyRateMax || ''}
                         onChange={e => setHomestayData({ ...homestayData, nightlyRateMax: Number(e.target.value) })}
+                        placeholder="e.g. 4500"
                         className="input-glass"
                       />
                     </div>
@@ -762,10 +774,11 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         Medical / Emergency Service Type *
                       </label>
                       <select
-                        value={emergencyData.serviceType}
+                        value={emergencyData.serviceType || ''}
                         onChange={e => setEmergencyData({ ...emergencyData, serviceType: e.target.value as any })}
                         className="input-glass"
                       >
+                        <option value="" disabled style={{ background: '#090e17' }}>-- Select Service Type --</option>
                         <option value="Private Ambulance Operator" style={{ background: '#090e17' }}>Private Ambulance Operator</option>
                         <option value="24/7 Urgent Clinic / Hospital" style={{ background: '#090e17' }}>24/7 Urgent Clinic / Hospital</option>
                         <option value="24/7 Pharmacy" style={{ background: '#090e17' }}>24/7 Pharmacy / Chemist</option>
@@ -810,8 +823,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                       <input
                         type="number"
                         min={1}
-                        value={emergencyData.availableVehiclesOrBeds}
+                        value={emergencyData.availableVehiclesOrBeds || ''}
                         onChange={e => setEmergencyData({ ...emergencyData, availableVehiclesOrBeds: Number(e.target.value) })}
+                        placeholder="e.g. 2"
                         className="input-glass"
                       />
                     </div>
@@ -822,8 +836,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                       </label>
                       <input
                         type="number"
-                        value={emergencyData.serviceRadiusKm}
+                        value={emergencyData.serviceRadiusKm || ''}
                         onChange={e => setEmergencyData({ ...emergencyData, serviceRadiusKm: Number(e.target.value) })}
+                        placeholder="e.g. 35"
                         className="input-glass"
                       />
                     </div>
@@ -840,10 +855,11 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                         Agency Type *
                       </label>
                       <select
-                        value={rentalData.agencyType}
+                        value={rentalData.agencyType || ''}
                         onChange={e => setRentalData({ ...rentalData, agencyType: e.target.value as any })}
                         className="input-glass"
                       >
+                        <option value="" disabled style={{ background: '#090e17' }}>-- Select Agency Type --</option>
                         <option value="Two-Wheeler & Bicycle Rental" style={{ background: '#090e17' }}>Two-Wheeler & Bicycle Rental</option>
                         <option value="Trekking & Camping Gear" style={{ background: '#090e17' }}>Trekking & Camping Gear Rentals</option>
                         <option value="Boating & Safari Agency" style={{ background: '#090e17' }}>Boating & Safari Agency</option>
