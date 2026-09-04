@@ -187,11 +187,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* Profile Overview Card */}
+      {/* Profile Overview Card (Dual-Mode: Tourist or Service Provider) */}
       <div className="glass-panel" style={{
         padding: '18px 24px',
-        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 27, 75, 0.6) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        background: providerProfile && !userProfile.isRegistered 
+          ? 'linear-gradient(90deg, rgba(15, 23, 42, 0.95) 0%, rgba(41, 37, 36, 0.7) 100%)'
+          : 'linear-gradient(90deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 27, 75, 0.6) 100%)',
+        border: providerProfile && !userProfile.isRegistered 
+          ? '1px solid rgba(245, 158, 11, 0.25)' 
+          : '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -203,34 +207,51 @@ export const Dashboard: React.FC<DashboardProps> = ({
             width: '46px',
             height: '46px',
             borderRadius: '14px',
-            background: 'rgba(56, 189, 248, 0.15)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
+            background: providerProfile && !userProfile.isRegistered ? 'rgba(245, 158, 11, 0.15)' : 'rgba(56, 189, 248, 0.15)',
+            border: providerProfile && !userProfile.isRegistered ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(56, 189, 248, 0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#38bdf8',
+            color: providerProfile && !userProfile.isRegistered ? '#fbbf24' : '#38bdf8',
             fontSize: '18px',
             fontWeight: 800
           }}>
-            {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '22px', height: '22px' }} />}
+            {userProfile.isRegistered ? (
+              userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '22px', height: '22px' }} />
+            ) : providerProfile ? (
+              providerProfile.businessName ? providerProfile.businessName.charAt(0).toUpperCase() : <ShieldCheck style={{ width: '22px', height: '22px' }} />
+            ) : (
+              <User style={{ width: '22px', height: '22px' }} />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>
-                {userProfile.isRegistered ? userProfile.name : 'Guest Profile'}
+                {userProfile.isRegistered 
+                  ? userProfile.name 
+                  : providerProfile 
+                  ? (providerProfile.businessName || providerProfile.providerName)
+                  : 'Guest Profile'}
               </h3>
-              <span className={`badge ${userProfile.isRegistered ? 'badge-green' : 'badge-amber'}`}>
-                {userProfile.isRegistered ? 'Registered' : 'Not Registered'}
+              <span className={`badge ${userProfile.isRegistered ? 'badge-green' : providerProfile ? 'badge-amber' : 'badge-amber'}`}>
+                {userProfile.isRegistered ? 'Registered Tourist' : providerProfile ? 'Verified Partner' : 'Not Registered'}
               </span>
               {userProfile.isRegistered && (
                 <span className="badge badge-blue" style={{ fontSize: '0.68rem' }}>
                   ID: {userProfile.id ? userProfile.id.slice(-6).toUpperCase() : 'TRP-849'}
                 </span>
               )}
+              {!userProfile.isRegistered && providerProfile && (
+                <span className="badge badge-amber" style={{ fontSize: '0.68rem' }}>
+                  ID: {providerProfile.id}
+                </span>
+              )}
             </div>
             <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
               {userProfile.isRegistered 
                 ? `Blood: ${userProfile.bloodGroup} • ${userProfile.trustedContacts.length} Emergency Contacts • ${userProfile.govtIdType}`
+                : providerProfile
+                ? `Proprietor: ${providerProfile.providerName} • ${providerProfile.operatingCity} • Fair-Fare Verified`
                 : 'Register your personal & medical details for the offline emergency card.'}
             </p>
           </div>
@@ -253,6 +274,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <Edit3 style={{ width: '14px', height: '14px' }} /> Edit Details
               </button>
+            </>
+          ) : providerProfile ? (
+            <>
+              <button
+                onClick={() => onNavigateTab('profile')}
+                className="btn-secondary"
+                style={{ padding: '8px 16px', fontSize: '0.78rem', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+              >
+                <ShieldCheck style={{ width: '14px', height: '14px' }} /> View Partner Profile
+              </button>
+              {onOpenProviderRegister && (
+                <button
+                  onClick={onOpenProviderRegister}
+                  className="btn-primary"
+                  style={{ padding: '8px 16px', fontSize: '0.78rem', background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', color: '#000000', fontWeight: 800 }}
+                >
+                  <Edit3 style={{ width: '14px', height: '14px' }} /> Edit Details
+                </button>
+              )}
             </>
           ) : (
             <button

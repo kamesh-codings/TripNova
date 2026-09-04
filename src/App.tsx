@@ -99,6 +99,14 @@ export const App: React.FC = () => {
     showToast('Tourist profile deleted. Switched back to Guest Explore Mode.');
   };
 
+  const handleDeleteProviderProfile = () => {
+    deleteStoredProviderProfile();
+    setProviderProfile(null);
+    sessionStorage.removeItem(GATEWAY_SHOWN_KEY);
+    setActiveTab('dashboard');
+    showToast('Service Provider profile successfully deleted.');
+  };
+
   const handleSaveTrip = (newTrip: TripPlan) => {
     if (!userProfile.isRegistered) {
       setIsRegisterOpen(true);
@@ -120,8 +128,10 @@ export const App: React.FC = () => {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         userProfile={userProfile}
+        providerProfile={providerProfile}
         onOpenSOS={() => setIsSOSModalOpen(true)}
         onOpenRegister={() => setIsRegisterOpen(true)}
+        onOpenProviderRegister={() => setIsProviderRegisterOpen(true)}
         onOpenChatbot={() => setIsChatbotOpen(!isChatbotOpen)}
       />
 
@@ -229,9 +239,12 @@ export const App: React.FC = () => {
         {activeTab === 'profile' && (
           <ProfileView
             userProfile={userProfile}
+            providerProfile={providerProfile}
             onEditProfile={() => setIsRegisterOpen(true)}
+            onEditProviderProfile={() => setIsProviderRegisterOpen(true)}
             onNavigateTab={setActiveTab}
             onDeleteProfile={handleDeleteProfile}
+            onDeleteProviderProfile={handleDeleteProviderProfile}
           />
         )}
       </main>

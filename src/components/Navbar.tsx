@@ -3,22 +3,25 @@ import {
   Compass, 
   MapPin, 
   ShieldAlert, 
+  ShieldCheck,
   CreditCard, 
   Scale, 
   Languages, 
   User, 
-  Sparkles,
-  PhoneCall,
+  Sparkles, 
+  PhoneCall, 
   Landmark
 } from 'lucide-react';
-import { UserProfile } from '../types';
+import { UserProfile, ServiceProviderProfile } from '../types';
 
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   userProfile: UserProfile;
+  providerProfile?: ServiceProviderProfile | null;
   onOpenSOS: () => void;
   onOpenRegister: () => void;
+  onOpenProviderRegister?: () => void;
   onOpenChatbot: () => void;
 }
 
@@ -26,8 +29,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   userProfile,
+  providerProfile,
   onOpenSOS,
   onOpenRegister,
+  onOpenProviderRegister,
   onOpenChatbot
 }) => {
   const navItems = [
@@ -121,36 +126,60 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>SOS</span>
           </button>
 
-          {/* Integrated Top-Right My Profile / Register Button */}
+          {/* Integrated Top-Right My Profile / Register Button (Dual-Mode: Tourist or Provider) */}
           <button
             onClick={() => {
-              if (userProfile.isRegistered) {
+              if (userProfile.isRegistered || providerProfile) {
                 setActiveTab('profile');
               } else {
                 onOpenRegister();
               }
             }}
             className={`navbar-profile-btn ${activeTab === 'profile' ? 'active' : ''}`}
-            title={userProfile.isRegistered ? 'Open My Profile & Travel Documents' : 'Register Tourist Profile'}
+            title={
+              userProfile.isRegistered 
+                ? `Tourist Profile: ${userProfile.name}` 
+                : providerProfile 
+                ? `Partner Profile: ${providerProfile.businessName}` 
+                : 'Register Tourist Profile'
+            }
           >
-            {userProfile.avatarUrl ? (
+            {userProfile.isRegistered && userProfile.avatarUrl ? (
               <img 
                 src={userProfile.avatarUrl} 
                 alt={userProfile.name} 
                 className="profile-avatar-img"
               />
             ) : (
-              <div className="profile-avatar-initial">
-                {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '14px', height: '14px' }} />}
+              <div 
+                className="profile-avatar-initial"
+                style={{
+                  background: providerProfile && !userProfile.isRegistered ? 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)' : undefined,
+                  color: providerProfile && !userProfile.isRegistered ? '#000000' : undefined
+                }}
+              >
+                {userProfile.isRegistered ? (
+                  userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '14px', height: '14px' }} />
+                ) : providerProfile ? (
+                  providerProfile.businessName ? providerProfile.businessName.charAt(0).toUpperCase() : <ShieldCheck style={{ width: '14px', height: '14px' }} />
+                ) : (
+                  <User style={{ width: '14px', height: '14px' }} />
+                )}
               </div>
             )}
             <div className="profile-info-block hide-mobile">
               <span className="profile-name-text">
-                {userProfile.isRegistered ? (userProfile.name.split(' ')[0] || 'My Profile') : 'Register'}
+                {userProfile.isRegistered 
+                  ? (userProfile.name.split(' ')[0] || 'My Profile')
+                  : providerProfile 
+                  ? (providerProfile.businessName.length > 14 ? providerProfile.businessName.slice(0, 14) + '...' : providerProfile.businessName)
+                  : 'Register'}
               </span>
               <span className="profile-sub-text">
                 {userProfile.isRegistered 
-                  ? (userProfile.nativeCurrency ? `${userProfile.nativeCurrency} • Profile` : 'My Profile') 
+                  ? (userProfile.nativeCurrency ? `${userProfile.nativeCurrency} • Profile` : 'Tourist Form') 
+                  : providerProfile
+                  ? `${providerProfile.nativeCurrency || 'INR'} • Partner`
                   : 'Tourist Form'}
               </span>
             </div>
