@@ -63,6 +63,13 @@ import {
   DEFAULT_HOME_TIMEZONE, 
   FullDestinationIntelligence 
 } from '../utils/weatherApi';
+import { 
+  GLOBAL_195_COUNTRIES, 
+  UTC_OFFSET_BANDS, 
+  MULTI_TIMEZONE_COUNTRIES_OVERVIEW, 
+  CountryTimezoneInfo, 
+  TimezoneSubZone 
+} from '../data/timezoneData';
 
 interface ConversationMessage {
   id: string;
@@ -137,12 +144,18 @@ export const TravelTools: React.FC = () => {
   // Rules & Regulations state
   const [selectedCountryIndex, setSelectedCountryIndex] = useState(0);
 
-  // Timezone & World Clock State (Live Open-Meteo Integration)
+  // Timezone & World Clock State (Complete 195-Country & UTC-12 to UTC+14 Engine)
+  const [selectedCountryId, setSelectedCountryId] = useState<number>(185); // Default: United Kingdom (185)
+  const [selectedSubZoneTzId, setSelectedSubZoneTzId] = useState<string>('Europe/London');
+  const [timezoneSearchQuery, setTimezoneSearchQuery] = useState('');
+  const [continentFilter, setContinentFilter] = useState<'All' | 'Asia' | 'Europe' | 'Americas' | 'Africa' | 'Oceania'>('All');
+  const [utcBandFilter, setUtcBandFilter] = useState<string>(''); // e.g. 'UTC+5:30' or ''
+  const [homeCountryId, setHomeCountryId] = useState<number>(77); // Default: India (77)
+  const [homeSubZoneTzId, setHomeSubZoneTzId] = useState<string>('Asia/Kolkata');
   const [clockSearchQuery, setClockSearchQuery] = useState('London');
   const [clockData, setClockData] = useState<FullDestinationIntelligence | null>(null);
   const [isLoadingClock, setIsLoadingClock] = useState(false);
   const [clockError, setClockError] = useState<string | null>(null);
-  const [homeTimezone, setHomeTimezone] = useState(DEFAULT_HOME_TIMEZONE);
   const [liveTick, setLiveTick] = useState(0);
 
   // Weather & AQI State (Live Open-Meteo Integration)
@@ -162,14 +175,14 @@ export const TravelTools: React.FC = () => {
   // Fetch initial clock and weather data
   useEffect(() => {
     if (activeSubTab === 'timezone' && !clockData && !isLoadingClock) {
-      handleLoadClock('London', homeTimezone);
+      handleLoadClock('London', homeSubZoneTzId);
     }
     if (activeSubTab === 'weather' && !weatherData && !isLoadingWeather) {
       handleLoadWeather('Ooty');
     }
   }, [activeSubTab]);
 
-  const handleLoadClock = async (cityToFetch: string = clockSearchQuery, hTz: string = homeTimezone) => {
+  const handleLoadClock = async (cityToFetch: string = clockSearchQuery, hTz: string = homeSubZoneTzId) => {
     if (!cityToFetch.trim()) return;
     setIsLoadingClock(true);
     setClockError(null);
@@ -192,7 +205,7 @@ export const TravelTools: React.FC = () => {
     setIsLoadingWeather(true);
     setWeatherError(null);
     try {
-      const res = await fetchCompleteDestinationData(cityToFetch, homeTimezone);
+      const res = await fetchCompleteDestinationData(cityToFetch, homeSubZoneTzId);
       if (res) {
         setWeatherData(res);
       } else {
@@ -204,18 +217,6 @@ export const TravelTools: React.FC = () => {
       setIsLoadingWeather(false);
     }
   };
-
-  const HOME_TIMEZONE_OPTIONS = [
-    { city: 'Chennai / India (IST +5:30)', tz: 'Asia/Kolkata', flag: '🇮🇳' },
-    { city: 'London / UK (GMT/BST)', tz: 'Europe/London', flag: '🇬🇧' },
-    { city: 'New York / USA (EST/EDT)', tz: 'America/New_York', flag: '🇺🇸' },
-    { city: 'San Francisco / USA (PST/PDT)', tz: 'America/Los_Angeles', flag: '🇺🇸' },
-    { city: 'Tokyo / Japan (JST +9:00)', tz: 'Asia/Tokyo', flag: '🇯🇵' },
-    { city: 'Dubai / UAE (GST +4:00)', tz: 'Asia/Dubai', flag: '🇦🇪' },
-    { city: 'Singapore (SGT +8:00)', tz: 'Asia/Singapore', flag: '🇸🇬' },
-    { city: 'Paris / France (CET +1:00)', tz: 'Europe/Paris', flag: '🇫🇷' },
-    { city: 'Sydney / Australia (AEST +10:00)', tz: 'Australia/Sydney', flag: '🇦🇺' }
-  ];
 
   // Stop audio when unmounting or switching tabs
   useEffect(() => {
@@ -1263,76 +1264,122 @@ export const TravelTools: React.FC = () => {
         </div>
       )}
 
-      {/* 3. Timezones & World Clock Engine (Live Open-Meteo Integration) */}
+      {/* 3. Timezones & World Clock Engine (195 Countries & 38 UTC Offset Bands) */}
       {activeSubTab === 'timezone' && (() => {
-        // Calculate live ticking times
-        const currentHomeTimeStr = new Date().toLocaleString('en-US', {
-          timeZone: homeTimezone,
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true
-        });
-        const currentHomeDateStr = new Date().toLocaleString('en-US', {
-          timeZone: homeTimezone,
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
-        });
+        // Find current home country and selected destination country
+        const homeCountry = GLOBAL_195_COUNTRIES.find(c => c.id === homeCountryId) || GLOBAL_195_COUNTRIES[76]; // India (id: 77)
+        const activeHomeTz = homeSubZoneTzId || homeCountry.primaryTzId;
 
-        const currentDestTimeStr = clockData ? new Date().toLocaleString('en-US', {
-          timeZone: clockData.location.timezone,
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true
-        }) : '';
-        const currentDestDateStr = clockData ? new Date().toLocaleString('en-US', {
-          timeZone: clockData.location.timezone,
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
-        }) : '';
+        const selectedCountry = GLOBAL_195_COUNTRIES.find(c => c.id === selectedCountryId) || GLOBAL_195_COUNTRIES[184]; // UK (id: 185)
+        const activeDestTz = selectedSubZoneTzId || selectedCountry.primaryTzId;
 
-        const timeDelta = clockData ? calculateTimeDifference(clockData.location.timezone, homeTimezone) : null;
-        const selectedHomeObj = HOME_TIMEZONE_OPTIONS.find(h => h.tz === homeTimezone) || HOME_TIMEZONE_OPTIONS[0];
+        // Calculate live ticking times using exact IANA timezone IDs
+        let currentHomeTimeStr = '--:--:--';
+        let currentHomeDateStr = '';
+        try {
+          currentHomeTimeStr = new Date().toLocaleTimeString('en-US', {
+            timeZone: activeHomeTz,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          });
+          currentHomeDateStr = new Date().toLocaleDateString('en-US', {
+            timeZone: activeHomeTz,
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        } catch (e) {
+          currentHomeTimeStr = new Date().toLocaleTimeString();
+        }
+
+        let currentDestTimeStr = '--:--:--';
+        let currentDestDateStr = '';
+        try {
+          currentDestTimeStr = new Date().toLocaleTimeString('en-US', {
+            timeZone: activeDestTz,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          });
+          currentDestDateStr = new Date().toLocaleDateString('en-US', {
+            timeZone: activeDestTz,
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        } catch (e) {
+          currentDestTimeStr = new Date().toLocaleTimeString();
+        }
+
+        const timeDelta = calculateTimeDifference(activeDestTz, activeHomeTz);
+
+        // Filter 195 Countries
+        const filtered195 = GLOBAL_195_COUNTRIES.filter(country => {
+          if (timezoneSearchQuery.trim()) {
+            const q = timezoneSearchQuery.toLowerCase();
+            const mName = country.name.toLowerCase().includes(q);
+            const mCity = country.capitalOrMajorCity.toLowerCase().includes(q);
+            const mTz = country.timezoneName.toLowerCase().includes(q) || country.primaryTzId.toLowerCase().includes(q);
+            const mOffset = country.utcOffset.toLowerCase().includes(q);
+            if (!mName && !mCity && !mTz && !mOffset) return false;
+          }
+
+          if (continentFilter !== 'All' && country.continent !== continentFilter) {
+            return false;
+          }
+
+          if (utcBandFilter) {
+            const cleanBand = utcBandFilter.replace('−', '-');
+            const cleanOffset = country.utcOffset.replace('−', '-');
+            if (!cleanOffset.includes(cleanBand)) return false;
+          }
+
+          return true;
+        });
 
         return (
           <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
             
-            {/* Header & City Search Bar */}
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+            {/* Top Control Panel: Home Base Selector, Search & Stats */}
+            <div className="glass-panel" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px', borderColor: 'rgba(56, 189, 248, 0.35)' }}>
+              
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
-                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
-                    <Clock style={{ width: '22px', height: '22px' }} />
+                  <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                    <Clock style={{ width: '24px', height: '24px' }} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff' }}>Live World Clock & Timezone Intelligence</h3>
-                    <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Search any city globally to calculate exact local time, +/- time difference vs home, sunrise and sunset</p>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ffffff' }}>Global 195-Country World Clock & UTC Engine</h3>
+                    <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Real-time synchronized clocks across 195 countries, 38 UTC Offset bands (UTC−12 to UTC+14) & IANA zones</p>
                   </div>
                 </div>
 
-                {/* Home Timezone Selector */}
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8' }}>Your Home Base:</span>
+                {/* Home Base Selector */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>📍 Your Home Base:</span>
+                  </span>
                   <select
-                    value={homeTimezone}
+                    value={homeCountryId}
                     onChange={e => {
-                      const newTz = e.target.value;
-                      setHomeTimezone(newTz);
-                      if (clockData) {
-                        handleLoadClock(clockData.location.city, newTz);
+                      const newId = parseInt(e.target.value, 10);
+                      setHomeCountryId(newId);
+                      const cObj = GLOBAL_195_COUNTRIES.find(c => c.id === newId);
+                      if (cObj) {
+                        setHomeSubZoneTzId(cObj.primaryTzId);
                       }
                     }}
                     className="input-glass"
-                    style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff', padding: '6px 12px', background: '#090e17' }}
+                    style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8', padding: '8px 14px', background: '#090e17' }}
                   >
-                    {HOME_TIMEZONE_OPTIONS.map(opt => (
-                      <option key={opt.tz} value={opt.tz} style={{ background: '#090e17' }}>
-                        {opt.flag} {opt.city}
+                    {GLOBAL_195_COUNTRIES.map(c => (
+                      <option key={c.id} value={c.id} style={{ background: '#090e17', color: '#ffffff' }}>
+                        {c.flag} {c.name} ({c.utcOffset.split('(')[0].trim()})
                       </option>
                     ))}
                   </select>
@@ -1340,264 +1387,375 @@ export const TravelTools: React.FC = () => {
               </div>
 
               {/* Search Form */}
-              <form
-                onSubmit={e => {
-                  e.preventDefault();
-                  handleLoadClock(clockSearchQuery, homeTimezone);
-                }}
-                className="flex gap-2"
-              >
+              <div className="flex gap-2">
                 <div style={{ position: 'relative', flex: 1 }}>
                   <Search style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: '#64748b' }} />
                   <input
                     type="text"
-                    value={clockSearchQuery}
-                    onChange={e => setClockSearchQuery(e.target.value)}
-                    placeholder="Search any destination city worldwide (e.g., Tokyo, London, Paris, New York, Ooty, Dubai...)"
+                    value={timezoneSearchQuery}
+                    onChange={e => setTimezoneSearchQuery(e.target.value)}
+                    placeholder="Search 195 countries, capitals, IANA timezones (e.g., India, Tokyo, Asia/Kolkata, Paris, London, America/New_York...)"
                     className="input-glass"
                     style={{ paddingLeft: '44px', width: '100%', fontSize: '0.88rem', fontWeight: 700 }}
                   />
+                  {timezoneSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setTimezoneSearchQuery('')}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
-                <button
-                  type="submit"
-                  disabled={isLoadingClock}
-                  className="btn-primary"
-                  style={{ padding: '0 20px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', flexShrink: 0 }}
-                >
-                  {isLoadingClock ? <Loader2 className="animate-spin" style={{ width: '16px', height: '16px' }} /> : <Compass style={{ width: '16px', height: '16px' }} />}
-                  <span>Check Time</span>
-                </button>
-              </form>
-
-              {/* Quick Popular City Pills */}
-              <div className="flex items-center gap-2 flex-wrap pt-1">
-                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700 }}>Quick Lookup:</span>
-                {['London', 'Tokyo', 'New York', 'Paris', 'Dubai', 'Singapore', 'Sydney', 'Chennai', 'Ooty'].map(city => (
-                  <button
-                    key={city}
-                    type="button"
-                    onClick={() => {
-                      setClockSearchQuery(city);
-                      handleLoadClock(city, homeTimezone);
-                    }}
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '8px',
-                      fontSize: '0.72rem',
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: clockData?.location.city.toLowerCase() === city.toLowerCase() ? '#38bdf8' : 'rgba(255, 255, 255, 0.06)',
-                      color: clockData?.location.city.toLowerCase() === city.toLowerCase() ? '#0f172a' : '#cbd5e1',
-                      fontWeight: clockData?.location.city.toLowerCase() === city.toLowerCase() ? 800 : 500,
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {city}
-                  </button>
-                ))}
               </div>
 
-              {clockError && (
-                <div style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <AlertTriangle style={{ width: '16px', height: '16px', flexShrink: 0 }} />
-                  <span>{clockError}</span>
+              {/* Continent Filter Tabs */}
+              <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, marginRight: '4px' }}>Region:</span>
+                  {(['All', 'Asia', 'Europe', 'Americas', 'Africa', 'Oceania'] as const).map(cont => {
+                    const count = cont === 'All' ? 195 : GLOBAL_195_COUNTRIES.filter(c => c.continent === cont).length;
+                    const isActive = continentFilter === cont;
+                    return (
+                      <button
+                        key={cont}
+                        type="button"
+                        onClick={() => setContinentFilter(cont)}
+                        className="btn-secondary"
+                        style={{
+                          padding: '4px 10px',
+                          fontSize: '0.72rem',
+                          borderRadius: '8px',
+                          background: isActive ? '#38bdf8' : 'rgba(255,255,255,0.06)',
+                          color: isActive ? '#0f172a' : '#cbd5e1',
+                          fontWeight: isActive ? 800 : 600,
+                          borderColor: isActive ? '#38bdf8' : 'rgba(255,255,255,0.06)'
+                        }}
+                      >
+                        {cont} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    Showing <strong>{filtered195.length}</strong> of 195 Countries
+                  </span>
+                </div>
+              </div>
+
+              {/* Interactive 38 UTC Offset Bands Ribbon (UTC-12 to UTC+14) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Zap style={{ width: '13px', height: '13px' }} />
+                    <span>38 Global UTC Offset Bands (UTC−12 to UTC+14):</span>
+                  </span>
+                  {utcBandFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setUtcBandFilter('')}
+                      style={{ fontSize: '0.7rem', color: '#f87171', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                    >
+                      Clear Offset Filter (✕ {utcBandFilter})
+                    </button>
+                  )}
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  gap: '6px',
+                  overflowX: 'auto',
+                  paddingBottom: '6px',
+                  scrollbarWidth: 'thin'
+                }}>
+                  {UTC_OFFSET_BANDS.map(band => {
+                    const isSelected = utcBandFilter === band.offset;
+                    const isIndia = band.offset === 'UTC+5:30';
+                    return (
+                      <button
+                        key={band.offset}
+                        type="button"
+                        onClick={() => setUtcBandFilter(isSelected ? '' : band.offset)}
+                        title={`${band.offset}: ${band.examplePlace}`}
+                        style={{
+                          padding: '5px 9px',
+                          borderRadius: '8px',
+                          fontSize: '0.7rem',
+                          fontFamily: 'monospace',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          border: isSelected ? '1px solid #38bdf8' : isIndia ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(255,255,255,0.06)',
+                          background: isSelected ? 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)' : isIndia ? 'rgba(251, 191, 36, 0.12)' : 'rgba(10, 15, 29, 0.7)',
+                          color: isSelected ? '#ffffff' : isIndia ? '#fbbf24' : '#cbd5e1',
+                          fontWeight: isSelected || isIndia ? 800 : 500,
+                          flexShrink: 0
+                        }}
+                      >
+                        {band.offset}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
 
-            {/* Live Dual Clocks Hero Comparison */}
-            {clockData && (
-              <div className="grid grid-12 gap-4">
-                
-                {/* Left: Home Base Live Clock */}
-                <div className="col-span-6 lg-col-span-12 glass-panel" style={{
-                  padding: '24px',
-                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 35, 65, 0.85) 100%)',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span style={{ fontSize: '1.2rem' }}>{selectedHomeObj.flag}</span>
-                      <div>
-                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Your Home Location</span>
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#ffffff' }}>{selectedHomeObj.city.split('/')[0].trim()}</h4>
-                      </div>
+            {/* Live Dual Clocks Hero Comparison for Selected Country */}
+            <div className="grid grid-12 gap-4">
+              
+              {/* Left: Home Base Live Clock */}
+              <div className="col-span-6 lg-col-span-12 glass-panel" style={{
+                padding: '24px',
+                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 35, 65, 0.85) 100%)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: '1.4rem' }}>{homeCountry.flag}</span>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 800 }}>Your Home Base</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>{homeCountry.name}</h4>
                     </div>
-                    <span className="badge badge-blue">Home Base</span>
                   </div>
-
-                  <div style={{ padding: '16px', borderRadius: '14px', background: 'rgba(10, 15, 29, 0.8)', textAlign: 'center', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                    <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace', letterSpacing: '1px' }}>
-                      {currentHomeTimeStr}
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '4px', fontWeight: 600 }}>
-                      📅 {currentHomeDateStr}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs" style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                    <span>Timezone: <strong>{homeTimezone}</strong></span>
-                    <span>Live Clock ⏱️</span>
-                  </div>
+                  <span className="badge badge-blue">{homeCountry.utcOffset.split('/')[0].trim()}</span>
                 </div>
 
-                {/* Right: Destination Hub Live Clock */}
-                <div className="col-span-6 lg-col-span-12 glass-panel" style={{
-                  padding: '24px',
-                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.75) 100%)',
-                  border: '1px solid rgba(168, 85, 247, 0.35)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(168, 85, 247, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
-                        <Navigation style={{ width: '16px', height: '16px' }} />
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.72rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Destination Hub</span>
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#ffffff' }}>{clockData.location.city}, {clockData.location.country}</h4>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.72rem', padding: '3px 10px', borderRadius: '6px', background: clockData.weather.isDay ? 'rgba(251, 191, 36, 0.2)' : 'rgba(129, 140, 248, 0.2)', color: clockData.weather.isDay ? '#fbbf24' : '#818cf8', fontWeight: 800 }}>
-                      {clockData.weather.isDay ? '☀️ Daytime' : '🌙 Nighttime'}
-                    </span>
+                <div style={{ padding: '16px', borderRadius: '14px', background: 'rgba(10, 15, 29, 0.85)', textAlign: 'center', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace', letterSpacing: '1px' }}>
+                    {currentHomeTimeStr}
                   </div>
-
-                  <div style={{ padding: '16px', borderRadius: '14px', background: 'rgba(10, 15, 29, 0.8)', textAlign: 'center', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
-                    <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#c084fc', fontFamily: 'monospace', letterSpacing: '1px' }}>
-                      {currentDestTimeStr}
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '4px', fontWeight: 600 }}>
-                      📅 {currentDestDateStr}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between" style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                    <span>Timezone: <strong>{clockData.location.timezone}</strong></span>
-                    <span>Coordinates: <strong>{clockData.location.latitude.toFixed(2)}°, {clockData.location.longitude.toFixed(2)}°</strong></span>
-                  </div>
+                  <p style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '4px', fontWeight: 600 }}>
+                    📅 {currentHomeDateStr}
+                  </p>
                 </div>
 
-                {/* Time Difference Banner */}
-                {timeDelta && (
-                  <div className="col-span-12 glass-panel" style={{
-                    padding: '16px 20px',
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.3) 100%)',
-                    border: '1px solid rgba(16, 185, 129, 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '12px'
-                  }}>
-                    <div className="flex items-center gap-3">
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
-                        <ArrowRightLeft style={{ width: '18px', height: '18px' }} />
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '0.72rem', color: '#a7f3d0', fontWeight: 700 }}>Time Difference Assessment:</span>
-                        <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#ffffff' }}>
-                          {clockData.location.city} is <span style={{ color: '#34d399' }}>{timeDelta.differenceText}</span>
-                        </div>
-                      </div>
-                    </div>
+                <div className="flex items-center justify-between text-xs" style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                  <span>Zone: <strong style={{ color: '#ffffff' }}>{activeHomeTz}</strong></span>
+                  <span>Capital: <strong>{homeCountry.capitalOrMajorCity}</strong></span>
+                </div>
+              </div>
 
-                    <div className="flex items-center gap-4">
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>Sunrise & Sunset</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fbbf24' }}>
-                          🌅 {clockData.weather.sunrise} &nbsp;|&nbsp; 🌇 {clockData.weather.sunset}
-                        </span>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>Daylight Span</span>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8' }}>
-                          ☀️ {Math.floor(clockData.weather.daylightDurationSeconds / 3600)}h {Math.round((clockData.weather.daylightDurationSeconds % 3600) / 60)}m
-                        </span>
-                      </div>
+              {/* Right: Destination Location Live Clock */}
+              <div className="col-span-6 lg-col-span-12 glass-panel" style={{
+                padding: '24px',
+                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.75) 100%)',
+                border: '1px solid rgba(168, 85, 247, 0.35)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: '1.4rem' }}>{selectedCountry.flag}</span>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 800 }}>Inspected Destination</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>{selectedCountry.name}</h4>
                     </div>
+                  </div>
+
+                  <span style={{ fontSize: '0.72rem', padding: '3px 10px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', fontWeight: 800 }}>
+                    {selectedCountry.utcOffset}
+                  </span>
+                </div>
+
+                {/* Sub-Zone Selector if Country has multiple timezones */}
+                {selectedCountry.subZones && selectedCountry.subZones.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#c084fc', fontWeight: 800, whiteSpace: 'nowrap' }}>Multi-Zone:</span>
+                    <select
+                      value={activeDestTz}
+                      onChange={e => setSelectedSubZoneTzId(e.target.value)}
+                      className="input-glass"
+                      style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffffff', padding: '4px 8px', width: '100%', background: '#090e17' }}
+                    >
+                      {selectedCountry.subZones.map(sz => (
+                        <option key={sz.tzId} value={sz.tzId} style={{ background: '#090e17' }}>
+                          {sz.name} ({sz.offset})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 
-              </div>
-            )}
+                <div style={{ padding: '16px', borderRadius: '14px', background: 'rgba(10, 15, 29, 0.85)', textAlign: 'center', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#c084fc', fontFamily: 'monospace', letterSpacing: '1px' }}>
+                    {currentDestTimeStr}
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '4px', fontWeight: 600 }}>
+                    📅 {currentDestDateStr}
+                  </p>
+                </div>
 
-            {/* Global Major Tourist Capitals Live Clocks Grid */}
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="flex items-center justify-between">
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Clock style={{ width: '16px', height: '16px', color: '#38bdf8' }} />
-                  <span>Major Global Tourism Hubs — Live World Clocks</span>
-                </h4>
-                <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Syncing in real-time</span>
+                <div className="flex items-center justify-between flex-wrap gap-2 text-xs" style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                  <span>Zone: <strong style={{ color: '#ffffff' }}>{activeDestTz}</strong></span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cityName = selectedCountry.capitalOrMajorCity.split('&')[0].split(',')[0].trim();
+                      setWeatherSearchInput(cityName);
+                      setActiveSubTab('weather');
+                      handleLoadWeather(cityName);
+                    }}
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(251, 191, 36, 0.15)',
+                      border: '1px solid rgba(251, 191, 36, 0.3)',
+                      color: '#fbbf24',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <CloudSun style={{ width: '12px', height: '12px' }} />
+                    <span>Check Live Weather &rarr;</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Time Difference Banner */}
+              {timeDelta && (
+                <div className="col-span-12 glass-panel" style={{
+                  padding: '16px 20px',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.3) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div className="flex items-center gap-3">
+                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                      <ArrowRightLeft style={{ width: '20px', height: '20px' }} />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#a7f3d0', fontWeight: 800 }}>Time Difference Assessment:</span>
+                      <div style={{ fontSize: '1rem', fontWeight: 900, color: '#ffffff' }}>
+                        {selectedCountry.flag} {selectedCountry.name} is <span style={{ color: '#34d399' }}>{timeDelta.differenceText}</span> ({homeCountry.name})
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Official Timezone Name</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff' }}>
+                        {selectedCountry.timezoneName}
+                      </span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>IANA Identifier</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#38bdf8', fontFamily: 'monospace' }}>
+                        {activeDestTz}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Complete 195-Country Live World Clock Grid */}
+            <div className="glass-panel" style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Clock style={{ width: '18px', height: '18px', color: '#38bdf8' }} />
+                  <h4 style={{ fontSize: '1rem', fontWeight: 900, color: '#ffffff' }}>
+                    Live Clocks — {filtered195.length} Countries Synchronized in Real-Time
+                  </h4>
+                </div>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                  Click any country card to inspect & compare
+                </span>
               </div>
 
               <div className="grid grid-3 gap-3">
-                {[
-                  { city: 'Tokyo, Japan', tz: 'Asia/Tokyo', flag: '🇯🇵', gmt: 'GMT+9' },
-                  { city: 'London, UK', tz: 'Europe/London', flag: '🇬🇧', gmt: 'GMT+0' },
-                  { city: 'Paris, France', tz: 'Europe/Paris', flag: '🇫🇷', gmt: 'GMT+1' },
-                  { city: 'New York, USA', tz: 'America/New_York', flag: '🇺🇸', gmt: 'GMT-5' },
-                  { city: 'Dubai, UAE', tz: 'Asia/Dubai', flag: '🇦🇪', gmt: 'GMT+4' },
-                  { city: 'Singapore', tz: 'Asia/Singapore', flag: '🇸🇬', gmt: 'GMT+8' },
-                  { city: 'Sydney, Australia', tz: 'Australia/Sydney', flag: '🇦🇺', gmt: 'GMT+10' },
-                  { city: 'Chennai, India', tz: 'Asia/Kolkata', flag: '🇮🇳', gmt: 'GMT+5:30' },
-                  { city: 'Ooty (Nilgiris), India', tz: 'Asia/Kolkata', flag: '🇮🇳', gmt: 'GMT+5:30' }
-                ].map(c => {
-                  let timeStr = '';
+                {filtered195.map(country => {
+                  let countryTime = '--:--:--';
                   try {
-                    timeStr = new Date().toLocaleTimeString('en-US', {
-                      timeZone: c.tz,
+                    countryTime = new Date().toLocaleTimeString('en-US', {
+                      timeZone: country.primaryTzId,
                       hour: '2-digit',
                       minute: '2-digit',
                       second: '2-digit',
                       hour12: true
                     });
                   } catch (e) {
-                    timeStr = '--:--:--';
+                    countryTime = '--:--:--';
                   }
+
+                  const isCurrentSelected = selectedCountryId === country.id;
 
                   return (
                     <div
-                      key={c.city}
+                      key={country.id}
                       onClick={() => {
-                        const cityName = c.city.split(',')[0].split('(')[0].trim();
-                        setClockSearchQuery(cityName);
-                        handleLoadClock(cityName, homeTimezone);
+                        setSelectedCountryId(country.id);
+                        setSelectedSubZoneTzId(country.primaryTzId);
                       }}
                       style={{
                         padding: '14px 16px',
                         borderRadius: '12px',
-                        background: 'rgba(10, 15, 29, 0.75)',
-                        border: '1px solid rgba(255, 255, 255, 0.07)',
+                        background: isCurrentSelected ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(30, 41, 59, 0.8) 100%)' : 'rgba(10, 15, 29, 0.75)',
+                        border: isCurrentSelected ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.07)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '6px',
+                        gap: '8px',
                         cursor: 'pointer',
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
+                        boxShadow: isCurrentSelected ? '0 0 15px rgba(56, 189, 248, 0.2)' : 'none'
                       }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor = '#38bdf8'}
-                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)'}
+                      onMouseEnter={e => {
+                        if (!isCurrentSelected) e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+                      }}
+                      onMouseLeave={e => {
+                        if (!isCurrentSelected) e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)';
+                      }}
                     >
                       <div className="flex items-center justify-between">
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff' }}>
-                          {c.flag} {c.city}
+                        <div className="flex items-center gap-2">
+                          <span style={{ fontSize: '1.2rem' }}>{country.flag}</span>
+                          <div>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', display: 'block', lineHeight: 1.2 }}>
+                              {country.name}
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{country.capitalOrMajorCity}</span>
+                          </div>
+                        </div>
+                        <span className="badge badge-blue" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>
+                          {country.utcOffset.split('/')[0].split('to')[0].trim()}
                         </span>
-                        <span className="badge badge-blue" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>{c.gmt}</span>
                       </div>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>
-                        {timeStr}
+
+                      <div style={{ fontSize: '1.5rem', fontWeight: 900, color: isCurrentSelected ? '#38bdf8' : '#e2e8f0', fontFamily: 'monospace', letterSpacing: '0.5px' }}>
+                        {countryTime}
                       </div>
-                      <span style={{ fontSize: '0.68rem', color: '#64748b' }}>Click to inspect destination &rarr;</span>
+
+                      <div className="flex items-center justify-between text-xs" style={{ fontSize: '0.68rem', color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '6px' }}>
+                        <span>{country.primaryTzId}</span>
+                        <span style={{ color: isCurrentSelected ? '#38bdf8' : '#94a3b8', fontWeight: 700 }}>
+                          {isCurrentSelected ? 'Active Destination ★' : 'Click to inspect &rarr;'}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
               </div>
+
+              {filtered195.length === 0 && (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                  No countries match your search / filter criteria. Try clearing the filter or searching for another country.
+                </div>
+              )}
             </div>
 
           </div>
