@@ -208,6 +208,7 @@ export const App: React.FC = () => {
       {/* Floating AI Chatbot Button */}
       <button
         onClick={() => setIsChatbotOpen(!isChatbotOpen)}
+        className="floating-bot-btn"
         style={{
           position: 'fixed',
           bottom: '24px',

@@ -10,7 +10,14 @@ import {
   HeartPulse, 
   Calendar, 
   User,
-  Edit3
+  Edit3,
+  ShieldCheck,
+  Languages,
+  Clock,
+  CloudSun,
+  Activity,
+  Zap,
+  PhoneCall
 } from 'lucide-react';
 import { UserProfile, TripPlan } from '../types';
 import { TOP_PICKS_CATEGORIES, NEARBY_HOSPITALS } from '../data/mockData';
@@ -38,68 +45,174 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const displayPicks = filteredCategories.length > 0 ? filteredCategories : TOP_PICKS_CATEGORIES;
 
   return (
-    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-      {/* Hero Welcome Card */}
+    <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+      {/* Hero Welcome Card with 2-Column Responsive Grid */}
       <div className="hero-card">
-        <div style={{ maxWidth: '780px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="badge badge-blue">
-              <Sparkles style={{ width: '13px', height: '13px' }} /> Next-Gen Tourist Guardian
-            </span>
-            <span className={`badge ${userProfile.isRegistered ? 'badge-green' : 'badge-amber'}`}>
-              {userProfile.isRegistered ? `Active Tourist: ${userProfile.name}` : 'Explore Mode Active'}
-            </span>
+        <div className="hero-grid">
+          {/* Left Column: Hero Copy & Actions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="badge badge-blue">
+                <Sparkles style={{ width: '13px', height: '13px' }} /> Next-Gen Tourist Guardian
+              </span>
+              <span className={`badge ${userProfile.isRegistered ? 'badge-green' : 'badge-amber'}`}>
+                {userProfile.isRegistered ? `Active Tourist: ${userProfile.name}` : 'Explore Mode Active'}
+              </span>
+            </div>
+
+            <h1 className="hero-title">
+              Explore with Wonder. <br />
+              <span className="text-gradient">Travel with Zero Fear.</span>
+            </h1>
+
+            <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.6, maxWidth: '600px' }}>
+              Your all-in-one AI travel companion. Plan personalized itineraries, eliminate transport overcharging with Fare Guard, and carry an offline digital Emergency Card with instant voice translation.
+            </p>
+
+            <div className="flex items-center gap-3 flex-wrap" style={{ paddingTop: '8px' }}>
+              <button
+                onClick={() => onNavigateTab('planner')}
+                className="btn-primary"
+              >
+                <Compass style={{ width: '18px', height: '18px' }} /> Start Planning Trip
+              </button>
+              <button
+                onClick={() => onNavigateTab('emergency-card')}
+                className="btn-secondary"
+                style={{ color: '#fca5a5', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+              >
+                <HeartPulse style={{ width: '18px', height: '18px', color: '#ef4444' }} /> Emergency Card
+              </button>
+
+              {userProfile.isRegistered ? (
+                <button
+                  onClick={() => onNavigateTab('profile')}
+                  className="btn-secondary"
+                  style={{ color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' }}
+                >
+                  <User style={{ width: '18px', height: '18px' }} /> View Profile
+                </button>
+              ) : (
+                <button
+                  onClick={onOpenRegister}
+                  className="btn-secondary"
+                  style={{ color: '#38bdf8' }}
+                >
+                  <User style={{ width: '18px', height: '18px' }} /> Register
+                </button>
+              )}
+            </div>
           </div>
 
-          <h1 className="hero-title">
-            Explore with Wonder. <br />
-            <span className="text-gradient">Travel with Zero Fear.</span>
-          </h1>
+          {/* Right Column: Live Companion Radar & Telemetry Hub */}
+          <div className="hero-telemetry-card">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <span style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  boxShadow: '0 0 10px #10b981',
+                  display: 'inline-block'
+                }} />
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.02em' }}>
+                  AI GUARDIAN RADAR
+                </span>
+              </div>
+              <span className="badge badge-green" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
+                <ShieldCheck style={{ width: '12px', height: '12px' }} /> 99.8% Safety Shield
+              </span>
+            </div>
 
-          <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.6 }}>
-            Your all-in-one AI travel companion. Plan personalized itineraries, eliminate transport overcharging with Fare Guard, and carry an offline digital Emergency Card with instant voice translation.
-          </p>
-
-          <div className="flex items-center gap-3 flex-wrap" style={{ paddingTop: '8px' }}>
-            <button
-              onClick={() => onNavigateTab('planner')}
-              className="btn-primary"
-            >
-              <Compass style={{ width: '18px', height: '18px' }} /> Start Planning Trip
-            </button>
-            <button
-              onClick={() => onNavigateTab('emergency-card')}
-              className="btn-secondary"
-              style={{ color: '#fca5a5', borderColor: 'rgba(239, 68, 68, 0.4)' }}
-            >
-              <HeartPulse style={{ width: '18px', height: '18px', color: '#ef4444' }} /> View Tourist Emergency Card
-            </button>
-
-            {userProfile.isRegistered ? (
-              <button
-                onClick={() => onNavigateTab('profile')}
-                className="btn-secondary"
-                style={{ color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' }}
+            {/* 4 Telemetry Items Grid */}
+            <div className="hero-telemetry-grid">
+              {/* Telemetry 1: Fare Guard */}
+              <div 
+                onClick={() => onNavigateTab('anti-scam')}
+                className="hero-telemetry-item"
               >
-                <User style={{ width: '18px', height: '18px' }} /> View & Edit Profile
-              </button>
-            ) : (
-              <button
-                onClick={onOpenRegister}
-                className="btn-secondary"
-                style={{ color: '#38bdf8' }}
+                <div className="flex items-center justify-between">
+                  <span style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 700 }}>FARE GUARD</span>
+                  <Scale style={{ width: '14px', height: '14px', color: '#fbbf24' }} />
+                </div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>Anti-Overcharging</div>
+                <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Auto, Cab, Bus Rates</span>
+              </div>
+
+              {/* Telemetry 2: Voice Translator */}
+              <div 
+                onClick={() => onNavigateTab('tools')}
+                className="hero-telemetry-item"
               >
-                <User style={{ width: '18px', height: '18px' }} /> Complete Registration
+                <div className="flex items-center justify-between">
+                  <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 700 }}>TRANSLATOR</span>
+                  <Languages style={{ width: '14px', height: '14px', color: '#38bdf8' }} />
+                </div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>10+ Voice Engines</div>
+                <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Live Audio & Walkie-Talkie</span>
+              </div>
+
+              {/* Telemetry 3: Timezones & Clocks */}
+              <div 
+                onClick={() => onNavigateTab('tools')}
+                className="hero-telemetry-item"
+              >
+                <div className="flex items-center justify-between">
+                  <span style={{ fontSize: '0.7rem', color: '#a855f7', fontWeight: 700 }}>WORLD CLOCK</span>
+                  <Clock style={{ width: '14px', height: '14px', color: '#a855f7' }} />
+                </div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>195 Countries</div>
+                <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>38 UTC Bands Synchronized</span>
+              </div>
+
+              {/* Telemetry 4: Live Weather & AQI */}
+              <div 
+                onClick={() => onNavigateTab('tools')}
+                className="hero-telemetry-item"
+              >
+                <div className="flex items-center justify-between">
+                  <span style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700 }}>WEATHER & AQI</span>
+                  <CloudSun style={{ width: '14px', height: '14px', color: '#34d399' }} />
+                </div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>Live Satellite Sync</div>
+                <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>7-Day Forecast & Advisory</span>
+              </div>
+            </div>
+
+            {/* Quick Action Bar */}
+            <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <div className="flex items-center gap-1.5" style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                <Activity style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
+                <span>Emergency Hotline 112 Ready</span>
+              </div>
+              <button
+                onClick={onOpenSOS}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#fca5a5',
+                  borderRadius: '9999px',
+                  padding: '3px 10px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <PhoneCall style={{ width: '11px', height: '11px' }} /> Trigger SOS
               </button>
-            )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Profile Overview Card (Problem 3) */}
+      {/* Profile Overview Card */}
       <div className="glass-panel" style={{
-        padding: '20px 24px',
-        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 27, 75, 0.5) 100%)',
+        padding: '18px 24px',
+        background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 27, 75, 0.6) 100%)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         alignItems: 'center',
@@ -107,10 +220,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         flexWrap: 'wrap',
         gap: '16px'
       }}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div style={{
-            width: '44px',
-            height: '44px',
+            width: '46px',
+            height: '46px',
             borderRadius: '14px',
             background: 'rgba(56, 189, 248, 0.15)',
             border: '1px solid rgba(56, 189, 248, 0.3)',
@@ -121,18 +234,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
             fontSize: '18px',
             fontWeight: 800
           }}>
-            {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '20px', height: '20px' }} />}
+            {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '22px', height: '22px' }} />}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>
                 {userProfile.isRegistered ? userProfile.name : 'Guest Profile'}
               </h3>
               <span className={`badge ${userProfile.isRegistered ? 'badge-green' : 'badge-amber'}`}>
                 {userProfile.isRegistered ? 'Registered' : 'Not Registered'}
               </span>
+              {userProfile.isRegistered && (
+                <span className="badge badge-blue" style={{ fontSize: '0.68rem' }}>
+                  ID: {userProfile.id ? userProfile.id.slice(-6).toUpperCase() : 'TRP-849'}
+                </span>
+              )}
             </div>
-            <p style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+            <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
               {userProfile.isRegistered 
                 ? `Blood: ${userProfile.bloodGroup} • ${userProfile.trustedContacts.length} Emergency Contacts • ${userProfile.govtIdType}`
                 : 'Register your personal & medical details for the offline emergency card.'}
@@ -140,7 +258,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {userProfile.isRegistered ? (
             <>
               <button
