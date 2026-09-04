@@ -92,13 +92,10 @@ CREATE TABLE `places` (
         'entertainment',
         'other'
     ) NOT NULL,
-    `latitude` DECIMAL(10, 7) NOT NULL,
-    `longitude` DECIMAL(10, 7) NOT NULL,
     `avg_rating` DECIMAL(3, 2) NOT NULL DEFAULT 0.00,
     `review_count` INT UNSIGNED NOT NULL DEFAULT 0,
     `entry_fee` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     `opening_hours` VARCHAR(255) DEFAULT NULL,
-    `image_url` VARCHAR(512) DEFAULT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -111,8 +108,6 @@ CREATE TABLE `places` (
         REFERENCES `locations` (`id`)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    CONSTRAINT `chk_places_lat` CHECK (`latitude` BETWEEN -90.0000000 AND 90.0000000),
-    CONSTRAINT `chk_places_long` CHECK (`longitude` BETWEEN -180.0000000 AND 180.0000000),
     CONSTRAINT `chk_places_rating` CHECK (`avg_rating` BETWEEN 0.00 AND 5.00)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

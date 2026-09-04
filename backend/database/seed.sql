@@ -74,7 +74,7 @@ INSERT INTO `users` (
 
 -- -----------------------------------------------------------------------------
 -- 2. Seed Locations
--- Chennai (Gateway to South India) & Thanjavur (Chola Architectural Capital)
+-- Tamil Nadu (24 districts) & Kerala (14 districts)
 -- -----------------------------------------------------------------------------
 INSERT INTO `locations` (
     `id`,
@@ -86,15 +86,16 @@ INSERT INTO `locations` (
     `created_at`,
     `updated_at`
 ) VALUES
+-- Tamil Nadu Locations
 (
     'loc-chn',
     'Chennai',
     'Tamil Nadu',
     'India',
     'INR',
-    'The cultural capital of South India, known for its historic Dravidian temples, classical Carnatic music festivals, vibrant coastal promenade, and British colonial landmarks along the Coromandel Coast.',
-    '2026-08-01 00:00:00',
-    '2026-08-01 00:00:00'
+    'Capital city known for its colonial heritage, Marina Beach, classical Carnatic music scene, and historic temples like Kapaleeshwarar.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
 ),
 (
     'loc-tnj',
@@ -102,9 +103,370 @@ INSERT INTO `locations` (
     'Tamil Nadu',
     'India',
     'INR',
-    'The legendary capital of the Imperial Chola Dynasty, world-renowned for the UNESCO World Heritage Great Living Chola Temples, classical Tanjore paintings, brass and bronze sculptures, and rich agricultural heritage along the Cauvery Delta.',
-    '2026-08-01 00:00:00',
-    '2026-08-01 00:00:00'
+    'The cultural heart of the Chola empire, home to the UNESCO World Heritage Brihadisvara Temple, Tanjore paintings, and rich bronze casting heritage.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-mdu',
+    'Madurai',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'One of the oldest continuously inhabited cities, renowned for the architectural wonder Meenakshi Amman Temple and its vibrant night food culture.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-cbe',
+    'Coimbatore',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Major industrial and textile hub situated along the Western Ghats, serving as the transit gateway to Nilgiris hill stations and the Adiyogi Shiva bust.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-cgl',
+    'Chengalpattu',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Coastal heritage district housing the 7th-century UNESCO World Heritage rock-cut monuments and shore temples of Mamallapuram (Mahabalipuram).',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-kpm',
+    'Kanchipuram',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'The City of Thousand Temples and world-famous silk sarees, featuring historic Dravidian landmarks such as Kailasanathar and Ekambareswarar temples.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-nlg',
+    'Nilgiris',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Scenic hill district encompassing Ooty, Coonoor, and Kotagiri, celebrated for tea plantations, cool climate, and the Nilgiri Mountain Railway.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-dgl',
+    'Dindigul',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Home to the misty hill resort town of Kodaikanal, historical rock forts, and known regionally for handmade brass lock craftsmanship.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-kkm',
+    'Kanyakumari',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'The southernmost tip of mainland India where three seas converge, famed for sunrise views, the Vivekananda Rock Memorial, and the Thiruvalluvar Statue.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-try',
+    'Tiruchirappalli',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Historic city along the Kaveri river, prominent for the ancient Rockfort Temple perched on an 83-meter rock and the massive Sri Ranganathaswamy Temple complex.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-rmd',
+    'Ramanathapuram',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Coastal pilgrimage hub encompassing the island of Rameswaram, Ramanathaswamy Temple corridors, and the ghost town of Dhanushkodi.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-tvm',
+    'Tiruvannamalai',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'A major spiritual destination centered around the sacred Arunachala hill and the Annamalaiyar Temple, famous for Girivalam circumambulation.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-tnv',
+    'Tirunelveli',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Ancient city along the Thamirabarani river, noted for the Nellaiappar Temple, regional halwa, and proximity to scenic Western Ghat waterfalls.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-tks',
+    'Tenkasi',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Known as the spa town of South India due to the therapeutic mineral waterfalls of Courtallam and historic Kasiviswanathar Temple.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-slm',
+    'Salem',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Surrounded by hills, Salem is known for silver craft, steel production, and as the gateway to the quiet hill station of Yercaud in the Shevaroy range.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-vel',
+    'Vellore',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Historical city featuring the 16th-century stone Vellore Fort, Jalakandeswarar Temple, and the Golden Temple (Sripuram) in Malaikodi.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-tni',
+    'Theni',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Lush green valley nestled in the Western Ghats, celebrated for the cloud-covered tea estates of Meghamalai and Suruli waterfalls.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-ngp',
+    'Nagapattinam',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Coastal district holding major pilgrimage sites including the Basilica of Our Lady of Good Health in Velankanni and the Nagore Dargah shrine.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-myd',
+    'Mayiladuthurai',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Cauvery delta region renowned for historic Chola-era temples and the coastal heritage town of Tharangambadi (Tranquebar) with Fort Dansborg.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-svg',
+    'Sivaganga',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Heritage region famous for Chettinad culture, sprawling 19th-century palatial mansions, handloom Athangudi tiles, and distinct regional cuisine.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-dpi',
+    'Dharmapuri',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Forest and agricultural district popular for Hogenakkal Falls on the Kaveri river, often referred to as the Niagara of India.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-cud',
+    'Cuddalore',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Coastal town known for the Silver Beach, mangrove forests of Pichavaram (one of the largest in India), and the Nataraja Temple in Chidambaram.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-tut',
+    'Thoothukudi',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'The Pearl City, recognized for its historic seaport, salt pans, coastal churches like Our Lady of Snows Basilica, and Tiruchendur Murugan Temple.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-erd',
+    'Erode',
+    'Tamil Nadu',
+    'India',
+    'INR',
+    'Major agricultural and turmeric market district featuring the confluence of the Bhavani and Kaveri rivers at Bhavani Sangameshwarar Temple.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+-- Kerala Locations
+(
+    'loc-trv',
+    'Thiruvananthapuram',
+    'Kerala',
+    'India',
+    'INR',
+    'Capital city known for the historic Sree Padmanabhaswamy Temple, seaside cliff beaches of Varkala, Kovalam coast, and Napier Museum.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-klm',
+    'Kollam',
+    'Kerala',
+    'India',
+    'INR',
+    'Historic port city serving as the southern gateway to the Ashtamudi Lake backwaters, Munroe Island canal networks, and the Jatayu Earth''s Center.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-pta',
+    'Pathanamthitta',
+    'Kerala',
+    'India',
+    'INR',
+    'Spiritual and eco-tourism hub known as the transit base for Sabarimala pilgrimage, Gavi rainforests, and handmade Aranmula metal mirrors.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-alp',
+    'Alappuzha',
+    'Kerala',
+    'India',
+    'INR',
+    'Renowned as the Venice of the East, famous for tranquil backwater cruises on traditional houseboats, Punnamada Lake, and serene Marari Beach.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-ktm',
+    'Kottayam',
+    'Kerala',
+    'India',
+    'INR',
+    'Bordered by Vembanad Lake, celebrated for rubber plantations, Kumarakom Bird Sanctuary backwaters, and heritage Syrian Christian churches.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-idk',
+    'Idukki',
+    'Kerala',
+    'India',
+    'INR',
+    'Highland district in the Western Ghats home to Munnar tea plantations, Eravikulam National Park (Nilgiri Tahr), and the massive Idukki Arch Dam.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-ekm',
+    'Ernakulam',
+    'Kerala',
+    'India',
+    'INR',
+    'Commercial heart of Kerala encompassing historic Kochi, Fort Kochi colonial quarters, iconic Chinese fishing nets, and Mattancherry spice markets.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-tsr',
+    'Thrissur',
+    'Kerala',
+    'India',
+    'INR',
+    'The cultural capital of Kerala, famed for the grand Thrissur Pooram temple festival, ancient Vadakkunnathan Temple, and traditional performing arts.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-pkd',
+    'Palakkad',
+    'Kerala',
+    'India',
+    'INR',
+    'The granary of Kerala framed by the Western Ghats gap, known for the 18th-century granite Palakkad Fort and virgin rainforests of Silent Valley.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-mlp',
+    'Malappuram',
+    'Kerala',
+    'India',
+    'INR',
+    'Coastal and hilly terrain rich in Malabar culture, historic teak reserves of Nilambur, and traditional ayurvedic healing at Kottakkal Arya Vaidya Sala.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-kkd',
+    'Kozhikode',
+    'Kerala',
+    'India',
+    'INR',
+    'Historic spice trade port where Vasco da Gama landed, celebrated for Malabar cuisine, Beypore wooden dhow shipbuilding, and Kappad Beach.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-wyd',
+    'Wayanad',
+    'Kerala',
+    'India',
+    'INR',
+    'Misty highland plateau known for lush spice estates, Chembra Peak heart-shaped lake, prehistoric Edakkal Cave petroglyphs, and wildlife reserves.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-knr',
+    'Kannur',
+    'Kerala',
+    'India',
+    'INR',
+    'The Land of Looms and Lores, renowned for sacred Theyyam ritual dance performances, Muzhappilangad drive-in beach, and historic St. Angelo Fort.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
+),
+(
+    'loc-ksd',
+    'Kasaragod',
+    'Kerala',
+    'India',
+    'INR',
+    'Northernmost coastal border district featuring the seaside laterite battlements of Bekal Fort, coir crafts, and quiet backwater waterways.',
+    '2026-09-04 00:00:00',
+    '2026-09-04 00:00:00'
 );
 
 -- -----------------------------------------------------------------------------
@@ -116,13 +478,10 @@ INSERT INTO `places` (
     `location_id`,
     `name`,
     `category`,
-    `latitude`,
-    `longitude`,
     `avg_rating`,
     `review_count`,
     `entry_fee`,
     `opening_hours`,
-    `image_url`,
     `created_at`,
     `updated_at`
 ) VALUES
@@ -131,13 +490,10 @@ INSERT INTO `places` (
     'loc-chn',
     'Marina Beach',
     'beach',
-    13.0499520,
-    80.2824030,
     4.50,
     2,
     0.00,
     '24 Hours (Best visited: 05:00 - 08:30 & 16:30 - 20:30)',
-    'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800',
     '2026-08-05 06:00:00',
     '2026-08-05 06:00:00'
 ),
@@ -146,13 +502,10 @@ INSERT INTO `places` (
     'loc-chn',
     'Kapaleeshwarar Temple',
     'religious',
-    13.0334810,
-    80.2698650,
     4.80,
     2,
     0.00,
     '05:30 - 12:00, 16:00 - 21:00 (Closed mid-day)',
-    'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?w=800',
     '2026-08-05 06:00:00',
     '2026-08-05 06:00:00'
 ),
@@ -161,13 +514,10 @@ INSERT INTO `places` (
     'loc-tnj',
     'Brihadisvara Temple',
     'historical',
-    10.7828060,
-    79.1318440,
     4.90,
     2,
     0.00,
     '06:00 - 12:30, 16:00 - 20:30',
-    'https://images.unsplash.com/photo-1600100397608-f010e4785461?w=800',
     '2026-08-05 06:00:00',
     '2026-08-05 06:00:00'
 );

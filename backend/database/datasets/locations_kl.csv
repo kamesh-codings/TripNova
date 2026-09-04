@@ -1,0 +1,15 @@
+id,name,state,country,currency_code,description,created_at,updated_at
+loc-trv,Thiruvananthapuram,Kerala,India,INR,"Capital city known for the historic Sree Padmanabhaswamy Temple, seaside cliff beaches of Varkala, Kovalam coast, and Napier Museum.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-klm,Kollam,Kerala,India,INR,"Historic port city serving as the southern gateway to the Ashtamudi Lake backwaters, Munroe Island canal networks, and the Jatayu Earth's Center.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-pta,Pathanamthitta,Kerala,India,INR,"Spiritual and eco-tourism hub known as the transit base for Sabarimala pilgrimage, Gavi rainforests, and handmade Aranmula metal mirrors.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-alp,Alappuzha,Kerala,India,INR,"Renowned as the Venice of the East, famous for tranquil backwater cruises on traditional houseboats, Punnamada Lake, and serene Marari Beach.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-ktm,Kottayam,Kerala,India,INR,"Bordered by Vembanad Lake, celebrated for rubber plantations, Kumarakom Bird Sanctuary backwaters, and heritage Syrian Christian churches.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-idk,Idukki,Kerala,India,INR,"Highland district in the Western Ghats home to Munnar tea plantations, Eravikulam National Park (Nilgiri Tahr), and the massive Idukki Arch Dam.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-ekm,Ernakulam,Kerala,India,INR,"Commercial heart of Kerala encompassing historic Kochi, Fort Kochi colonial quarters, iconic Chinese fishing nets, and Mattancherry spice markets.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-tsr,Thrissur,Kerala,India,INR,"The cultural capital of Kerala, famed for the grand Thrissur Pooram temple festival, ancient Vadakkunnathan Temple, and traditional performing arts.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-pkd,Palakkad,Kerala,India,INR,"The granary of Kerala framed by the Western Ghats gap, known for the 18th-century granite Palakkad Fort and virgin rainforests of Silent Valley.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-mlp,Malappuram,Kerala,India,INR,"Coastal and hilly terrain rich in Malabar culture, historic teak reserves of Nilambur, and traditional ayurvedic healing at Kottakkal Arya Vaidya Sala.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-kkd,Kozhikode,Kerala,India,INR,"Historic spice trade port where Vasco da Gama landed, celebrated for Malabar cuisine, Beypore wooden dhow shipbuilding, and Kappad Beach.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-wyd,Wayanad,Kerala,India,INR,"Misty highland plateau known for lush spice estates, Chembra Peak heart-shaped lake, prehistoric Edakkal Cave petroglyphs, and wildlife reserves.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-knr,Kannur,Kerala,India,INR,"The Land of Looms and Lores, renowned for sacred Theyyam ritual dance performances, Muzhappilangad drive-in beach, and historic St. Angelo Fort.",2026-09-04 00:00:00,2026-09-04 00:00:00
+loc-ksd,Kasaragod,Kerala,India,INR,"Northernmost coastal border district featuring the seaside laterite battlements of Bekal Fort, coir crafts, and quiet backwater waterways.",2026-09-04 00:00:00,2026-09-04 00:00:00
