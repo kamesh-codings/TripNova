@@ -32,7 +32,19 @@ import {
   ExternalLink, 
   ShieldCheck, 
   AlertTriangle, 
-  Building2 
+  Building2,
+  Search,
+  Wind,
+  Droplets,
+  Sun,
+  Moon,
+  Sunrise,
+  Sunset,
+  Activity,
+  Thermometer,
+  Zap,
+  RefreshCw,
+  Compass
 } from 'lucide-react';
 import { COUNTRY_RULES, TICKET_BOOKING_PLATFORMS } from '../data/mockData';
 import { 
@@ -44,6 +56,13 @@ import {
 } from '../data/transitData';
 import { speakPhrase, stopSpeech, VoiceRecognizer, LANG_CODE_MAP, LanguageVoiceConfig } from '../utils/speech';
 import { translateText } from '../utils/translator';
+import { 
+  fetchCompleteDestinationData, 
+  calculateTimeDifference, 
+  DEFAULT_HOME_CITY, 
+  DEFAULT_HOME_TIMEZONE, 
+  FullDestinationIntelligence 
+} from '../utils/weatherApi';
 
 interface ConversationMessage {
   id: string;
@@ -118,8 +137,85 @@ export const TravelTools: React.FC = () => {
   // Rules & Regulations state
   const [selectedCountryIndex, setSelectedCountryIndex] = useState(0);
 
-  // Weather state
-  const [weatherCity, setWeatherCity] = useState('Ooty & Nilgiris');
+  // Timezone & World Clock State (Live Open-Meteo Integration)
+  const [clockSearchQuery, setClockSearchQuery] = useState('London');
+  const [clockData, setClockData] = useState<FullDestinationIntelligence | null>(null);
+  const [isLoadingClock, setIsLoadingClock] = useState(false);
+  const [clockError, setClockError] = useState<string | null>(null);
+  const [homeTimezone, setHomeTimezone] = useState(DEFAULT_HOME_TIMEZONE);
+  const [liveTick, setLiveTick] = useState(0);
+
+  // Weather & AQI State (Live Open-Meteo Integration)
+  const [weatherSearchInput, setWeatherSearchInput] = useState('Ooty');
+  const [weatherData, setWeatherData] = useState<FullDestinationIntelligence | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+
+  // Live timer tick every second for real-time clocks
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLiveTick(t => t + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Fetch initial clock and weather data
+  useEffect(() => {
+    if (activeSubTab === 'timezone' && !clockData && !isLoadingClock) {
+      handleLoadClock('London', homeTimezone);
+    }
+    if (activeSubTab === 'weather' && !weatherData && !isLoadingWeather) {
+      handleLoadWeather('Ooty');
+    }
+  }, [activeSubTab]);
+
+  const handleLoadClock = async (cityToFetch: string = clockSearchQuery, hTz: string = homeTimezone) => {
+    if (!cityToFetch.trim()) return;
+    setIsLoadingClock(true);
+    setClockError(null);
+    try {
+      const res = await fetchCompleteDestinationData(cityToFetch, hTz);
+      if (res) {
+        setClockData(res);
+      } else {
+        setClockError(`City "${cityToFetch}" not found. Try searching for a major city name.`);
+      }
+    } catch (err) {
+      setClockError('Failed to fetch destination timezone details.');
+    } finally {
+      setIsLoadingClock(false);
+    }
+  };
+
+  const handleLoadWeather = async (cityToFetch: string = weatherSearchInput) => {
+    if (!cityToFetch.trim()) return;
+    setIsLoadingWeather(true);
+    setWeatherError(null);
+    try {
+      const res = await fetchCompleteDestinationData(cityToFetch, homeTimezone);
+      if (res) {
+        setWeatherData(res);
+      } else {
+        setWeatherError(`City "${cityToFetch}" not found. Try another city.`);
+      }
+    } catch (err) {
+      setWeatherError('Failed to fetch weather report.');
+    } finally {
+      setIsLoadingWeather(false);
+    }
+  };
+
+  const HOME_TIMEZONE_OPTIONS = [
+    { city: 'Chennai / India (IST +5:30)', tz: 'Asia/Kolkata', flag: '🇮🇳' },
+    { city: 'London / UK (GMT/BST)', tz: 'Europe/London', flag: '🇬🇧' },
+    { city: 'New York / USA (EST/EDT)', tz: 'America/New_York', flag: '🇺🇸' },
+    { city: 'San Francisco / USA (PST/PDT)', tz: 'America/Los_Angeles', flag: '🇺🇸' },
+    { city: 'Tokyo / Japan (JST +9:00)', tz: 'Asia/Tokyo', flag: '🇯🇵' },
+    { city: 'Dubai / UAE (GST +4:00)', tz: 'Asia/Dubai', flag: '🇦🇪' },
+    { city: 'Singapore (SGT +8:00)', tz: 'Asia/Singapore', flag: '🇸🇬' },
+    { city: 'Paris / France (CET +1:00)', tz: 'Europe/Paris', flag: '🇫🇷' },
+    { city: 'Sydney / Australia (AEST +10:00)', tz: 'Australia/Sydney', flag: '🇦🇺' }
+  ];
 
   // Stop audio when unmounting or switching tabs
   useEffect(() => {
@@ -1167,28 +1263,346 @@ export const TravelTools: React.FC = () => {
         </div>
       )}
 
-      {/* 3. Timezones */}
-      {activeSubTab === 'timezone' && (
-        <div className="grid grid-3 gap-4 animate-fade">
-          {COUNTRY_RULES.map(country => {
-            const now = new Date();
-            return (
-              <div key={country.country} className="glass-panel" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div className="flex items-center justify-between">
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>
-                    {country.flag} {country.country.split('(')[0]}
-                  </span>
-                  <span className="badge badge-blue">{country.gmtOffset}</span>
+      {/* 3. Timezones & World Clock Engine (Live Open-Meteo Integration) */}
+      {activeSubTab === 'timezone' && (() => {
+        // Calculate live ticking times
+        const currentHomeTimeStr = new Date().toLocaleString('en-US', {
+          timeZone: homeTimezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        });
+        const currentHomeDateStr = new Date().toLocaleString('en-US', {
+          timeZone: homeTimezone,
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+
+        const currentDestTimeStr = clockData ? new Date().toLocaleString('en-US', {
+          timeZone: clockData.location.timezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        }) : '';
+        const currentDestDateStr = clockData ? new Date().toLocaleString('en-US', {
+          timeZone: clockData.location.timezone,
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }) : '';
+
+        const timeDelta = clockData ? calculateTimeDifference(clockData.location.timezone, homeTimezone) : null;
+        const selectedHomeObj = HOME_TIMEZONE_OPTIONS.find(h => h.tz === homeTimezone) || HOME_TIMEZONE_OPTIONS[0];
+
+        return (
+          <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+            
+            {/* Header & City Search Bar */}
+            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                    <Clock style={{ width: '22px', height: '22px' }} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff' }}>Live World Clock & Timezone Intelligence</h3>
+                    <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Search any city globally to calculate exact local time, +/- time difference vs home, sunrise and sunset</p>
+                  </div>
                 </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>
-                  {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+
+                {/* Home Timezone Selector */}
+                <div className="flex items-center gap-2">
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8' }}>Your Home Base:</span>
+                  <select
+                    value={homeTimezone}
+                    onChange={e => {
+                      const newTz = e.target.value;
+                      setHomeTimezone(newTz);
+                      if (clockData) {
+                        handleLoadClock(clockData.location.city, newTz);
+                      }
+                    }}
+                    className="input-glass"
+                    style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff', padding: '6px 12px', background: '#090e17' }}
+                  >
+                    {HOME_TIMEZONE_OPTIONS.map(opt => (
+                      <option key={opt.tz} value={opt.tz} style={{ background: '#090e17' }}>
+                        {opt.flag} {opt.city}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Timezone: {country.timezone}</p>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {/* Search Form */}
+              <form
+                onSubmit={e => {
+                  e.preventDefault();
+                  handleLoadClock(clockSearchQuery, homeTimezone);
+                }}
+                className="flex gap-2"
+              >
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <Search style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: '#64748b' }} />
+                  <input
+                    type="text"
+                    value={clockSearchQuery}
+                    onChange={e => setClockSearchQuery(e.target.value)}
+                    placeholder="Search any destination city worldwide (e.g., Tokyo, London, Paris, New York, Ooty, Dubai...)"
+                    className="input-glass"
+                    style={{ paddingLeft: '44px', width: '100%', fontSize: '0.88rem', fontWeight: 700 }}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoadingClock}
+                  className="btn-primary"
+                  style={{ padding: '0 20px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', flexShrink: 0 }}
+                >
+                  {isLoadingClock ? <Loader2 className="animate-spin" style={{ width: '16px', height: '16px' }} /> : <Compass style={{ width: '16px', height: '16px' }} />}
+                  <span>Check Time</span>
+                </button>
+              </form>
+
+              {/* Quick Popular City Pills */}
+              <div className="flex items-center gap-2 flex-wrap pt-1">
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700 }}>Quick Lookup:</span>
+                {['London', 'Tokyo', 'New York', 'Paris', 'Dubai', 'Singapore', 'Sydney', 'Chennai', 'Ooty'].map(city => (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => {
+                      setClockSearchQuery(city);
+                      handleLoadClock(city, homeTimezone);
+                    }}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      fontSize: '0.72rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: clockData?.location.city.toLowerCase() === city.toLowerCase() ? '#38bdf8' : 'rgba(255, 255, 255, 0.06)',
+                      color: clockData?.location.city.toLowerCase() === city.toLowerCase() ? '#0f172a' : '#cbd5e1',
+                      fontWeight: clockData?.location.city.toLowerCase() === city.toLowerCase() ? 800 : 500,
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {city}
+                  </button>
+                ))}
+              </div>
+
+              {clockError && (
+                <div style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertTriangle style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+                  <span>{clockError}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Live Dual Clocks Hero Comparison */}
+            {clockData && (
+              <div className="grid grid-12 gap-4">
+                
+                {/* Left: Home Base Live Clock */}
+                <div className="col-span-6 lg-col-span-12 glass-panel" style={{
+                  padding: '24px',
+                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 35, 65, 0.85) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span style={{ fontSize: '1.2rem' }}>{selectedHomeObj.flag}</span>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Your Home Location</span>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#ffffff' }}>{selectedHomeObj.city.split('/')[0].trim()}</h4>
+                      </div>
+                    </div>
+                    <span className="badge badge-blue">Home Base</span>
+                  </div>
+
+                  <div style={{ padding: '16px', borderRadius: '14px', background: 'rgba(10, 15, 29, 0.8)', textAlign: 'center', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                    <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace', letterSpacing: '1px' }}>
+                      {currentHomeTimeStr}
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '4px', fontWeight: 600 }}>
+                      📅 {currentHomeDateStr}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs" style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
+                    <span>Timezone: <strong>{homeTimezone}</strong></span>
+                    <span>Live Clock ⏱️</span>
+                  </div>
+                </div>
+
+                {/* Right: Destination Hub Live Clock */}
+                <div className="col-span-6 lg-col-span-12 glass-panel" style={{
+                  padding: '24px',
+                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.75) 100%)',
+                  border: '1px solid rgba(168, 85, 247, 0.35)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(168, 85, 247, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
+                        <Navigation style={{ width: '16px', height: '16px' }} />
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700 }}>Destination Hub</span>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#ffffff' }}>{clockData.location.city}, {clockData.location.country}</h4>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.72rem', padding: '3px 10px', borderRadius: '6px', background: clockData.weather.isDay ? 'rgba(251, 191, 36, 0.2)' : 'rgba(129, 140, 248, 0.2)', color: clockData.weather.isDay ? '#fbbf24' : '#818cf8', fontWeight: 800 }}>
+                      {clockData.weather.isDay ? '☀️ Daytime' : '🌙 Nighttime'}
+                    </span>
+                  </div>
+
+                  <div style={{ padding: '16px', borderRadius: '14px', background: 'rgba(10, 15, 29, 0.8)', textAlign: 'center', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
+                    <div style={{ fontSize: '2.4rem', fontWeight: 900, color: '#c084fc', fontFamily: 'monospace', letterSpacing: '1px' }}>
+                      {currentDestTimeStr}
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '4px', fontWeight: 600 }}>
+                      📅 {currentDestDateStr}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between" style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    <span>Timezone: <strong>{clockData.location.timezone}</strong></span>
+                    <span>Coordinates: <strong>{clockData.location.latitude.toFixed(2)}°, {clockData.location.longitude.toFixed(2)}°</strong></span>
+                  </div>
+                </div>
+
+                {/* Time Difference Banner */}
+                {timeDelta && (
+                  <div className="col-span-12 glass-panel" style={{
+                    padding: '16px 20px',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.3) 100%)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                  }}>
+                    <div className="flex items-center gap-3">
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                        <ArrowRightLeft style={{ width: '18px', height: '18px' }} />
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#a7f3d0', fontWeight: 700 }}>Time Difference Assessment:</span>
+                        <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#ffffff' }}>
+                          {clockData.location.city} is <span style={{ color: '#34d399' }}>{timeDelta.differenceText}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>Sunrise & Sunset</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fbbf24' }}>
+                          🌅 {clockData.weather.sunrise} &nbsp;|&nbsp; 🌇 {clockData.weather.sunset}
+                        </span>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>Daylight Span</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8' }}>
+                          ☀️ {Math.floor(clockData.weather.daylightDurationSeconds / 3600)}h {Math.round((clockData.weather.daylightDurationSeconds % 3600) / 60)}m
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* Global Major Tourist Capitals Live Clocks Grid */}
+            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="flex items-center justify-between">
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock style={{ width: '16px', height: '16px', color: '#38bdf8' }} />
+                  <span>Major Global Tourism Hubs — Live World Clocks</span>
+                </h4>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Syncing in real-time</span>
+              </div>
+
+              <div className="grid grid-3 gap-3">
+                {[
+                  { city: 'Tokyo, Japan', tz: 'Asia/Tokyo', flag: '🇯🇵', gmt: 'GMT+9' },
+                  { city: 'London, UK', tz: 'Europe/London', flag: '🇬🇧', gmt: 'GMT+0' },
+                  { city: 'Paris, France', tz: 'Europe/Paris', flag: '🇫🇷', gmt: 'GMT+1' },
+                  { city: 'New York, USA', tz: 'America/New_York', flag: '🇺🇸', gmt: 'GMT-5' },
+                  { city: 'Dubai, UAE', tz: 'Asia/Dubai', flag: '🇦🇪', gmt: 'GMT+4' },
+                  { city: 'Singapore', tz: 'Asia/Singapore', flag: '🇸🇬', gmt: 'GMT+8' },
+                  { city: 'Sydney, Australia', tz: 'Australia/Sydney', flag: '🇦🇺', gmt: 'GMT+10' },
+                  { city: 'Chennai, India', tz: 'Asia/Kolkata', flag: '🇮🇳', gmt: 'GMT+5:30' },
+                  { city: 'Ooty (Nilgiris), India', tz: 'Asia/Kolkata', flag: '🇮🇳', gmt: 'GMT+5:30' }
+                ].map(c => {
+                  let timeStr = '';
+                  try {
+                    timeStr = new Date().toLocaleTimeString('en-US', {
+                      timeZone: c.tz,
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                      hour12: true
+                    });
+                  } catch (e) {
+                    timeStr = '--:--:--';
+                  }
+
+                  return (
+                    <div
+                      key={c.city}
+                      onClick={() => {
+                        const cityName = c.city.split(',')[0].split('(')[0].trim();
+                        setClockSearchQuery(cityName);
+                        handleLoadClock(cityName, homeTimezone);
+                      }}
+                      style={{
+                        padding: '14px 16px',
+                        borderRadius: '12px',
+                        background: 'rgba(10, 15, 29, 0.75)',
+                        border: '1px solid rgba(255, 255, 255, 0.07)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = '#38bdf8'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.07)'}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff' }}>
+                          {c.flag} {c.city}
+                        </span>
+                        <span className="badge badge-blue" style={{ fontSize: '0.65rem', padding: '2px 6px' }}>{c.gmt}</span>
+                      </div>
+                      <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>
+                        {timeStr}
+                      </div>
+                      <span style={{ fontSize: '0.68rem', color: '#64748b' }}>Click to inspect destination &rarr;</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+        );
+      })()}
 
       {/* 4. Country Rules */}
       {activeSubTab === 'rules' && (
@@ -2093,59 +2507,392 @@ export const TravelTools: React.FC = () => {
         );
       })()}
 
-      {/* 6. Weather Reports */}
+      {/* 6. Live Weather Reports, 7-Day Forecast & Air Quality Radar (Live Open-Meteo Integration) */}
       {activeSubTab === 'weather' && (
-        <div className="glass-panel animate-fade" style={{ maxWidth: '780px', margin: '0 auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-3">
-              <CloudSun style={{ width: '28px', height: '28px', color: '#fbbf24' }} />
-              <div>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>Live Weather Radar & Trip Forecast</h3>
-                <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Monitors precipitation, storms, and cyclonic alerts for your spots.</p>
+        <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+          
+          {/* Header & City Search Bar */}
+          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderColor: 'rgba(251, 191, 36, 0.3)' }}>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(251, 191, 36, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fbbf24' }}>
+                  <CloudSun style={{ width: '22px', height: '22px' }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff' }}>Live Weather Radar, 7-Day Forecast & AQI</h3>
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Real-time meteorological conditions, US AQI air quality ratings & dynamic travel safety advice</p>
+                </div>
               </div>
+
+              {weatherData && (
+                <div className="flex items-center gap-2">
+                  <span className="badge badge-blue">
+                    📍 {weatherData.location.city}, {weatherData.location.country}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleLoadWeather(weatherData.location.city)}
+                    disabled={isLoadingWeather}
+                    className="btn-secondary"
+                    style={{ padding: '6px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    title="Refresh live weather"
+                  >
+                    <RefreshCw className={isLoadingWeather ? 'animate-spin' : ''} style={{ width: '12px', height: '12px' }} />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div className="flex gap-1">
-              {['Ooty & Nilgiris', 'Chennai Coast', 'Madurai Heritage'].map(city => (
+            {/* Search Form */}
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleLoadWeather(weatherSearchInput);
+              }}
+              className="flex gap-2"
+            >
+              <div style={{ position: 'relative', flex: 1 }}>
+                <Search style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: '#64748b' }} />
+                <input
+                  type="text"
+                  value={weatherSearchInput}
+                  onChange={e => setWeatherSearchInput(e.target.value)}
+                  placeholder="Search any destination worldwide (e.g., Ooty, Chennai, Kodaikanal, Tokyo, Paris, London...)"
+                  className="input-glass"
+                  style={{ paddingLeft: '44px', width: '100%', fontSize: '0.88rem', fontWeight: 700 }}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoadingWeather}
+                className="btn-primary"
+                style={{ padding: '0 20px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', flexShrink: 0, background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}
+              >
+                {isLoadingWeather ? <Loader2 className="animate-spin" style={{ width: '16px', height: '16px' }} /> : <CloudSun style={{ width: '16px', height: '16px' }} />}
+                <span>Fetch Weather</span>
+              </button>
+            </form>
+
+            {/* Quick Popular Weather Cities */}
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700 }}>Popular Spots:</span>
+              {['Ooty', 'Chennai', 'Kodaikanal', 'Madurai', 'Bengaluru', 'Tokyo', 'Paris', 'London', 'New York'].map(city => (
                 <button
                   key={city}
-                  onClick={() => setWeatherCity(city)}
-                  className="btn-secondary"
+                  type="button"
+                  onClick={() => {
+                    setWeatherSearchInput(city);
+                    handleLoadWeather(city);
+                  }}
                   style={{
                     padding: '4px 10px',
+                    borderRadius: '8px',
                     fontSize: '0.72rem',
-                    background: weatherCity === city ? '#38bdf8' : 'rgba(10, 15, 29, 0.7)',
-                    color: weatherCity === city ? '#0f172a' : '#94a3b8',
-                    fontWeight: 700
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: weatherData?.location.city.toLowerCase() === city.toLowerCase() ? '#fbbf24' : 'rgba(255, 255, 255, 0.06)',
+                    color: weatherData?.location.city.toLowerCase() === city.toLowerCase() ? '#0f172a' : '#cbd5e1',
+                    fontWeight: weatherData?.location.city.toLowerCase() === city.toLowerCase() ? 800 : 500,
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   {city}
                 </button>
               ))}
             </div>
+
+            {weatherError && (
+              <div style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+                <span>{weatherError}</span>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-3 gap-3">
-            <div style={{ padding: '18px', borderRadius: '16px', background: 'rgba(10, 15, 29, 0.85)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Temperature</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#ffffff' }}>18°C</div>
-              <p style={{ fontSize: '0.75rem', color: '#38bdf8' }}>Mist & Light Drizzle</p>
-            </div>
+          {weatherData && (
+            <>
+              {/* Main Weather Overview & Key Metrics */}
+              <div className="grid grid-12 gap-4">
+                
+                {/* Hero Current Weather Card */}
+                <div className="col-span-7 lg-col-span-12 glass-panel" style={{
+                  padding: '24px',
+                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%)',
+                  border: '1px solid rgba(251, 191, 36, 0.35)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '18px'
+                }}>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#ffffff' }}>{weatherData.location.city}</h3>
+                        <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>({weatherData.location.country})</span>
+                      </div>
+                      <p style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                        Timezone: {weatherData.location.timezone} &bull; Coordinates: {weatherData.location.latitude.toFixed(2)}°, {weatherData.location.longitude.toFixed(2)}°
+                      </p>
+                    </div>
 
-            <div style={{ padding: '18px', borderRadius: '16px', background: 'rgba(10, 15, 29, 0.85)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Humidity</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#818cf8' }}>82%</div>
-              <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Rain gear advised</p>
-            </div>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      padding: '4px 12px',
+                      borderRadius: '8px',
+                      background: weatherData.weather.isDay ? 'rgba(251, 191, 36, 0.2)' : 'rgba(129, 140, 248, 0.2)',
+                      color: weatherData.weather.isDay ? '#fbbf24' : '#818cf8',
+                      border: `1px solid ${weatherData.weather.isDay ? 'rgba(251, 191, 36, 0.3)' : 'rgba(129, 140, 248, 0.3)'}`
+                    }}>
+                      {weatherData.weather.isDay ? '☀️ Daylight' : '🌙 Night Time'}
+                    </span>
+                  </div>
 
-            <div style={{ padding: '18px', borderRadius: '16px', background: 'rgba(10, 15, 29, 0.85)', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: '#fbbf24' }}>Advisory</span>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', marginTop: '8px' }}>Ghat Road Clear</div>
-              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '4px' }}>Drive with fog lights</p>
-            </div>
-          </div>
+                  {/* Giant Temp & Condition */}
+                  <div className="flex items-center justify-between flex-wrap gap-4" style={{ padding: '16px 20px', borderRadius: '16px', background: 'rgba(10, 15, 29, 0.75)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div>
+                      <div style={{ fontSize: '3.2rem', fontWeight: 900, color: '#ffffff', lineHeight: 1, fontFamily: 'monospace' }}>
+                        {weatherData.weather.temperature}°C
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: '6px' }}>
+                        Feels like <strong style={{ color: '#38bdf8' }}>{weatherData.weather.feelsLike}°C</strong>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#fbbf24' }}>
+                        {weatherData.weather.condition}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>
+                        WMO Weather Code: #{weatherData.weather.weatherCode}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4 Metrics Tiles */}
+                  <div className="grid grid-4 gap-3">
+                    <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.6)', border: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'center' }}>
+                      <div className="flex items-center justify-center gap-1" style={{ color: '#38bdf8', marginBottom: '4px' }}>
+                        <Droplets style={{ width: '14px', height: '14px' }} />
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Humidity</span>
+                      </div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
+                        {weatherData.weather.humidity}%
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.6)', border: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'center' }}>
+                      <div className="flex items-center justify-center gap-1" style={{ color: '#34d399', marginBottom: '4px' }}>
+                        <Wind style={{ width: '14px', height: '14px' }} />
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Wind</span>
+                      </div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
+                        {weatherData.weather.windSpeed} <span style={{ fontSize: '0.7rem' }}>km/h</span>
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.6)', border: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'center' }}>
+                      <div className="flex items-center justify-center gap-1" style={{ color: '#818cf8', marginBottom: '4px' }}>
+                        <CloudSun style={{ width: '14px', height: '14px' }} />
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Rain / Precip</span>
+                      </div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
+                        {weatherData.weather.precipitation} <span style={{ fontSize: '0.7rem' }}>mm</span>
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.6)', border: '1px solid rgba(255, 255, 255, 0.05)', textAlign: 'center' }}>
+                      <div className="flex items-center justify-center gap-1" style={{ color: '#f59e0b', marginBottom: '4px' }}>
+                        <Sun style={{ width: '14px', height: '14px' }} />
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>UV Index</span>
+                      </div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
+                        {weatherData.weather.uvIndex} <span style={{ fontSize: '0.65rem', color: weatherData.weather.uvIndex >= 6 ? '#f87171' : '#34d399' }}>({weatherData.weather.uvIndex >= 8 ? 'Very High' : weatherData.weather.uvIndex >= 6 ? 'High' : weatherData.weather.uvIndex >= 3 ? 'Moderate' : 'Low'})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sunrise & Sunset Strip */}
+                  <div className="flex items-center justify-between flex-wrap gap-2 pt-2" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', fontSize: '0.75rem' }}>
+                    <div className="flex items-center gap-2">
+                      <Sunrise style={{ width: '15px', height: '15px', color: '#fbbf24' }} />
+                      <span style={{ color: '#94a3b8' }}>Sunrise:</span>
+                      <strong style={{ color: '#ffffff' }}>{weatherData.weather.sunrise}</strong>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sunset style={{ width: '15px', height: '15px', color: '#f97316' }} />
+                      <span style={{ color: '#94a3b8' }}>Sunset:</span>
+                      <strong style={{ color: '#ffffff' }}>{weatherData.weather.sunset}</strong>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sun style={{ width: '15px', height: '15px', color: '#38bdf8' }} />
+                      <span style={{ color: '#94a3b8' }}>Daylight:</span>
+                      <strong style={{ color: '#38bdf8' }}>{Math.floor(weatherData.weather.daylightDurationSeconds / 3600)}h {Math.round((weatherData.weather.daylightDurationSeconds % 3600) / 60)}m</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Air Quality (AQI) Meter & Dynamic Travel Advice */}
+                <div className="col-span-5 lg-col-span-12 flex flex-col gap-4">
+                  
+                  {/* Air Quality Index Card */}
+                  <div className="glass-panel" style={{
+                    padding: '20px',
+                    background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 35, 65, 0.75) 100%)',
+                    border: `1px solid ${weatherData.airQuality.aqiColor}40`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Activity style={{ width: '18px', height: '18px', color: weatherData.airQuality.aqiColor }} />
+                        <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>Air Quality Index (AQI)</h4>
+                      </div>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        background: `${weatherData.airQuality.aqiColor}25`,
+                        color: weatherData.airQuality.aqiColor,
+                        border: `1px solid ${weatherData.airQuality.aqiColor}50`
+                      }}>
+                        {weatherData.airQuality.aqiStatus}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between" style={{ padding: '12px 16px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.75)' }}>
+                      <div>
+                        <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>US AQI Score</span>
+                        <div style={{ fontSize: '2rem', fontWeight: 900, color: weatherData.airQuality.aqiColor, fontFamily: 'monospace' }}>
+                          {weatherData.airQuality.usAqi}
+                        </div>
+                      </div>
+                      <div className="flex gap-4">
+                        <div>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>PM2.5</span>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{weatherData.airQuality.pm25} <span style={{ fontSize: '0.65rem' }}>µg/m³</span></span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>PM10</span>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{weatherData.airQuality.pm10} <span style={{ fontSize: '0.65rem' }}>µg/m³</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Smart Travel & Safety Advice Card */}
+                  <div className="glass-panel" style={{
+                    padding: '20px',
+                    background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 80, 50, 0.3) 100%)',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    flex: 1
+                  }}>
+                    <div className="flex items-center gap-2">
+                      <Sparkles style={{ width: '18px', height: '18px', color: '#34d399' }} />
+                      <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>AI Travel & Packing Advisory</h4>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {weatherData.travelAdvice.map((adv, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            background: 'rgba(10, 15, 29, 0.75)',
+                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                            fontSize: '0.75rem',
+                            color: '#e2e8f0',
+                            lineHeight: 1.4
+                          }}
+                        >
+                          {adv}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* 7-Day Interactive Forecast Slider */}
+              {weatherData.forecast && weatherData.forecast.length > 0 && (
+                <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(56, 189, 248, 0.25)' }}>
+                  <div className="flex items-center justify-between">
+                    <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CloudSun style={{ width: '16px', height: '16px', color: '#38bdf8' }} />
+                      <span>7-Day Comprehensive Weather Forecast</span>
+                    </h4>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Daily high &bull; low &bull; rain probability</span>
+                  </div>
+
+                  <div className="grid grid-7 gap-2">
+                    {weatherData.forecast.map((item, idx) => {
+                      const dateObj = new Date(item.date);
+                      const dayName = idx === 0 ? 'Today' : idx === 1 ? 'Tomorrow' : dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                      const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                      return (
+                        <div
+                          key={item.date}
+                          style={{
+                            padding: '14px 10px',
+                            borderRadius: '12px',
+                            background: idx === 0 ? 'rgba(56, 189, 248, 0.12)' : 'rgba(10, 15, 29, 0.75)',
+                            border: idx === 0 ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '6px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: idx === 0 ? '#38bdf8' : '#ffffff' }}>
+                            {dayName}
+                          </span>
+                          <span style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                            {formattedDate}
+                          </span>
+
+                          <div style={{ fontSize: '1.4rem', margin: '4px 0' }}>
+                            {item.condition.split(' ')[0]}
+                          </div>
+
+                          <div style={{ fontSize: '0.68rem', color: '#cbd5e1', fontWeight: 600, minHeight: '28px' }}>
+                            {item.condition.substring(item.condition.indexOf(' ') + 1)}
+                          </div>
+
+                          <div className="flex items-center gap-1" style={{ marginTop: '4px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#ffffff' }}>{item.maxTemp}°</span>
+                            <span style={{ fontSize: '0.72rem', color: '#64748b' }}>/ {item.minTemp}°</span>
+                          </div>
+
+                          {item.rainProbability > 0 ? (
+                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '6px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700, marginTop: '2px' }}>
+                              💧 {item.rainProbability}%
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '6px', background: 'rgba(255, 255, 255, 0.05)', color: '#64748b', marginTop: '2px' }}>
+                              ☀️ Dry
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
         </div>
       )}
     </div>
   );
 };
+
