@@ -132,6 +132,17 @@ export const App: React.FC = () => {
     showToast('Service Provider profile successfully deleted.');
   };
 
+  const handleLogout = () => {
+    deleteStoredProfile();
+    deleteStoredProviderProfile();
+    setUserProfile({ ...DEFAULT_USER_PROFILE, isRegistered: false });
+    setProviderProfile(null);
+    sessionStorage.removeItem(GATEWAY_SHOWN_KEY);
+    setIsGatewayOpen(true);
+    setActiveTab('dashboard');
+    showToast('Logged out successfully. Welcome back to TripNova Gateway!');
+  };
+
   const handleSaveTrip = (newTrip: TripPlan) => {
     if (!userProfile.isRegistered) {
       setIsRegisterOpen(true);
@@ -140,8 +151,7 @@ export const App: React.FC = () => {
     const updated = [newTrip, ...trips];
     setTrips(updated);
     saveStoredTrips(updated);
-    setActiveTab('planner');
-    showToast('Itinerary plan saved successfully!');
+    showToast(`Trip plan "${newTrip.title}" saved successfully!`);
   };
 
   const activeTrip = trips.length > 0 ? trips[0] : undefined;
@@ -158,6 +168,7 @@ export const App: React.FC = () => {
         onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenProviderRegister={() => setIsProviderRegisterOpen(true)}
         onOpenChatbot={() => setIsChatbotOpen(!isChatbotOpen)}
+        onLogout={handleLogout}
       />
 
       {/* Toast Notification */}
@@ -271,6 +282,7 @@ export const App: React.FC = () => {
             onNavigateTab={setActiveTab}
             onDeleteProfile={handleDeleteProfile}
             onDeleteProviderProfile={handleDeleteProviderProfile}
+            onLogout={handleLogout}
           />
         )}
       </main>

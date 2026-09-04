@@ -10,7 +10,8 @@ import {
   User, 
   Sparkles, 
   PhoneCall, 
-  Landmark
+  Landmark,
+  LogOut
 } from 'lucide-react';
 import { UserProfile, ServiceProviderProfile, UserLocation } from '../types';
 import { getStoredLocation } from '../utils/geoLocator';
@@ -24,6 +25,7 @@ interface NavbarProps {
   onOpenRegister: () => void;
   onOpenProviderRegister?: () => void;
   onOpenChatbot: () => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -34,7 +36,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSOS,
   onOpenRegister,
   onOpenProviderRegister,
-  onOpenChatbot
+  onOpenChatbot,
+  onLogout
 }) => {
   const [activeLocation, setActiveLocation] = useState<UserLocation | null>(() => getStoredLocation());
 
@@ -219,6 +222,27 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           </button>
+
+          {/* Logout Action Button (Active when registered as Tourist or Provider) */}
+          {(userProfile.isRegistered || providerProfile) && onLogout && (
+            <button
+              onClick={onLogout}
+              className="btn-secondary"
+              style={{
+                padding: '8px 12px',
+                fontSize: '0.78rem',
+                color: '#f87171',
+                borderColor: 'rgba(239, 68, 68, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Log Out of Session"
+            >
+              <LogOut style={{ width: '14px', height: '14px' }} />
+              <span className="hide-mobile">Logout</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

@@ -19,7 +19,8 @@ import {
   MapPin,
   DollarSign,
   QrCode,
-  Award
+  Award,
+  LogOut
 } from 'lucide-react';
 import { UserProfile, ServiceProviderProfile } from '../types';
 
@@ -31,6 +32,7 @@ interface ProfileViewProps {
   onNavigateTab: (tab: string) => void;
   onDeleteProfile: () => void;
   onDeleteProviderProfile?: () => void;
+  onLogout?: () => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
@@ -40,7 +42,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onEditProviderProfile,
   onNavigateTab,
   onDeleteProfile,
-  onDeleteProviderProfile
+  onDeleteProviderProfile,
+  onLogout
 }) => {
   // If user has both, or only provider, set appropriate active profile tab
   const [activeProfileTab, setActiveProfileTab] = useState<'tourist' | 'provider'>(() => {
@@ -50,6 +53,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showProviderDeleteConfirm, setShowProviderDeleteConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const getCategoryTitle = (cat?: string) => {
     switch(cat) {
@@ -210,6 +214,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 >
                   <Edit3 style={{ width: '15px', height: '15px' }} />
                   <span>Edit Partner Details</span>
+                </button>
+              )}
+              {onLogout && (
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="btn-secondary"
+                  style={{ padding: '9px 14px', fontSize: '0.82rem', color: '#cbd5e1' }}
+                  title="Log Out of Session"
+                >
+                  <LogOut style={{ width: '15px', height: '15px' }} />
+                  <span>Log Out</span>
                 </button>
               )}
               <button
@@ -539,6 +554,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <CreditCard style={{ width: '15px', height: '15px' }} />
                 <span>Safety Pass</span>
               </button>
+              {onLogout && (
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="btn-secondary"
+                  style={{ padding: '9px 14px', fontSize: '0.82rem', color: '#cbd5e1' }}
+                  title="Log Out of Session"
+                >
+                  <LogOut style={{ width: '15px', height: '15px' }} />
+                  <span>Log Out</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="btn-secondary"
@@ -550,6 +576,80 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Logout Confirmation Modal */}
+          {showLogoutConfirm && (
+            <div style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 110,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
+              background: 'rgba(0,0,0,0.85)',
+              backdropFilter: 'blur(12px)'
+            }} className="animate-fade">
+              <div className="glass-panel" style={{
+                width: '100%',
+                maxWidth: '440px',
+                padding: '24px',
+                background: '#090e17',
+                border: '2px solid rgba(239, 68, 68, 0.4)',
+                borderRadius: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '2px solid #ef4444',
+                  margin: '0 auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ef4444'
+                }}>
+                  <LogOut style={{ width: '24px', height: '24px' }} />
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', marginBottom: '6px' }}>
+                    Confirm Log Out
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                    Are you sure you want to log out of your session? You can sign back in or register a new profile at any time.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowLogoutConfirm(false)}
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '10px', fontSize: '0.82rem' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowLogoutConfirm(false);
+                      if (onLogout) onLogout();
+                    }}
+                    className="btn-sos"
+                    style={{ flex: 1, padding: '10px', fontSize: '0.82rem' }}
+                  >
+                    Yes, Log Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Delete Confirmation Modal */}
           {showDeleteConfirm && (
