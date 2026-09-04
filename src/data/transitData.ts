@@ -808,3 +808,406 @@ export const HIERARCHICAL_TRANSIT_DATA: CountryNode[] = [
     ]
   }
 ];
+
+export interface RouteOptionFlight {
+  airline: string;
+  flightNumber: string;
+  fromAirport: string;
+  toAirport: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  stops: string;
+  estimatedPrice: string;
+  bookingUrl: string;
+  provider: string;
+}
+
+export interface RouteOptionTrain {
+  trainName: string;
+  trainNumber: string;
+  fromStation: string;
+  toStation: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  classes: string[];
+  estimatedPrice: string;
+  bookingUrl: string;
+  availabilityBadge?: string;
+}
+
+export interface RouteOptionBus {
+  operator: string;
+  busType: string;
+  fromTerminal: string;
+  toTerminal: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  estimatedPrice: string;
+  bookingUrl: string;
+  seatsAvailable?: number;
+}
+
+export interface RouteOptionCab {
+  serviceType: string;
+  distanceKm: number;
+  duration: string;
+  routeVia: string;
+  estimatedPrice: string;
+  tollEstimate: string;
+  bookingUrl: string;
+}
+
+export interface JourneyRouteResult {
+  fromCity: string;
+  toCity: string;
+  travelDate: string;
+  distanceKm: number;
+  flights: RouteOptionFlight[];
+  trains: RouteOptionTrain[];
+  buses: RouteOptionBus[];
+  cabs: RouteOptionCab[];
+  destinationPasses?: {
+    attractionName: string;
+    bookingUrl: string;
+    passType: 'Official E-Pass' | 'ASI Monument Pass' | 'Forest Permit' | 'State Tourism Ticket';
+  }[];
+}
+
+export const POPULAR_ORIGIN_CITIES = [
+  'Chennai, Tamil Nadu',
+  'Bengaluru, Karnataka',
+  'Coimbatore, Tamil Nadu',
+  'Madurai, Tamil Nadu',
+  'Kochi, Kerala',
+  'Trivandrum, Kerala',
+  'Mumbai, Maharashtra',
+  'Delhi NCR, India',
+  'Hyderabad, Telangana',
+  'Kolkata, West Bengal',
+  'Tokyo, Japan',
+  'New York, USA',
+  'Paris, France',
+  'Dubai, UAE'
+];
+
+export const POPULAR_DESTINATION_CITIES = [
+  'Ooty & Nilgiri Hills, Tamil Nadu',
+  'Chennai Central, Tamil Nadu',
+  'Madurai Heritage, Tamil Nadu',
+  'Kanyakumari, Tamil Nadu',
+  'Kochi & Fort Kochi, Kerala',
+  'Bengaluru Garden City, Karnataka',
+  'Tokyo Metropolis, Japan',
+  'Manhattan & NYC, USA',
+  'Paris City of Light, France',
+  'Dubai Downtown, UAE'
+];
+
+/**
+ * Dynamically resolves multi-modal ticket booking options for a specific Starting point -> Destination pair
+ */
+export function getRouteTicketOptions(
+  fromCity: string,
+  toCity: string,
+  travelDate: string = 'Tomorrow'
+): JourneyRouteResult {
+  const cleanFrom = fromCity.split(',')[0].trim();
+  const cleanTo = toCity.split(',')[0].trim();
+
+  // Route: Chennai -> Ooty / Coimbatore
+  if (cleanFrom.toLowerCase().includes('chennai') && cleanTo.toLowerCase().includes('ooty')) {
+    return {
+      fromCity: 'Chennai, Tamil Nadu (MAA)',
+      toCity: 'Ooty & Nilgiri Hills, Tamil Nadu (UAM)',
+      travelDate,
+      distanceKm: 535,
+      flights: [
+        {
+          airline: 'IndiGo Airlines',
+          flightNumber: '6E-6721',
+          fromAirport: 'Chennai International (MAA)',
+          toAirport: 'Coimbatore International (CJB) + 2h Cab to Ooty',
+          departureTime: '06:20 AM',
+          arrivalTime: '07:35 AM',
+          duration: '1h 15m non-stop',
+          stops: 'Non-stop',
+          estimatedPrice: '₹2,650',
+          bookingUrl: 'https://www.goindigo.in/',
+          provider: 'IndiGo Official'
+        },
+        {
+          airline: 'Air India',
+          flightNumber: 'AI-542',
+          fromAirport: 'Chennai (MAA)',
+          toAirport: 'Coimbatore (CJB)',
+          departureTime: '14:40 PM',
+          arrivalTime: '15:55 PM',
+          duration: '1h 15m non-stop',
+          stops: 'Non-stop',
+          estimatedPrice: '₹3,100',
+          bookingUrl: 'https://www.makemytrip.com/flights/',
+          provider: 'MakeMyTrip Flights'
+        }
+      ],
+      trains: [
+        {
+          trainName: 'Nilgiri Superfast Express (Connecting to Toy Train)',
+          trainNumber: '12671',
+          fromStation: 'Chennai Central (MAS)',
+          toStation: 'Mettupalayam (MTP) / Udhagamandalam (UAM)',
+          departureTime: '21:05 PM',
+          arrivalTime: '06:15 AM (+1 day)',
+          duration: '9h 10m (Overnight Sleeper)',
+          classes: ['1A', '2A', '3A', 'SL'],
+          estimatedPrice: '₹345 - ₹1,820',
+          bookingUrl: 'https://www.irctc.co.in/nget/train-search',
+          availabilityBadge: 'High Confirmation Probability'
+        },
+        {
+          trainName: 'Vande Bharat High-Speed Express',
+          trainNumber: '20643',
+          fromStation: 'Chennai Central (MAS)',
+          toStation: 'Coimbatore Junction (CBE)',
+          departureTime: '06:00 AM',
+          arrivalTime: '11:50 AM',
+          duration: '5h 50m (Fastest)',
+          classes: ['CC', 'EC'],
+          estimatedPrice: '₹1,365 - ₹2,485',
+          bookingUrl: 'https://www.confirmtkt.com/',
+          availabilityBadge: 'Vande Bharat Express'
+        }
+      ],
+      buses: [
+        {
+          operator: 'TNSTC / SETC Tamil Nadu Govt',
+          busType: 'AC Multi-Axle Sleeper (2+1)',
+          fromTerminal: 'Kilambakkam KCBT, Chennai',
+          toTerminal: 'Ooty Central Bus Stand',
+          departureTime: '20:30 PM',
+          arrivalTime: '07:30 AM (+1 day)',
+          duration: '11h 00m (Direct Hill Drop)',
+          estimatedPrice: '₹750 - ₹950',
+          bookingUrl: 'https://www.tnstc.in/',
+          seatsAvailable: 12
+        },
+        {
+          operator: 'IntrCity SmartBus / RedBus Super Luxury',
+          busType: 'Volvo AC Sleeper with Washroom',
+          fromTerminal: 'Koyambedu / Guindy, Chennai',
+          toTerminal: 'Ooty Commercial Road',
+          departureTime: '21:15 PM',
+          arrivalTime: '08:00 AM (+1 day)',
+          duration: '10h 45m',
+          estimatedPrice: '₹1,150',
+          bookingUrl: 'https://www.redbus.in/',
+          seatsAvailable: 8
+        }
+      ],
+      cabs: [
+        {
+          serviceType: 'Uber / Ola Outstation Sedan or SUV',
+          distanceKm: 535,
+          duration: 'approx. 9 hrs 30 mins',
+          routeVia: 'via NH48 (Chennai → Salem → Coimbatore → Mettupalayam → Ooty Ghats)',
+          estimatedPrice: '₹7,500 - ₹9,800',
+          tollEstimate: '₹420 (Fastag Tolls)',
+          bookingUrl: 'https://www.uber.com/'
+        }
+      ],
+      destinationPasses: [
+        { attractionName: 'Nilgiris District Mandatory Tourist E-Pass', bookingUrl: 'https://epass.tnega.org/', passType: 'Official E-Pass' },
+        { attractionName: 'Mudumalai Tiger Reserve Safari Permit', bookingUrl: 'https://mudumalaitigerreserve.com/', passType: 'Forest Permit' },
+        { attractionName: 'Tamil Nadu Tourism TTDC Sightseeing', bookingUrl: 'https://www.ttdconline.com/', passType: 'State Tourism Ticket' }
+      ]
+    };
+  }
+
+  // Route: Bengaluru -> Ooty
+  if (cleanFrom.toLowerCase().includes('bengaluru') && cleanTo.toLowerCase().includes('ooty')) {
+    return {
+      fromCity: 'Bengaluru, Karnataka (BLR)',
+      toCity: 'Ooty & Nilgiri Hills, Tamil Nadu (UAM)',
+      travelDate,
+      distanceKm: 275,
+      flights: [
+        {
+          airline: 'IndiGo Airlines',
+          flightNumber: '6E-7112',
+          fromAirport: 'Bengaluru (BLR)',
+          toAirport: 'Coimbatore (CJB)',
+          departureTime: '08:45 AM',
+          arrivalTime: '09:40 AM',
+          duration: '0h 55m non-stop',
+          stops: 'Non-stop',
+          estimatedPrice: '₹2,100',
+          bookingUrl: 'https://www.makemytrip.com/flights/',
+          provider: 'MakeMyTrip'
+        }
+      ],
+      trains: [
+        {
+          trainName: 'MGR Chennai Central - Mysuru Shatabdi / Vande Bharat',
+          trainNumber: '20607',
+          fromStation: 'KSR Bengaluru (SBC)',
+          toStation: 'Mysuru Junction (MYS) + 3h scenic drive to Ooty',
+          departureTime: '09:20 AM',
+          arrivalTime: '11:05 AM',
+          duration: '1h 45m',
+          classes: ['CC', 'EC'],
+          estimatedPrice: '₹515 - ₹1,020',
+          bookingUrl: 'https://www.irctc.co.in/',
+          availabilityBadge: 'Fastest Rail'
+        }
+      ],
+      buses: [
+        {
+          operator: 'KSRTC Airavat Club Class (Karnataka RTC)',
+          busType: 'Scania Diamond AC Multi-Axle',
+          fromTerminal: 'Kempegowda Bus Station (Majestic), Bengaluru',
+          toTerminal: 'Ooty Central Bus Stand',
+          departureTime: '22:30 PM',
+          arrivalTime: '06:00 AM (+1 day)',
+          duration: '7h 30m via Bandipur Rainforest',
+          estimatedPrice: '₹620 - ₹850',
+          bookingUrl: 'https://ksrtc.in/',
+          seatsAvailable: 16
+        },
+        {
+          operator: 'RedBus GreenLine Travels',
+          busType: 'Volvo AC Sleeper',
+          fromTerminal: 'Madiwala / Silk Board, Bengaluru',
+          toTerminal: 'Ooty Bus Stand',
+          departureTime: '23:00 PM',
+          arrivalTime: '06:45 AM (+1 day)',
+          duration: '7h 45m',
+          estimatedPrice: '₹950',
+          bookingUrl: 'https://www.redbus.in/',
+          seatsAvailable: 14
+        }
+      ],
+      cabs: [
+        {
+          serviceType: 'Zoomcar Self Drive / Ola Outstation',
+          distanceKm: 275,
+          duration: 'approx. 5 hrs 30 mins',
+          routeVia: 'via Mysore Road & Bandipur National Park (NH766 / Kalhatty Ghats)',
+          estimatedPrice: '₹4,200 - ₹5,800',
+          tollEstimate: '₹180 (Bangalore-Mysore Expressway)',
+          bookingUrl: 'https://www.zoomcar.com/'
+        }
+      ],
+      destinationPasses: [
+        { attractionName: 'Nilgiris District Mandatory Tourist E-Pass', bookingUrl: 'https://epass.tnega.org/', passType: 'Official E-Pass' }
+      ]
+    };
+  }
+
+  // Generic Dynamic Multi-Modal Route Generator for any Origin & Destination
+  const genericDistance = Math.floor(Math.random() * 400) + 180;
+  return {
+    fromCity: fromCity || 'Origin City',
+    toCity: toCity || 'Destination City',
+    travelDate,
+    distanceKm: genericDistance,
+    flights: [
+      {
+        airline: 'IndiGo / Air India / Global Carriers',
+        flightNumber: 'Direct & Connecting Flights',
+        fromAirport: `Airport nearest to ${cleanFrom}`,
+        toAirport: `Airport nearest to ${cleanTo}`,
+        departureTime: 'Morning / Afternoon',
+        arrivalTime: 'Evening',
+        duration: '1h 30m - 3h 15m',
+        stops: 'Direct / 1 Stop',
+        estimatedPrice: '₹3,200 - ₹5,800',
+        bookingUrl: 'https://www.makemytrip.com/flights/',
+        provider: 'MakeMyTrip Flight Engine'
+      },
+      {
+        airline: 'Google Flights Real-time Search',
+        flightNumber: 'Compare All Airlines',
+        fromAirport: cleanFrom,
+        toAirport: cleanTo,
+        departureTime: 'Flexible Timings',
+        arrivalTime: 'Flexible',
+        duration: 'Fastest Route',
+        stops: 'Best Price Calendar',
+        estimatedPrice: 'Lowest Fare Guaranteed',
+        bookingUrl: `https://www.google.com/travel/flights`,
+        provider: 'Google Flights'
+      }
+    ],
+    trains: [
+      {
+        trainName: `${cleanFrom} - ${cleanTo} Express / Vande Bharat`,
+        trainNumber: '12xxx / 20xxx',
+        fromStation: `${cleanFrom} Main Junction`,
+        toStation: `${cleanTo} Railway Station`,
+        departureTime: '06:30 AM / 21:00 PM',
+        arrivalTime: '14:00 PM / 06:30 AM (+1 day)',
+        duration: `${Math.round(genericDistance / 65)}h ${Math.round((genericDistance % 65) * 0.9)}m`,
+        classes: ['1A', '2A', '3A', 'SL', 'CC'],
+        estimatedPrice: '₹280 - ₹1,650',
+        bookingUrl: 'https://www.irctc.co.in/nget/train-search',
+        availabilityBadge: 'Official IRCTC Live Booking'
+      },
+      {
+        trainName: 'ConfirmTkt Instant Rail Ticket',
+        trainNumber: 'Alternative Trains Available',
+        fromStation: cleanFrom,
+        toStation: cleanTo,
+        departureTime: 'Multiple Schedules',
+        arrivalTime: 'Multiple Schedules',
+        duration: 'Express Cadence',
+        classes: ['AC Sleeper', 'Chair Car', 'Sleeper'],
+        estimatedPrice: 'Confirmed Seats Prediction',
+        bookingUrl: 'https://www.confirmtkt.com/',
+        availabilityBadge: 'Waitlist Predictor'
+      }
+    ],
+    buses: [
+      {
+        operator: 'Official State Transport (TNSTC / KSRTC / MSRTC)',
+        busType: 'AC Multi-Axle Deluxe / Sleeper',
+        fromTerminal: `${cleanFrom} Central Bus Station`,
+        toTerminal: `${cleanTo} Bus Stand`,
+        departureTime: '21:00 PM',
+        arrivalTime: '06:00 AM (+1 day)',
+        duration: `${Math.round(genericDistance / 50)}h 00m`,
+        estimatedPrice: '₹480 - ₹850',
+        bookingUrl: 'https://www.redbus.in/',
+        seatsAvailable: 20
+      },
+      {
+        operator: 'RedBus Luxury Sleeper Network',
+        busType: 'Volvo AC Semi-Sleeper & Sleeper',
+        fromTerminal: `${cleanFrom} City Boarding Points`,
+        toTerminal: `${cleanTo} Drop Points`,
+        departureTime: 'Evening & Night Batches',
+        arrivalTime: 'Morning Drop',
+        duration: 'Fast Highway Route',
+        estimatedPrice: '₹750 - ₹1,350',
+        bookingUrl: 'https://www.redbus.in/',
+        seatsAvailable: 15
+      }
+    ],
+    cabs: [
+      {
+        serviceType: 'Uber / Ola Outstation Cab or Rental',
+        distanceKm: genericDistance,
+        duration: `approx. ${Math.round(genericDistance / 55)} hrs`,
+        routeVia: `Direct National Highway Highway corridor (${cleanFrom} → ${cleanTo})`,
+        estimatedPrice: `₹${genericDistance * 14} - ₹${genericDistance * 18}`,
+        tollEstimate: 'Fastag Highway Tolls',
+        bookingUrl: 'https://www.uber.com/'
+      }
+    ],
+    destinationPasses: [
+      { attractionName: `${cleanTo} Heritage & Tourism Pass`, bookingUrl: 'https://asi.paygov.org.in/', passType: 'ASI Monument Pass' }
+    ]
+  };
+}
+

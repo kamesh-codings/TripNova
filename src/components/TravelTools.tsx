@@ -35,7 +35,13 @@ import {
   Building2 
 } from 'lucide-react';
 import { COUNTRY_RULES, TICKET_BOOKING_PLATFORMS } from '../data/mockData';
-import { HIERARCHICAL_TRANSIT_DATA } from '../data/transitData';
+import { 
+  HIERARCHICAL_TRANSIT_DATA, 
+  POPULAR_ORIGIN_CITIES, 
+  POPULAR_DESTINATION_CITIES, 
+  getRouteTicketOptions, 
+  JourneyRouteResult 
+} from '../data/transitData';
 import { speakPhrase, stopSpeech, VoiceRecognizer, LANG_CODE_MAP, LanguageVoiceConfig } from '../utils/speech';
 import { translateText } from '../utils/translator';
 
@@ -50,7 +56,15 @@ interface ConversationMessage {
 }
 
 export const TravelTools: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'translator' | 'currency' | 'timezone' | 'rules' | 'booking' | 'weather'>('translator');
+  const [activeSubTab, setActiveSubTab] = useState<'translator' | 'currency' | 'timezone' | 'rules' | 'booking' | 'weather'>('booking');
+
+  // Ticket & Transit Booking Mode: 'route' (From -> To) or 'hierarchy' (Country -> City)
+  const [bookingTabMode, setBookingTabMode] = useState<'route' | 'hierarchy'>('route');
+  const [fromCityInput, setFromCityInput] = useState('Chennai, Tamil Nadu');
+  const [toCityInput, setToCityInput] = useState('Ooty & Nilgiri Hills, Tamil Nadu');
+  const [travelDateInput, setTravelDateInput] = useState('Tomorrow');
+  const [travelClassInput, setTravelClassInput] = useState('All Classes (AC / Sleeper / Economy)');
+  const [routeCategoryFilter, setRouteCategoryFilter] = useState<'all' | 'flight' | 'train' | 'bus' | 'cab' | 'pass'>('all');
 
   // Hierarchical Ticket & Transit Booking State
   const [bookingCountryIdx, setBookingCountryIdx] = useState(0);
@@ -1242,8 +1256,12 @@ export const TravelTools: React.FC = () => {
         </div>
       )}
 
-      {/* 5. Hierarchical Location-Based Ticket & Transit Bookings */}
+      {/* 5. Complete From -> To Route Ticket Booking & Transit Hub Engine */}
       {activeSubTab === 'booking' && (() => {
+        // Route Ticket Booking Result calculation
+        const routeResult: JourneyRouteResult = getRouteTicketOptions(fromCityInput, toCityInput, travelDateInput);
+
+        // Hierarchical explorer state calculation
         const currentCountry = HIERARCHICAL_TRANSIT_DATA[bookingCountryIdx] || HIERARCHICAL_TRANSIT_DATA[0];
         const statesList = currentCountry.states || [];
         const currentState = statesList[bookingStateIdx] || statesList[0] || { name: 'None', code: '', districts: [] };
@@ -1259,454 +1277,818 @@ export const TravelTools: React.FC = () => {
 
         const { airports, railways, busTerminals, localTransit, monumentPasses = [] } = currentCity.transit;
 
+        const handleSwapRoute = () => {
+          const tempFrom = fromCityInput;
+          setFromCityInput(toCityInput);
+          setToCityInput(tempFrom);
+        };
+
         return (
           <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* Top Control Panel: Cascading Hierarchy Selectors */}
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-3">
-                  <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
-                    <Navigation style={{ width: '20px', height: '20px' }} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>Hierarchical Transit & Ticket Booking Hub</h3>
-                    <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Select your destination hierarchy to find official flights, trains, buses, cabs, and entry passes.</p>
-                  </div>
+            
+            {/* Top Switcher: Route Booking vs Station Hub Explorer */}
+            <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+              <div className="flex items-center gap-3">
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                  <TicketIcon style={{ width: '22px', height: '22px' }} />
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="badge badge-blue">
-                    Currency: {currentCountry.currency}
-                  </span>
+                <div>
+                  <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff' }}>Smart Transit & Ticket Booking Engine</h3>
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Search From &rarr; To route tickets across Flights, Trains, Buses, Cabs & Destination Passes</p>
                 </div>
               </div>
 
-              {/* 4-Step Cascading Dropdowns */}
-              <div className="grid grid-4 gap-3">
-                {/* 1. Country */}
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    <span>Step 1: Country</span>
-                  </label>
-                  <select
-                    value={bookingCountryIdx}
-                    onChange={e => {
-                      const newCountryIdx = parseInt(e.target.value, 10);
-                      setBookingCountryIdx(newCountryIdx);
-                      setBookingStateIdx(0);
-                      setBookingDistrictIdx(0);
-                      setBookingCityIdx(0);
-                    }}
-                    className="input-glass"
-                    style={{ fontWeight: 700, color: '#ffffff', width: '100%', padding: '10px 12px' }}
-                  >
-                    {HIERARCHICAL_TRANSIT_DATA.map((c, idx) => (
-                      <option key={c.code} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
-                        {c.flag} {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Mode Toggle Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBookingTabMode('route')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: bookingTabMode === 'route' ? 'linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)' : 'rgba(255,255,255,0.06)',
+                    color: bookingTabMode === 'route' ? '#ffffff' : '#94a3b8',
+                    boxShadow: bookingTabMode === 'route' ? '0 0 15px rgba(56, 189, 248, 0.35)' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Navigation style={{ width: '15px', height: '15px' }} />
+                  <span>From &rarr; To Route Search</span>
+                </button>
 
-                {/* 2. State / Province */}
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    <span>Step 2: State / Province</span>
-                  </label>
-                  <select
-                    value={bookingStateIdx}
-                    onChange={e => {
-                      const newStateIdx = parseInt(e.target.value, 10);
-                      setBookingStateIdx(newStateIdx);
-                      setBookingDistrictIdx(0);
-                      setBookingCityIdx(0);
-                    }}
-                    className="input-glass"
-                    style={{ fontWeight: 700, color: '#34d399', width: '100%', padding: '10px 12px' }}
-                  >
-                    {statesList.map((s, idx) => (
-                      <option key={s.name} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
-                        📍 {s.name} ({s.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 3. District / Region */}
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    <span>Step 3: District / Region</span>
-                  </label>
-                  <select
-                    value={bookingDistrictIdx}
-                    onChange={e => {
-                      const newDistIdx = parseInt(e.target.value, 10);
-                      setBookingDistrictIdx(newDistIdx);
-                      setBookingCityIdx(0);
-                    }}
-                    className="input-glass"
-                    style={{ fontWeight: 700, color: '#fbbf24', width: '100%', padding: '10px 12px' }}
-                  >
-                    {districtsList.map((d, idx) => (
-                      <option key={d.name} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
-                        🏛️ {d.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 4. City / Town / Hub */}
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#a855f7', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    <span>Step 4: City / Town</span>
-                  </label>
-                  <select
-                    value={bookingCityIdx}
-                    onChange={e => {
-                      const newCityIdx = parseInt(e.target.value, 10);
-                      setBookingCityIdx(newCityIdx);
-                    }}
-                    className="input-glass"
-                    style={{ fontWeight: 700, color: '#c084fc', width: '100%', padding: '10px 12px' }}
-                  >
-                    {citiesList.map((ct, idx) => (
-                      <option key={ct.name} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
-                        🏙️ {ct.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setBookingTabMode('hierarchy')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: bookingTabMode === 'hierarchy' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255,255,255,0.06)',
+                    color: bookingTabMode === 'hierarchy' ? '#ffffff' : '#94a3b8',
+                    boxShadow: bookingTabMode === 'hierarchy' ? '0 0 15px rgba(16, 185, 129, 0.35)' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Building2 style={{ width: '15px', height: '15px' }} />
+                  <span>Station & Hub Explorer</span>
+                </button>
               </div>
             </div>
 
-            {/* Location Breadcrumbs & Destination Overview */}
-            <div className="glass-panel" style={{
-              padding: '20px',
-              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.5) 100%)',
-              border: '1px solid rgba(56, 189, 248, 0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                {/* Breadcrumbs */}
-                <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '0.82rem', fontWeight: 700 }}>
-                  <span style={{ color: '#ffffff' }}>{currentCountry.flag} {currentCountry.name}</span>
-                  <ChevronRight style={{ width: '14px', height: '14px', color: '#64748b' }} />
-                  <span style={{ color: '#34d399' }}>{currentState.name}</span>
-                  <ChevronRight style={{ width: '14px', height: '14px', color: '#64748b' }} />
-                  <span style={{ color: '#fbbf24' }}>{currentDistrict.name}</span>
-                  <ChevronRight style={{ width: '14px', height: '14px', color: '#64748b' }} />
-                  <span style={{ color: '#38bdf8', fontWeight: 900, fontSize: '0.92rem' }}>{currentCity.name}</span>
-                </div>
-
-                {currentCity.pincodeOrZip && (
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: '6px' }}>
-                    PIN / ZIP: <strong>{currentCity.pincodeOrZip}</strong>
-                  </span>
-                )}
-              </div>
-
-              <p style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-                {currentCity.description}
-              </p>
-
-              {/* Popular spots chips */}
-              {currentCity.popularSpots && currentCity.popularSpots.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap pt-1">
-                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>Key Spots:</span>
-                  {currentCity.popularSpots.map((spot, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        fontSize: '0.68rem',
-                        padding: '2px 8px',
-                        borderRadius: '6px',
-                        background: 'rgba(56, 189, 248, 0.12)',
-                        border: '1px solid rgba(56, 189, 248, 0.25)',
-                        color: '#bae6fd',
-                        fontWeight: 600
-                      }}
-                    >
-                      ★ {spot}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Category Filter Tabs */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {[
-                { id: 'all', label: 'All Transits & Portals', icon: Navigation, count: airports.length + railways.length + busTerminals.length + (monumentPasses.length > 0 ? monumentPasses.length : 0) + 1 },
-                { id: 'flight', label: 'Flights & Airports', icon: Plane, count: airports.length },
-                { id: 'train', label: 'Trains & Railways', icon: Train, count: railways.length },
-                { id: 'bus', label: 'Intercity Buses', icon: Bus, count: busTerminals.length },
-                { id: 'cab', label: 'Cabs, Metro & Rentals', icon: Car, count: localTransit.bookingLinks.length },
-                { id: 'pass', label: 'Sightseeing & Entry Passes', icon: TicketIcon, count: monumentPasses.length }
-              ].map(cat => {
-                const Icon = cat.icon;
-                const isActive = bookingCategoryFilter === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setBookingCategoryFilter(cat.id as any)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: '10px',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: isActive ? 'linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)' : 'rgba(15, 23, 42, 0.8)',
-                      color: isActive ? '#ffffff' : '#94a3b8',
-                      boxShadow: isActive ? '0 0 15px rgba(56, 189, 248, 0.3)' : 'none',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <Icon style={{ width: '14px', height: '14px' }} />
-                    <span>{cat.label}</span>
-                    <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)' }}>
-                      {cat.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Resolved Transit Hubs Grid */}
-            <div className="grid grid-12 gap-4">
-              
-              {/* 1. AIRPORTS & FLIGHTS */}
-              {(bookingCategoryFilter === 'all' || bookingCategoryFilter === 'flight') && airports.map((apt, idx) => (
-                <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(56, 189, 248, 0.25)' }}>
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
-                        <Plane style={{ width: '18px', height: '18px' }} />
-                      </div>
-                      <div>
-                        <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{apt.name}</h4>
-                        <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{apt.distance}</p>
-                      </div>
+            {/* =========================================================================
+                MODE 1: FROM -> TO ROUTE TICKET BOOKING ENGINE (PRIMARY)
+               ========================================================================= */}
+            {bookingTabMode === 'route' && (
+              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* Search Panel: From, To, Date, Class */}
+                <div className="glass-panel" style={{
+                  padding: '24px',
+                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 35, 65, 0.85) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '18px'
+                }}>
+                  <div className="grid grid-12 gap-3 items-end">
+                    
+                    {/* FROM: Starting Point */}
+                    <div className="col-span-4 lg-col-span-12">
+                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                        <MapPin style={{ width: '14px', height: '14px' }} />
+                        <span>Starting Point (From):</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={fromCityInput}
+                        onChange={e => setFromCityInput(e.target.value)}
+                        placeholder="e.g., Chennai, Tamil Nadu"
+                        className="input-glass"
+                        style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff', padding: '12px 14px' }}
+                      />
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="badge badge-blue">IATA: {apt.code}</span>
-                      <span style={{ fontSize: '0.68rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 700 }}>
-                        {apt.type}
-                      </span>
+
+                    {/* Swap Button */}
+                    <div className="col-span-1 lg-col-span-12" style={{ display: 'flex', justifyContent: 'center', paddingBottom: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={handleSwapRoute}
+                        className="btn-secondary"
+                        style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'rgba(56, 189, 248, 0.15)',
+                          color: '#38bdf8',
+                          borderColor: 'rgba(56, 189, 248, 0.3)'
+                        }}
+                        title="Swap Origin & Destination"
+                      >
+                        <ArrowRightLeft style={{ width: '18px', height: '18px' }} />
+                      </button>
+                    </div>
+
+                    {/* TO: Destination */}
+                    <div className="col-span-4 lg-col-span-12">
+                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                        <Navigation style={{ width: '14px', height: '14px' }} />
+                        <span>Destination (To):</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={toCityInput}
+                        onChange={e => setToCityInput(e.target.value)}
+                        placeholder="e.g., Ooty & Nilgiri Hills, Tamil Nadu"
+                        className="input-glass"
+                        style={{ fontSize: '0.88rem', fontWeight: 700, color: '#ffffff', padding: '12px 14px' }}
+                      />
+                    </div>
+
+                    {/* Travel Date */}
+                    <div className="col-span-3 lg-col-span-12">
+                      <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                        <Clock style={{ width: '14px', height: '14px' }} />
+                        <span>Travel Date:</span>
+                      </label>
+                      <select
+                        value={travelDateInput}
+                        onChange={e => setTravelDateInput(e.target.value)}
+                        className="input-glass"
+                        style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fbbf24', padding: '12px 14px', width: '100%' }}
+                      >
+                        <option value="Today" style={{ background: '#090e17' }}>Today (Instant Departure)</option>
+                        <option value="Tomorrow" style={{ background: '#090e17' }}>Tomorrow Morning</option>
+                        <option value="This Weekend (Saturday)" style={{ background: '#090e17' }}>This Weekend (Saturday)</option>
+                        <option value="Next Week" style={{ background: '#090e17' }}>Next Week</option>
+                      </select>
                     </div>
                   </div>
 
-                  {/* Flight Booking Links */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {apt.bookingLinks.map((link, lIdx) => (
-                      <div key={lIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{link.provider}</span>
-                            <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700 }}>{link.badge}</span>
-                          </div>
-                          <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{link.description}</p>
-                        </div>
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.72rem', whiteSpace: 'nowrap' }}
+                  {/* Quick Popular Origin and Destination Chips */}
+                  <div className="flex flex-col gap-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '0.72rem' }}>
+                      <span style={{ color: '#38bdf8', fontWeight: 700 }}>Popular Origins:</span>
+                      {['Chennai', 'Bengaluru', 'Coimbatore', 'Madurai', 'Kochi', 'Mumbai', 'Delhi', 'Tokyo', 'Paris'].map(city => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => setFromCityInput(`${city}, India`)}
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.68rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            background: fromCityInput.includes(city) ? '#38bdf8' : 'rgba(255,255,255,0.06)',
+                            color: fromCityInput.includes(city) ? '#0f172a' : '#94a3b8',
+                            fontWeight: fromCityInput.includes(city) ? 800 : 500
+                          }}
                         >
-                          <span>Book Flights</span>
-                          <ExternalLink style={{ width: '12px', height: '12px' }} />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* 2. RAILWAY STATIONS & TRAINS */}
-              {(bookingCategoryFilter === 'all' || bookingCategoryFilter === 'train') && railways.map((rail, idx) => (
-                <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(16, 185, 129, 0.25)' }}>
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
-                        <Train style={{ width: '18px', height: '18px' }} />
-                      </div>
-                      <div>
-                        <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{rail.name}</h4>
-                        <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{rail.division}</p>
-                      </div>
+                          {city}
+                        </button>
+                      ))}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontWeight: 800 }}>
-                        Code: {rail.code}
-                      </span>
-                      <span style={{ fontSize: '0.68rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.08)', color: '#cbd5e1' }}>
-                        {rail.type}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Rail Booking Links */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {rail.bookingLinks.map((link, lIdx) => (
-                      <div key={lIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{link.provider}</span>
-                            <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 700 }}>{link.badge}</span>
-                          </div>
-                          <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{link.description}</p>
-                        </div>
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.72rem', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', whiteSpace: 'nowrap' }}
+                    <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '0.72rem' }}>
+                      <span style={{ color: '#34d399', fontWeight: 700 }}>Popular Destinations:</span>
+                      {['Ooty & Nilgiri Hills', 'Chennai Central', 'Madurai Heritage', 'Kanyakumari', 'Kochi & Fort Kochi', 'Tokyo', 'Paris'].map(city => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => setToCityInput(`${city}, Tamil Nadu`)}
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.68rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            background: toCityInput.includes(city) ? '#34d399' : 'rgba(255,255,255,0.06)',
+                            color: toCityInput.includes(city) ? '#0f172a' : '#94a3b8',
+                            fontWeight: toCityInput.includes(city) ? 800 : 500
+                          }}
                         >
-                          <span>Reserve Train</span>
-                          <ExternalLink style={{ width: '12px', height: '12px' }} />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* 3. BUS TERMINALS & INTERCITY COACHES */}
-              {(bookingCategoryFilter === 'all' || bookingCategoryFilter === 'bus') && busTerminals.map((bus, idx) => (
-                <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(245, 158, 11, 0.25)' }}>
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fbbf24' }}>
-                        <Bus style={{ width: '18px', height: '18px' }} />
-                      </div>
-                      <div>
-                        <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{bus.name}</h4>
-                        <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{bus.type}</p>
-                      </div>
+                          {city}
+                        </button>
+                      ))}
                     </div>
                   </div>
-
-                  {bus.majorOperators && (
-                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', background: 'rgba(10, 15, 29, 0.5)', padding: '6px 10px', borderRadius: '8px' }}>
-                      <strong style={{ color: '#fbbf24' }}>Key Fleets:</strong> {bus.majorOperators.join(' • ')}
-                    </div>
-                  )}
-
-                  {/* Bus Booking Links */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {bus.bookingLinks.map((link, lIdx) => (
-                      <div key={lIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{link.provider}</span>
-                            <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', fontWeight: 700 }}>{link.badge}</span>
-                          </div>
-                          <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{link.description}</p>
-                        </div>
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.72rem', background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', whiteSpace: 'nowrap' }}
-                        >
-                          <span>Book Bus</span>
-                          <ExternalLink style={{ width: '12px', height: '12px' }} />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              ))}
 
-              {/* 4. LOCAL TRANSIT, CABS & METRO */}
-              {(bookingCategoryFilter === 'all' || bookingCategoryFilter === 'cab') && localTransit && (
-                <div className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(168, 85, 247, 0.25)' }}>
+                {/* Route Journey Summary Banner */}
+                <div className="glass-panel" style={{
+                  padding: '16px 20px',
+                  background: 'linear-gradient(90deg, rgba(2, 132, 199, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#38bdf8' }}>{routeResult.fromCity}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700 }}>
+                      <span style={{ height: '2px', width: '30px', background: '#38bdf8' }}></span>
+                      <span>approx. {routeResult.distanceKm} km</span>
+                      <span style={{ height: '2px', width: '30px', background: '#34d399' }}></span>
+                      <ChevronRight style={{ width: '16px', height: '16px', color: '#34d399' }} />
+                    </div>
+                    <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#34d399' }}>{routeResult.toCity}</span>
+                  </div>
+
                   <div className="flex items-center gap-2">
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
-                      <Car style={{ width: '18px', height: '18px' }} />
-                    </div>
-                    <div>
-                      <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>Local Commute, Cabs & Self-Drive</h4>
-                      <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{localTransit.metroOrCabs}</p>
-                    </div>
+                    <span className="badge badge-blue">Travel Date: {routeResult.travelDate}</span>
                   </div>
+                </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {localTransit.bookingLinks.map((link, lIdx) => (
-                      <div key={lIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{link.provider}</span>
-                            <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontWeight: 700 }}>{link.badge}</span>
+                {/* Multi-Modal Category Filter Pills */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {[
+                    { id: 'all', label: 'All Route Options', icon: Navigation, count: routeResult.flights.length + routeResult.trains.length + routeResult.buses.length + routeResult.cabs.length + (routeResult.destinationPasses?.length || 0) },
+                    { id: 'flight', label: 'Flights', icon: Plane, count: routeResult.flights.length },
+                    { id: 'train', label: 'Trains & Railways', icon: Train, count: routeResult.trains.length },
+                    { id: 'bus', label: 'Intercity Buses', icon: Bus, count: routeResult.buses.length },
+                    { id: 'cab', label: 'Cabs & Self-Drive', icon: Car, count: routeResult.cabs.length },
+                    { id: 'pass', label: 'Destination Passes', icon: TicketIcon, count: routeResult.destinationPasses?.length || 0 }
+                  ].map(cat => {
+                    const Icon = cat.icon;
+                    const isActive = routeCategoryFilter === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setRouteCategoryFilter(cat.id as any)}
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '10px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: isActive ? 'linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)' : 'rgba(15, 23, 42, 0.8)',
+                          color: isActive ? '#ffffff' : '#94a3b8',
+                          boxShadow: isActive ? '0 0 15px rgba(56, 189, 248, 0.3)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Icon style={{ width: '14px', height: '14px' }} />
+                        <span>{cat.label}</span>
+                        <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)' }}>
+                          {cat.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Results Section for From -> To Route */}
+                <div className="grid grid-12 gap-4">
+                  
+                  {/* 1. FLIGHTS SECTION */}
+                  {(routeCategoryFilter === 'all' || routeCategoryFilter === 'flight') && routeResult.flights.map((flt, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                            <Plane style={{ width: '20px', height: '20px' }} />
                           </div>
-                          <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{link.description}</p>
+                          <div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{flt.airline}</h4>
+                            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{flt.flightNumber} • {flt.stops}</p>
+                          </div>
                         </div>
+
+                        <div className="text-right">
+                          <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'monospace' }}>{flt.estimatedPrice}</span>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>per adult</span>
+                        </div>
+                      </div>
+
+                      {/* Flight Timings Box */}
+                      <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff' }}>{flt.departureTime}</div>
+                          <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{flt.fromAirport}</p>
+                        </div>
+
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#38bdf8', fontWeight: 700 }}>{flt.duration}</span>
+                          <div style={{ width: '60px', height: '2px', background: '#38bdf8', margin: '3px auto' }}></div>
+                          <span style={{ fontSize: '0.65rem', color: '#64748b' }}>Direct Flight</span>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff' }}>{flt.arrivalTime}</div>
+                          <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{flt.toAirport}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Official Provider: <strong>{flt.provider}</strong></span>
                         <a
-                          href={link.url}
+                          href={flt.bookingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-primary"
+                          style={{ padding: '8px 16px', fontSize: '0.78rem' }}
+                        >
+                          <span>Book Flight on {flt.provider.split(' ')[0]}</span>
+                          <ExternalLink style={{ width: '13px', height: '13px' }} />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 2. TRAINS SECTION */}
+                  {(routeCategoryFilter === 'all' || routeCategoryFilter === 'train') && routeResult.trains.map((trn, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                            <Train style={{ width: '20px', height: '20px' }} />
+                          </div>
+                          <div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{trn.trainName}</h4>
+                            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Train #{trn.trainNumber} • {trn.duration}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#34d399', fontFamily: 'monospace' }}>{trn.estimatedPrice}</span>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>IRCTC Fare</span>
+                        </div>
+                      </div>
+
+                      {/* Station Details */}
+                      <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff' }}>{trn.departureTime}</div>
+                          <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{trn.fromStation}</p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {trn.classes.map(cls => (
+                            <span key={cls} style={{ fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 800 }}>
+                              {cls}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff' }}>{trn.arrivalTime}</div>
+                          <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{trn.toStation}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span style={{ fontSize: '0.72rem', color: '#34d399', fontWeight: 700 }}>
+                          ★ {trn.availabilityBadge || 'Confirmed Seats Prediction'}
+                        </span>
+                        <a
+                          href={trn.bookingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-primary"
+                          style={{ padding: '8px 16px', fontSize: '0.78rem', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}
+                        >
+                          <span>Book Train on IRCTC</span>
+                          <ExternalLink style={{ width: '13px', height: '13px' }} />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 3. BUSES SECTION */}
+                  {(routeCategoryFilter === 'all' || routeCategoryFilter === 'bus') && routeResult.buses.map((bus, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fbbf24' }}>
+                            <Bus style={{ width: '20px', height: '20px' }} />
+                          </div>
+                          <div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{bus.operator}</h4>
+                            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{bus.busType}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fbbf24', fontFamily: 'monospace' }}>{bus.estimatedPrice}</span>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>per berth/seat</span>
+                        </div>
+                      </div>
+
+                      {/* Bus Boarding & Drop */}
+                      <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff' }}>{bus.departureTime}</div>
+                          <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{bus.fromTerminal}</p>
+                        </div>
+
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 700 }}>{bus.duration}</span>
+                          <div style={{ width: '50px', height: '2px', background: '#fbbf24', margin: '3px auto' }}></div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff' }}>{bus.arrivalTime}</div>
+                          <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{bus.toTerminal}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        {bus.seatsAvailable && (
+                          <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 700 }}>
+                            {bus.seatsAvailable} seats remaining
+                          </span>
+                        )}
+                        <a
+                          href={bus.bookingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-primary"
+                          style={{ padding: '8px 16px', fontSize: '0.78rem', background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}
+                        >
+                          <span>Book Bus Ticket</span>
+                          <ExternalLink style={{ width: '13px', height: '13px' }} />
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 4. CABS & SELF DRIVE */}
+                  {(routeCategoryFilter === 'all' || routeCategoryFilter === 'cab') && routeResult.cabs.map((cab, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(168, 85, 247, 0.3)' }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
+                            <Car style={{ width: '20px', height: '20px' }} />
+                          </div>
+                          <div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{cab.serviceType}</h4>
+                            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{cab.distanceKm} km • {cab.duration}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#c084fc', fontFamily: 'monospace' }}>{cab.estimatedPrice}</span>
+                          <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Estimated Cab Fare</span>
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                        <p><strong>Route:</strong> {cab.routeVia}</p>
+                        <p style={{ color: '#94a3b8', marginTop: '4px' }}><strong>Toll:</strong> {cab.tollEstimate}</p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Door-to-Door Pickup</span>
+                        <a
+                          href={cab.bookingUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '0.72rem', color: '#c084fc', borderColor: 'rgba(168, 85, 247, 0.3)', whiteSpace: 'nowrap' }}
+                          style={{ padding: '8px 16px', fontSize: '0.78rem', color: '#c084fc', borderColor: 'rgba(168, 85, 247, 0.4)' }}
                         >
-                          <span>Open Service</span>
-                          <ExternalLink style={{ width: '12px', height: '12px' }} />
+                          <span>Reserve Cab / Rental</span>
+                          <ExternalLink style={{ width: '13px', height: '13px' }} />
                         </a>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 5. MONUMENT & SIGHTSEEING PASSES */}
-              {(bookingCategoryFilter === 'all' || bookingCategoryFilter === 'pass') && monumentPasses.length > 0 && (
-                <div className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(236, 72, 153, 0.25)' }}>
-                  <div className="flex items-center gap-2">
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(236, 72, 153, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f472b6' }}>
-                      <TicketIcon style={{ width: '18px', height: '18px' }} />
                     </div>
-                    <div>
-                      <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>Tourist E-Passes & Monument Tickets</h4>
-                      <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Official government permits, heritage monument passes, and safari entries.</p>
-                    </div>
-                  </div>
+                  ))}
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {monumentPasses.map((pass, pIdx) => (
-                      <div key={pIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{pass.attractionName}</span>
+                  {/* 5. DESTINATION PASSES */}
+                  {(routeCategoryFilter === 'all' || routeCategoryFilter === 'pass') && routeResult.destinationPasses && routeResult.destinationPasses.map((pass, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(236, 72, 153, 0.3)' }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(236, 72, 153, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f472b6' }}>
+                            <TicketIcon style={{ width: '20px', height: '20px' }} />
                           </div>
-                          <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(236, 72, 153, 0.15)', color: '#f472b6', fontWeight: 700, display: 'inline-block', marginTop: '2px' }}>
-                            {pass.passType}
-                          </span>
+                          <div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>{pass.attractionName}</h4>
+                            <span style={{ fontSize: '0.68rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(236, 72, 153, 0.15)', color: '#f472b6', fontWeight: 700, display: 'inline-block', marginTop: '2px' }}>
+                              {pass.passType}
+                            </span>
+                          </div>
                         </div>
+
                         <a
                           href={pass.bookingUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="btn-primary"
-                          style={{ padding: '6px 12px', fontSize: '0.72rem', background: 'linear-gradient(135deg, #db2777 0%, #ec4899 100%)', whiteSpace: 'nowrap' }}
+                          style={{ padding: '8px 16px', fontSize: '0.78rem', background: 'linear-gradient(135deg, #db2777 0%, #ec4899 100%)' }}
                         >
-                          <span>Get Pass</span>
-                          <ExternalLink style={{ width: '12px', height: '12px' }} />
+                          <span>Get Official Pass</span>
+                          <ExternalLink style={{ width: '13px', height: '13px' }} />
                         </a>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+
+                </div>
+              </div>
+            )}
+
+            {/* =========================================================================
+                MODE 2: HIERARCHICAL STATION & HUB EXPLORER (COUNTRY -> CITY)
+               ========================================================================= */}
+            {bookingTabMode === 'hierarchy' && (
+              <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* 4-Step Cascading Dropdowns */}
+                <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                        <Building2 style={{ width: '20px', height: '20px' }} />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>Hierarchical Location & Station Explorer</h3>
+                        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Browse all airports, train junctions, and central bus stands in any selected city.</p>
+                      </div>
+                    </div>
+
+                    <span className="badge badge-blue">
+                      Currency: {currentCountry.currency}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-4 gap-3">
+                    {/* 1. Country */}
+                    <div>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                        <span>Step 1: Country</span>
+                      </label>
+                      <select
+                        value={bookingCountryIdx}
+                        onChange={e => {
+                          const newCountryIdx = parseInt(e.target.value, 10);
+                          setBookingCountryIdx(newCountryIdx);
+                          setBookingStateIdx(0);
+                          setBookingDistrictIdx(0);
+                          setBookingCityIdx(0);
+                        }}
+                        className="input-glass"
+                        style={{ fontWeight: 700, color: '#ffffff', width: '100%', padding: '10px 12px' }}
+                      >
+                        {HIERARCHICAL_TRANSIT_DATA.map((c, idx) => (
+                          <option key={c.code} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
+                            {c.flag} {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 2. State / Province */}
+                    <div>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                        <span>Step 2: State / Province</span>
+                      </label>
+                      <select
+                        value={bookingStateIdx}
+                        onChange={e => {
+                          const newStateIdx = parseInt(e.target.value, 10);
+                          setBookingStateIdx(newStateIdx);
+                          setBookingDistrictIdx(0);
+                          setBookingCityIdx(0);
+                        }}
+                        className="input-glass"
+                        style={{ fontWeight: 700, color: '#34d399', width: '100%', padding: '10px 12px' }}
+                      >
+                        {statesList.map((s, idx) => (
+                          <option key={s.name} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
+                            📍 {s.name} ({s.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 3. District / Region */}
+                    <div>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                        <span>Step 3: District / Region</span>
+                      </label>
+                      <select
+                        value={bookingDistrictIdx}
+                        onChange={e => {
+                          const newDistIdx = parseInt(e.target.value, 10);
+                          setBookingDistrictIdx(newDistIdx);
+                          setBookingCityIdx(0);
+                        }}
+                        className="input-glass"
+                        style={{ fontWeight: 700, color: '#fbbf24', width: '100%', padding: '10px 12px' }}
+                      >
+                        {districtsList.map((d, idx) => (
+                          <option key={d.name} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
+                            🏛️ {d.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 4. City / Town / Hub */}
+                    <div>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#a855f7', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                        <span>Step 4: City / Town</span>
+                      </label>
+                      <select
+                        value={bookingCityIdx}
+                        onChange={e => {
+                          const newCityIdx = parseInt(e.target.value, 10);
+                          setBookingCityIdx(newCityIdx);
+                        }}
+                        className="input-glass"
+                        style={{ fontWeight: 700, color: '#c084fc', width: '100%', padding: '10px 12px' }}
+                      >
+                        {citiesList.map((ct, idx) => (
+                          <option key={ct.name} value={idx} style={{ background: '#090e17', color: '#ffffff' }}>
+                            🏙️ {ct.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              )}
 
-            </div>
+                {/* Location Breadcrumbs & Destination Overview */}
+                <div className="glass-panel" style={{
+                  padding: '20px',
+                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.5) 100%)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                      <span style={{ color: '#ffffff' }}>{currentCountry.flag} {currentCountry.name}</span>
+                      <ChevronRight style={{ width: '14px', height: '14px', color: '#64748b' }} />
+                      <span style={{ color: '#34d399' }}>{currentState.name}</span>
+                      <ChevronRight style={{ width: '14px', height: '14px', color: '#64748b' }} />
+                      <span style={{ color: '#fbbf24' }}>{currentDistrict.name}</span>
+                      <ChevronRight style={{ width: '14px', height: '14px', color: '#64748b' }} />
+                      <span style={{ color: '#38bdf8', fontWeight: 900, fontSize: '0.92rem' }}>{currentCity.name}</span>
+                    </div>
+
+                    {currentCity.pincodeOrZip && (
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: '6px' }}>
+                        PIN / ZIP: <strong>{currentCity.pincodeOrZip}</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  <p style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    {currentCity.description}
+                  </p>
+
+                  {/* Popular spots chips */}
+                  {currentCity.popularSpots && currentCity.popularSpots.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>Key Spots:</span>
+                      {currentCity.popularSpots.map((spot, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            fontSize: '0.68rem',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            background: 'rgba(56, 189, 248, 0.12)',
+                            border: '1px solid rgba(56, 189, 248, 0.25)',
+                            color: '#bae6fd',
+                            fontWeight: 600
+                          }}
+                        >
+                          ★ {spot}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Resolved Transit Hubs Grid */}
+                <div className="grid grid-12 gap-4">
+                  {/* AIRPORTS */}
+                  {airports.map((apt, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(56, 189, 248, 0.25)' }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                            <Plane style={{ width: '18px', height: '18px' }} />
+                          </div>
+                          <div>
+                            <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{apt.name}</h4>
+                            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{apt.distance}</p>
+                          </div>
+                        </div>
+                        <span className="badge badge-blue">IATA: {apt.code}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {apt.bookingLinks.map((link, lIdx) => (
+                          <div key={lIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{link.provider}</span>
+                              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{link.description}</p>
+                            </div>
+                            <a href={link.url} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.72rem' }}>
+                              <span>Book Flights</span>
+                              <ExternalLink style={{ width: '12px', height: '12px' }} />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* RAILWAYS */}
+                  {railways.map((rail, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(16, 185, 129, 0.25)' }}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                            <Train style={{ width: '18px', height: '18px' }} />
+                          </div>
+                          <div>
+                            <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{rail.name}</h4>
+                            <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{rail.division}</p>
+                          </div>
+                        </div>
+                        <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontWeight: 800 }}>
+                          Code: {rail.code}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {rail.bookingLinks.map((link, lIdx) => (
+                          <div key={lIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{link.provider}</span>
+                              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{link.description}</p>
+                            </div>
+                            <a href={link.url} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.72rem', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}>
+                              <span>Reserve Train</span>
+                              <ExternalLink style={{ width: '12px', height: '12px' }} />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* BUSES */}
+                  {busTerminals.map((bus, idx) => (
+                    <div key={idx} className="col-span-6 lg-col-span-12 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(245, 158, 11, 0.25)' }}>
+                      <div className="flex items-center gap-2">
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fbbf24' }}>
+                          <Bus style={{ width: '18px', height: '18px' }} />
+                        </div>
+                        <div>
+                          <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>{bus.name}</h4>
+                          <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{bus.type}</p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {bus.bookingLinks.map((link, lIdx) => (
+                          <div key={lIdx} style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(10, 15, 29, 0.7)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff' }}>{link.provider}</span>
+                              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{link.description}</p>
+                            </div>
+                            <a href={link.url} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.72rem', background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)' }}>
+                              <span>Book Bus</span>
+                              <ExternalLink style={{ width: '12px', height: '12px' }} />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         );
       })()}
