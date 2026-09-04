@@ -173,28 +173,30 @@ button, input, select, textarea {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-subtle);
-  padding: 12px 24px;
+  padding: 10px 20px;
 }
 
 .navbar-content {
-  max-width: 1280px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .brand-icon-box {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-md);
   background: var(--gradient-brand);
   padding: 2px;
@@ -215,7 +217,7 @@ button, input, select, textarea {
 }
 
 .brand-title {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 800;
   background: var(--gradient-brand);
   -webkit-background-clip: text;
@@ -225,29 +227,36 @@ button, input, select, textarea {
 }
 
 .brand-subtitle {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   margin-top: -2px;
 }
 
-/* Nav tabs */
+/* Nav tabs - Aligned to left and utilizing available bar width */
 .nav-links-box {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(15, 23, 42, 0.8);
+  gap: 3px;
+  background: rgba(15, 23, 42, 0.85);
   padding: 4px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.nav-links-box::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-link-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 0.8rem;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
   border: none;
@@ -259,13 +268,13 @@ button, input, select, textarea {
 
 .nav-link-btn:hover {
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .nav-link-btn.active {
   background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
 }
 
 /* Buttons */

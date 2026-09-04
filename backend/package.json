@@ -1,0 +1,28 @@
+{
+  "name": "tripnova-backend",
+  "version": "1.0.0",
+  "description": "TripNova Tourism Platform Backend API Server",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "tourism",
+    "travel",
+    "tripnova",
+    "api",
+    "safety",
+    "smart-india-hackathon"
+  ],
+  "author": "TripNova Team",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.12.0",
+    "sqlite3": "^5.1.7"
+  }
+}
