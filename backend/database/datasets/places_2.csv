@@ -1,0 +1,201 @@
+id,location_id,name,category,avg_rating,review_count,entry_fee,opening_hours,created_at,updated_at
+plc-shore-temple,loc-cgl,Shore Temple Mamallapuram,Heritage,4.7,4850,40.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pancha-rathas,loc-cgl,Pancha Rathas (Five Rathas),Heritage,4.6,3420,40.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-arjuna-penance,loc-cgl,Descent of the Ganges (Arjuna's Penance),Heritage,4.7,2980,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-butter-ball,loc-cgl,Krishna's Butter Ball,Historical,4.5,4120,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mahabs-lighthouse,loc-cgl,Mahabalipuram Lighthouse,Historical,4.4,1850,10.00,"10:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-varaha-cave,loc-cgl,Varaha Cave Temple,Heritage,4.6,1240,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-seashell-museum,loc-cgl,India Seashell Museum,Museum,4.4,2150,150.00,"08:00 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mahabs-beach,loc-cgl,Mahabalipuram Beach,Beach,4.4,3200,0.00,"24 Hours (Best: 05:30 - 18:30)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-tiger-cave,loc-cgl,Tiger Cave Saluvankuppam,Historical,4.3,1650,0.00,"07:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vedanthangal,loc-cgl,Vedanthangal Bird Sanctuary,Nature,4.5,2300,25.00,"06:00 - 18:00 (Nov to Mar)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kailasanathar,loc-kpm,Kailasanathar Temple,Heritage,4.8,2850,0.00,"06:00 - 12:00, 16:00 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ekambareswarar,loc-kpm,Ekambareswarar Temple,Religious,4.8,3400,0.00,"06:00 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kamakshi-amman,loc-kpm,Arulmigu Kamakshi Amman Temple,Religious,4.9,4200,0.00,"05:30 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-varadharaja,loc-kpm,Varadharaja Perumal Temple,Religious,4.8,3100,0.00,"06:00 - 12:30, 15:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vaikunta-perumal,loc-kpm,Vaikunta Perumal Temple,Historical,4.6,1280,0.00,"06:00 - 11:30, 16:00 - 19:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ulagalantha,loc-kpm,Ulagalantha Perumal Temple,Religious,4.7,1450,0.00,"06:00 - 12:00, 16:30 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kanchi-kudil,loc-kpm,Kanchi Kudil Heritage House,Heritage,4.3,620,20.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-trilokyanatha,loc-kpm,Trilokyanatha Jain Temple Tiruparuttikundram,Historical,4.5,430,0.00,"06:00 - 11:30, 16:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kachabeswarar,loc-kpm,Kachabeswarar Temple,Religious,4.6,940,0.00,"06:00 - 12:00, 16:30 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kanchi-silk-park,loc-kpm,Kanchipuram Silk Weavers Cooperative Society,Heritage,4.5,1520,0.00,"09:30 - 19:30 (Closed Sundays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-botanical-ooty,loc-nlg,Government Botanical Garden Ooty,Nature,4.6,5400,40.00,"07:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ooty-lake,loc-nlg,Ooty Lake & Boathouse,Nature,4.2,4600,15.00,"09:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-doddabetta,loc-nlg,Doddabetta Peak & Telescope House,Nature,4.5,3900,10.00,"09:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-rose-garden-ooty,loc-nlg,Government Rose Garden Ooty,Nature,4.5,3100,40.00,"08:30 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pykara-falls,loc-nlg,Pykara Waterfalls & Lake,Nature,4.6,2850,20.00,"09:30 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-sims-park,loc-nlg,Sim's Park Coonoor,Nature,4.5,2450,30.00,"09:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-dolphins-nose,loc-nlg,Dolphin's Nose Viewpoint,Nature,4.4,1980,15.00,"09:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-toy-train,loc-nlg,Nilgiri Mountain Railway (Toy Train),Historical,4.8,3750,50.00,"Scheduled Departures",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-tea-museum-ooty,loc-nlg,The Tea Factory & Tea Museum,Museum,4.3,2890,20.00,"09:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-avalanche-lake,loc-nlg,Avalanche Lake Sanctuary,Nature,4.7,2150,200.00,"09:00 - 15:00 (Forest permit)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kodai-lake,loc-dgl,Kodaikanal Lake & Boathouse,Nature,4.5,5100,0.00,"06:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-coakers-walk,loc-dgl,Coaker's Walk Kodaikanal,Nature,4.4,4200,30.00,"07:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-bryant-park,loc-dgl,Bryant Park,Nature,4.3,3100,30.00,"09:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pillar-rocks,loc-dgl,Pillar Rocks Viewpoint,Nature,4.5,3450,10.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-silver-cascade,loc-dgl,Silver Cascade Waterfalls,Nature,4.2,2750,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pine-forest,loc-dgl,Pine Forest Kodaikanal,Nature,4.4,2600,10.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-guna-caves,loc-dgl,Guna Caves (Devil's Kitchen),Nature,4.3,2100,10.00,"09:00 - 16:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mannavanur,loc-dgl,Mannavanur Eco Village & Lake,Nature,4.7,1650,20.00,"09:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-dindigul-fort,loc-dgl,Dindigul Rock Fort,Historical,4.5,1420,25.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-sirumalai-hills,loc-dgl,Sirumalai Hills Viewpoint,Nature,4.4,980,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vivekananda-rock,loc-kkm,Vivekananda Rock Memorial,Historical,4.8,6100,50.00,"08:00 - 16:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thiruvalluvar-statue,loc-kkm,Thiruvalluvar Statue,Monument,4.7,4800,20.00,"08:00 - 16:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-triveni-sangam,loc-kkm,Kanyakumari Triveni Sangam Beach,Beach,4.6,3900,0.00,"24 Hours (Best: 05:30 - 07:00 & 17:30 - 19:00)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-padmanabhapuram,loc-kkm,Padmanabhapuram Palace,Heritage,4.7,2900,40.00,"09:00 - 16:30 (Closed Mondays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-bhagavathy-temple,loc-kkm,Arulmigu Bhagavathy Amman Temple,Religious,4.8,3250,0.00,"04:30 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-gandhi-mandapam,loc-kkm,Mahatma Gandhi Memorial Mandapam,Historical,4.4,1850,5.00,"07:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vattakottai,loc-kkm,Vattakottai Circular Seaside Fort,Historical,4.5,2100,25.00,"08:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-suchindram,loc-kkm,Thanumalayan Temple Suchindram,Religious,4.8,2750,0.00,"04:30 - 11:30, 17:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mathur-aqueduct,loc-kkm,Mathur Aqueduct Hanging Bridge,Historical,4.4,1420,10.00,"07:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-chothavilai,loc-kkm,Chothavilai Beach,Beach,4.4,1280,0.00,"24 Hours (Best: 16:00 - 19:00)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-srirangam,loc-try,Sri Ranganathaswamy Temple Srirangam,Religious,4.9,5600,0.00,"06:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-rockfort,loc-try,Ucchi Pillayar Rockfort Temple,Religious,4.8,4100,10.00,"06:00 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thiruvanaikaval,loc-try,Jambukeswarar Temple Thiruvanaikaval,Religious,4.8,3200,0.00,"06:00 - 13:00, 15:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-butterfly-park,loc-try,Tropical Butterfly Park Srirangam,Nature,4.3,1850,15.00,"09:00 - 17:30 (Closed Tuesdays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-lourdu-church,loc-try,St. Lourdes Church Trichy,Religious,4.6,1420,0.00,"06:00 - 19:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-samayapuram,loc-try,Arulmigu Samayapuram Mariamman Temple,Religious,4.8,3900,0.00,"05:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-museum-trichy,loc-try,Government Museum Rani Mangammal Mahal,Museum,4.2,640,10.00,"09:30 - 17:00 (Closed Fridays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vayalur-murugan,loc-try,Vayalur Murugan Temple,Religious,4.7,1750,0.00,"06:00 - 13:00, 15:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mukkombu,loc-try,Mukkombu Upper Anaicut Park,Nature,4.2,2150,10.00,"08:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-gunaseelam,loc-try,Gunaseelam Prasanna Venkatachalapathy Temple,Religious,4.7,1320,0.00,"06:30 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-rameshwaram-temple,loc-rmd,Arulmigu Ramanathaswamy Temple,Religious,4.9,5900,0.00,"05:00 - 13:00, 15:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-agni-theertham,loc-rmd,Agni Theertham Holy Seashore,Beach,4.6,3400,0.00,"05:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-dhanushkodi,loc-rmd,Dhanushkodi Ghost Town & Beach,Beach,4.8,4750,0.00,"07:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pamban-bridge,loc-rmd,Pamban Sea Bridge & Viewpoint,Historical,4.7,4200,0.00,"24 Hours (Best: 06:00 - 18:00)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kalam-memorial,loc-rmd,Dr. A.P.J. Abdul Kalam National Memorial,Museum,4.8,3600,0.00,"09:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kothandaramaswamy,loc-rmd,Kothandaramaswamy Temple Dhanushkodi,Religious,4.6,1890,0.00,"06:30 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ram-setu-point,loc-rmd,Ram Setu (Adam's Bridge) Viewpoint,Heritage,4.7,2150,0.00,"07:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-villundi-theertham,loc-rmd,Villundi Theertham Fresh Water Spring,Beach,4.4,1680,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ariyaman-beach,loc-rmd,Ariyaman Beach Eco Tourism Park,Beach,4.3,1950,20.00,"08:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kurusadai-island,loc-rmd,Kurusadai Island Marine Biosphere,Nature,4.6,780,100.00,"09:00 - 15:00 (Forest boat)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-annamalaiyar,loc-tvm,Arulmigu Annamalaiyar Temple,Religious,4.9,5400,0.00,"05:30 - 12:30, 15:30 - 21:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-girivalam-path,loc-tvm,Arunachala Hill Girivalam Path (14 km),Religious,4.9,4100,0.00,"24 Hours (Best during Full Moon)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ramana-ashram,loc-tvm,Sri Ramana Maharshi Ashram,Heritage,4.8,3200,0.00,"05:30 - 12:30, 14:00 - 19:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-sathanur-dam,loc-tvm,Sathanur Dam & Crocodile Park,Nature,4.3,2150,15.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-virupaksha-cave,loc-tvm,Virupaksha Cave Arunachala,Historical,4.7,1420,0.00,"08:00 - 16:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-skandasramam,loc-tvm,Skandasramam Cave Arunachala,Historical,4.7,1350,0.00,"08:00 - 16:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-yogi-ashram,loc-tvm,Yogi Ramsuratkumar Ashram,Religious,4.7,1620,0.00,"06:00 - 12:00, 15:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-javadi-hills,loc-tvm,Javadi Hills Forest Reserve,Nature,4.4,980,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-beemanmadavu,loc-tvm,Beemanmadavu Waterfalls,Nature,4.3,740,0.00,"08:00 - 16:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-parvathamalai,loc-tvm,Parvathamalai Hill Shivan Temple Trail,Nature,4.8,1890,0.00,"24 Hours (Night trek popular)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-nellaiappar,loc-tnv,Arulmigu Nellaiappar Temple,Religious,4.8,4200,0.00,"06:00 - 12:30, 16:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-manimuthar-falls,loc-tnv,Manimuthar Waterfalls & Dam,Nature,4.5,2350,25.00,"08:00 - 16:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-agasthiyar-falls,loc-tnv,Papanasam Agasthiyar Waterfalls,Nature,4.6,2600,20.00,"07:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kmtr-tiger,loc-tnv,Kalakkad Mundanthurai Tiger Reserve,Nature,4.6,1120,50.00,"07:00 - 16:00 (Checkpost permit)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-krishnapuram,loc-tnv,Krishnapuram Venkatachalapathy Temple,Heritage,4.7,1350,0.00,"07:00 - 11:30, 17:00 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-science-centre-tnv,loc-tnv,District Science Centre Tirunelveli,Museum,4.3,1420,25.00,"10:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-uvari-church,loc-tnv,Uvari Kappal Matha Church,Religious,4.7,1850,0.00,"05:30 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-manjolai,loc-tnv,Manjolai Tea Estate Hills,Nature,4.6,980,0.00,"08:00 - 15:00 (Entry pass required)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-koonthankulam,loc-tnv,Koonthankulam Bird Sanctuary,Nature,4.4,850,10.00,"08:00 - 17:00 (Seasonal)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-trinity-cathedral,loc-tnv,Holy Trinity Cathedral Palayamkottai,Religious,4.5,720,0.00,"06:00 - 19:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-courtallam-main,loc-tks,Courtallam Main Waterfalls,Nature,4.6,4100,0.00,"06:00 - 18:30 (Monsoon season)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-five-falls,loc-tks,Five Falls (Aintharuvi) Courtallam,Nature,4.6,3800,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-old-courtallam,loc-tks,Old Courtallam Falls (Pazhaya Aruvi),Nature,4.5,2600,0.00,"06:30 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kasi-viswanathar,loc-tks,Kasi Viswanathar Temple Tenkasi,Religious,4.8,2450,0.00,"06:00 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-tiger-falls,loc-tks,Tiger Falls (Puli Aruvi),Nature,4.3,1650,0.00,"07:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-gundar-dam,loc-tks,Gundar Dam & Eco Park Sengottai,Nature,4.4,1420,10.00,"08:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-shenbaga-falls,loc-tks,Shenbaga Devi Falls Trail,Nature,4.5,890,0.00,"07:00 - 16:00 (Forest trek)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thirumalai-kovil,loc-tks,Thirumalai Kovil Panpoli,Religious,4.8,1920,0.00,"06:00 - 13:00, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ayikudi-balan,loc-tks,Ayikudi Balasubramanya Swamy Temple,Religious,4.7,1150,0.00,"06:00 - 12:00, 17:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-honey-falls,loc-tks,Honey Falls (Thenaruvi),Nature,4.6,740,0.00,"07:00 - 14:00 (Permit required)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-yercaud-lake,loc-slm,Yercaud Lake & Emerald Park,Nature,4.4,3600,20.00,"08:30 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pagoda-point,loc-slm,Pagoda Point Yercaud,Nature,4.4,2450,0.00,"06:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ladys-seat,loc-slm,Lady's Seat & Viewpoint,Nature,4.3,2800,10.00,"07:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kiliyur-falls,loc-slm,Kiliyur Waterfalls Yercaud,Nature,4.3,1950,0.00,"08:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-shevaroy-temple,loc-slm,Shevaroy Temple & Cave Peak,Religious,4.6,1820,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kottai-mariamman,loc-slm,Kottai Mariamman Temple Salem,Religious,4.7,2150,0.00,"06:00 - 12:00, 16:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kurumbapatti,loc-slm,Kurumbapatti Zoological Park,Nature,4.2,1450,20.00,"09:00 - 17:00 (Closed Tuesdays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-1008-shiva,loc-slm,1008 Shiva Temple Ariyanoor,Religious,4.6,1920,0.00,"06:30 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mettur-dam,loc-slm,Mettur Dam & Stanley Reservoir,Historical,4.5,3950,10.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mettur-park,loc-slm,Mettur Dam Pavalamani Park,Nature,4.2,1680,15.00,"09:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vellore-fort,loc-vel,Vellore Fort & Moat,Historical,4.6,4100,0.00,"08:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-golden-temple,loc-vel,Sri Lakshmi Narayani Golden Temple (Sripuram),Religious,4.8,5400,0.00,"07:00 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-jalakandeswarar,loc-vel,Jalakandeswarar Temple Fort,Religious,4.8,2950,0.00,"06:30 - 13:00, 17:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-museum-vellore,loc-vel,Government Museum Vellore Fort,Museum,4.3,870,10.00,"09:30 - 17:00 (Closed Fridays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-amirthi-zoo,loc-vel,Amirthi Zoological Forest Park,Nature,4.2,1680,20.00,"08:30 - 17:00 (Closed Tuesdays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-assumption-church,loc-vel,Assumption Cathedral Church Bell Tower,Religious,4.5,620,0.00,"06:00 - 19:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mordhana-dam,loc-vel,Mordhana Dam & Valley,Nature,4.3,950,0.00,"08:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-virinjipuram,loc-vel,Margabandeeswarar Temple Virinjipuram,Religious,4.7,1450,0.00,"06:00 - 12:00, 16:30 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vallimalai,loc-vel,Vallimalai Subramaniyar Temple,Religious,4.6,1120,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-padavedu,loc-vel,Padavedu Renugambal Temple,Religious,4.7,1350,0.00,"06:00 - 13:00, 15:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-meghamalai,loc-tni,Meghamalai Highwavys Tea Plateau,Nature,4.7,2850,0.00,"24 Hours (Forest transit)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-suruli-falls,loc-tni,Suruli Waterfalls & Caves,Nature,4.5,3100,20.00,"07:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kumbakkarai,loc-tni,Kumbakkarai Waterfalls,Nature,4.4,2400,15.00,"08:00 - 16:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-chinna-suruli,loc-tni,Chinna Suruli Waterfalls Kombaithozhu,Nature,4.4,1280,10.00,"08:00 - 16:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kuchanur,loc-tni,Kuchanur Saneeswara Bhagavan Temple,Religious,4.7,1920,0.00,"06:00 - 12:30, 16:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-veerapandi,loc-tni,Veerapandi Gowmariamman Temple,Religious,4.7,1850,0.00,"05:30 - 13:00, 16:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-sothuparai,loc-tni,Sothuparai Dam & Park,Nature,4.3,1350,10.00,"08:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kurangani,loc-tni,Kurangani Mountain Trek Route,Nature,4.7,1640,0.00,"06:00 - 16:00 (Forest guideline)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mavoothu,loc-tni,Mavoothu Vellappar Murugan Temple,Religious,4.6,980,0.00,"07:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-shanmuganathi,loc-tni,Shanmuganathi Dam & Garden,Nature,4.2,760,0.00,"08:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pichavaram,loc-cud,Pichavaram Mangrove Forest Boating,Nature,4.6,4300,50.00,"08:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-chidambaram-temple,loc-cud,Thillai Nataraja Temple Chidambaram,Religious,4.9,5100,0.00,"06:00 - 12:30, 16:30 - 22:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-silver-beach,loc-cud,Silver Beach Devanampattinam,Beach,4.4,2950,0.00,"24 Hours (Best: 05:30 - 08:30 & 16:30 - 20:30)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-padaleeswarar,loc-cud,Padaleeswarar Temple Tirupadiripuliyur,Religious,4.7,1620,0.00,"06:00 - 12:00, 16:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-veeranam-lake,loc-cud,Veeranam Historic Water Lake,Nature,4.4,1240,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vada-lour-sabai,loc-cud,Vadalur Vallalar Sathya Gnana Sabai,Heritage,4.8,2100,0.00,"05:00 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-bhuvanagiri,loc-cud,Sri Raghavendra Swamy Birthplace Shrine,Religious,4.7,1450,0.00,"06:00 - 12:30, 16:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-devanatha-perumal,loc-cud,Devanatha Perumal Temple Thiruvanthipuram,Religious,4.7,1380,0.00,"06:00 - 11:30, 16:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-srimushnam,loc-cud,Bhuvaraha Swamy Temple Srimushnam,Heritage,4.8,1690,0.00,"06:00 - 12:00, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-fort-st-david,loc-cud,Fort St. David Colonial Ruins,Historical,4.1,640,0.00,"08:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-chettinad-palace,loc-svg,Chettinad Palace Kanadukathan,Heritage,4.6,2850,100.00,"09:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-athangudi-palace,loc-svg,Athangudi Palace & Handmade Tile Craft,Heritage,4.6,2100,50.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-pillayarpatti,loc-svg,Pillayarpatti Karpaga Vinayagar Temple,Religious,4.9,4600,0.00,"06:00 - 13:00, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kundrakudi,loc-svg,Kundrakudi Shanmughanathar Hill Temple,Religious,4.8,2150,0.00,"06:00 - 12:30, 16:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vairavanpatti,loc-svg,Vairavanpatti Valaroli Nathar Temple,Religious,4.7,1120,0.00,"06:30 - 12:00, 16:30 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thirumayam-fort,loc-svg,Thirumayam Rock Fort & Cave Temple,Historical,4.5,1450,25.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thousand-windows,loc-svg,Ayiram Jannal Veedu (Thousand Window House),Heritage,4.3,1680,0.00,"External View / 09:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-ariyakudi,loc-svg,Ariyakudi Thiruvengadamudayan Temple,Religious,4.6,920,0.00,"06:00 - 11:30, 17:00 - 20:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kollangudi,loc-svg,Kollangudi Vettudaiyar Kaliamman Temple,Religious,4.7,1350,0.00,"06:00 - 12:30, 16:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vettangudi,loc-svg,Vettangudi Bird Sanctuary,Nature,4.2,680,10.00,"08:00 - 17:00 (Nov to Feb)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-fort-dansborg,loc-myd,Fort Dansborg Danish Citadel Tranquebar,Historical,4.6,3400,20.00,"09:00 - 17:30 (Closed Fridays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-danish-museum,loc-myd,Danish Museum Tranquebar,Museum,4.4,1420,10.00,"09:30 - 17:00 (Closed Fridays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-tranquebar-beach,loc-myd,Tharangambadi Ozone Coast Beach,Beach,4.5,2950,0.00,"24 Hours (Best: 05:30 - 18:30)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-new-jerusalem,loc-myd,New Jerusalem Church Tranquebar,Historical,4.5,1120,0.00,"07:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-mayuranathar,loc-myd,Mayuranathaswamy Temple,Religious,4.7,2150,0.00,"06:00 - 12:00, 16:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vaitheeswaran,loc-myd,Arulmigu Vaitheeswaran Koil,Religious,4.8,3800,0.00,"06:00 - 13:00, 16:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thirukadaiyur,loc-myd,Amirthakadeswarar Temple Thirukadaiyur,Religious,4.8,3200,0.00,"06:00 - 13:00, 16:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-poompuhar-beach,loc-myd,Poompuhar Beach & Silappathikara Art Gallery,Historical,4.3,1850,10.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-sirkazhi-temple,loc-myd,Bhramapureeswarar Temple Sirkazhi,Religious,4.7,1640,0.00,"06:00 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thirumanancheri,loc-myd,Udhvaganathar Temple Thirumanancheri,Religious,4.8,2450,0.00,"06:00 - 13:00, 15:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-velankanni-church,loc-ngp,Basilica of Our Lady of Good Health Velankanni,Religious,4.8,5600,0.00,"05:00 - 21:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-velankanni-beach,loc-ngp,Velankanni Coastal Beach,Beach,4.4,3200,0.00,"24 Hours (Best: 05:30 - 08:30 & 16:30 - 19:30)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-nagore-dargah,loc-ngp,Nagore Dargah Sharif,Religious,4.7,3900,0.00,"04:30 - 22:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-point-calimere,loc-ngp,Point Calimere Wildlife & Bird Sanctuary,Nature,4.5,1650,20.00,"07:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-calimere-lighthouse,loc-ngp,Kodiakkarai Heritage Lighthouse,Historical,4.4,1120,10.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kayarohanaswami,loc-ngp,Kayarohanaswami Temple Nagapattinam,Religious,4.6,980,0.00,"06:00 - 12:00, 17:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-soundararaja,loc-ngp,Soundararaja Perumal Temple,Religious,4.7,1250,0.00,"06:30 - 12:00, 17:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-sikkal-singaravelan,loc-ngp,Sikkal Singaravelan Murugan Temple,Religious,4.8,2100,0.00,"06:00 - 12:00, 16:30 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-nagapattinam-beach,loc-ngp,Nagapattinam Beach & Harbour Promenade,Beach,4.2,1420,0.00,"24 Hours (Best: 16:00 - 19:30)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kodiakkarai-beach,loc-ngp,Kodiakkarai Coastline & Salt Pans,Beach,4.4,850,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-tiruchendur,loc-tut,Arulmigu Subramaniya Swamy Temple Tiruchendur,Religious,4.9,5800,0.00,"05:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-tiruchendur-beach,loc-tut,Tiruchendur Temple Seashore,Beach,4.6,3950,0.00,"24 Hours",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-snows-basilica,loc-tut,Our Lady of Snows Basilica,Religious,4.8,3100,0.00,"05:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-hare-island,loc-tut,Hare Island (Muyal Theevu) & Lighthouse,Nature,4.3,1850,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-manapad-church,loc-tut,Holy Cross Church Manapad Coastal Dunes,Heritage,4.7,2150,0.00,"06:00 - 19:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kulasekharapatnam,loc-tut,Mutharamman Temple Kulasekharapatnam,Religious,4.8,2900,0.00,"06:00 - 12:30, 16:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kattabomman-fort,loc-tut,Panchalankurichi Kattabomman Memorial Fort,Historical,4.4,1680,10.00,"08:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kalugumalai,loc-tut,Kalugumalai Vettuvan Koil Monolithic Temple,Historical,4.7,1420,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-korkai-site,loc-tut,Korkai Ancient Pandyan Port Excavation Site,Historical,4.3,580,0.00,"09:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kayathar-memorial,loc-tut,Veerapandiya Kattabomman Memorial Kayathar,Historical,4.4,920,0.00,"08:00 - 18:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-hogenakkal-falls,loc-dpi,Hogenakkal Waterfalls on Cauvery,Nature,4.6,4950,20.00,"08:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-hogenakkal-boat,loc-dpi,Hogenakkal River Coracle Boat Rides,Nature,4.7,3800,200.00,"08:00 - 17:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-theerthamalai,loc-dpi,Theerthagirishwarar Temple Theerthamalai,Religious,4.7,1650,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kottai-kovil-dpi,loc-dpi,Kottai Kovil Mallikarjuneswarar Temple,Religious,4.6,1180,0.00,"06:00 - 12:00, 16:30 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vathalmalai,loc-dpi,Vathalmalai Highland Hill View Point,Nature,4.5,1340,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-shiva-memorial,loc-dpi,Subramanya Shiva Memorial Papparapatti,Historical,4.4,620,0.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-nagavathi-dam,loc-dpi,Nagavathi Dam & Catchment Area,Nature,4.2,850,0.00,"08:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thoppur-temple,loc-dpi,Thoppur Sanjeevirayan Anjaneyar Temple,Religious,4.7,1750,0.00,"06:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-adhiyamankottai,loc-dpi,Adhiyamankottai Fort Ruins & Temple,Historical,4.3,590,0.00,"06:30 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-hanumanthathirtham,loc-dpi,Hanumanthathirtham Sacred Spring Riverbank,Religious,4.4,720,0.00,"06:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-bhavani-sangam,loc-erd,Bhavani Sangameshwarar Temple (Triveni Sangam),Religious,4.8,4200,0.00,"06:00 - 13:00, 16:00 - 21:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kodiveri-dam,loc-erd,Kodiveri Dam & Waterfall Cascades,Nature,4.3,3100,10.00,"08:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-thindal-murugan,loc-erd,Thindalmalai Murugan Temple,Religious,4.8,2850,0.00,"06:00 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-chennimalai,loc-erd,Chennimalai Subramanyaswamy Hill Temple,Religious,4.8,2450,0.00,"06:00 - 13:00, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-vellode-birds,loc-erd,Vellode Bird Sanctuary,Nature,4.3,1650,20.00,"08:30 - 17:00 (Closed Tuesdays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-bhavanisagar-dam,loc-erd,Bhavanisagar Dam & Park,Nature,4.4,2750,10.00,"09:00 - 18:00",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-museum-erode,loc-erd,Government Museum Erode,Museum,4.2,580,10.00,"09:30 - 17:00 (Closed Fridays)",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-periyar-memorial,loc-erd,Thanthai Periyar Memorial House,Historical,4.5,890,0.00,"09:00 - 17:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-brough-church,loc-erd,Brough Church CSI Erode,Historical,4.6,720,0.00,"07:00 - 19:30",2026-09-04 00:00:00,2026-09-04 00:00:00
+plc-kodumudi,loc-erd,Magudeeswarar Temple Kodumudi,Religious,4.8,2250,0.00,"06:00 - 12:30, 16:00 - 20:30",2026-09-04 00:00:00,2026-09-04 00:00:00

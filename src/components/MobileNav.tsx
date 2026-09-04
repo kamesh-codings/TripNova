@@ -6,7 +6,7 @@ import {
   ShieldAlert, 
   Scale, 
   Languages,
-  User
+  Landmark
 } from 'lucide-react';
 
 interface MobileNavProps {
@@ -17,6 +17,7 @@ interface MobileNavProps {
 export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab }) => {
   const items = [
     { id: 'dashboard', label: 'Explore', icon: Compass },
+    { id: 'spots', label: 'Spots', icon: Landmark },
     { id: 'planner', label: 'Planner', icon: MapPin },
     { id: 'emergency-card', label: 'E-Card', icon: CreditCard, highlight: true },
     { id: 'safety-hub', label: 'Safety', icon: ShieldAlert },

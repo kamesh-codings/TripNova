@@ -8,7 +8,8 @@ import {
   Languages, 
   User, 
   Sparkles,
-  PhoneCall
+  PhoneCall,
+  Landmark
 } from 'lucide-react';
 import { UserProfile } from '../types';
 
@@ -30,10 +31,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenChatbot
 }) => {
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Compass },
+    { id: 'dashboard', label: 'Explore', icon: Compass },
+    { id: 'spots', label: 'Spots', icon: Landmark },
     { id: 'planner', label: 'Trip Planner', icon: MapPin },
     { id: 'emergency-card', label: 'Emergency Card', icon: CreditCard, highlight: true },
-    { id: 'safety-hub', label: 'Safety Hubs', icon: ShieldAlert },
+    { id: 'safety-hub', label: 'Safety Hub', icon: ShieldAlert },
     { id: 'anti-scam', label: 'Fare Guard', icon: Scale },
     { id: 'tools', label: 'Travel Tools', icon: Languages },
     { id: 'profile', label: 'Profile', icon: User },

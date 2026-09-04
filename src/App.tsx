@@ -11,6 +11,7 @@ import { RegistrationModal } from './components/RegistrationModal';
 import { ProfileView } from './components/ProfileView';
 import { NovaAIBot } from './components/NovaAIBot';
 import { WelcomeGateway } from './components/WelcomeGateway';
+import { SpotsExplorer } from './components/SpotsExplorer';
 import { UserProfile, TripPlan } from './types';
 import { DEFAULT_USER_PROFILE } from './data/mockData';
 import { 
@@ -20,6 +21,7 @@ import {
   getStoredTrips, 
   saveStoredTrips 
 } from './utils/storage';
+import { syncUserProfile } from './utils/api';
 import { Sparkles, UserPlus, CheckCircle } from 'lucide-react';
 
 const GATEWAY_SHOWN_KEY = 'tripnova_gateway_dismissed';
@@ -64,8 +66,9 @@ export const App: React.FC = () => {
   const handleSaveProfile = (updatedProfile: UserProfile) => {
     setUserProfile(updatedProfile);
     saveStoredProfile(updatedProfile);
+    syncUserProfile(updatedProfile).catch(() => {});
     sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
-    showToast('Tourist Profile successfully registered and activated!');
+    showToast('Tourist Profile successfully registered and synced with database!');
   };
 
   const handleDeleteProfile = () => {
@@ -161,6 +164,12 @@ export const App: React.FC = () => {
             onNavigateTab={setActiveTab}
             onOpenRegister={() => setIsRegisterOpen(true)}
             onOpenSOS={() => setIsSOSModalOpen(true)}
+          />
+        )}
+
+        {activeTab === 'spots' && (
+          <SpotsExplorer
+            onNavigateTab={setActiveTab}
           />
         )}
 

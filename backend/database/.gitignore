@@ -1,0 +1,31 @@
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+
+# MySQL/PostgreSQL dumps (if any)
+*.sql.gz
+*.dump
+
+# User data and personal information protection
+*user*.csv
+*users*.csv
+*user_data*
+*userdata*
+*user_history*
+*user_favorites*
+*user*.json
+*users*.json
+*user*.sql
+*users*.sql
+user-*.json
+user-*.csv
+users/
+user_data/
+datasets/users*
+datasets/*user*
+*.session
+*.auth
+
