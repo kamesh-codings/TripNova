@@ -209,6 +209,7 @@ export const App: React.FC = () => {
           <TripPlanner
             trips={trips}
             onSaveTrip={handleSaveTrip}
+            providerProfile={providerProfile}
           />
         )}
 

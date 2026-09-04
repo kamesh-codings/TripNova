@@ -425,6 +425,61 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                 </button>
               </div>
 
+              {/* Native Currency Selector in Step 2 */}
+              <div style={{
+                padding: '14px 18px',
+                borderRadius: '16px',
+                background: 'rgba(15, 23, 42, 0.75)',
+                border: '1px solid rgba(251, 191, 36, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(251, 191, 36, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fbbf24'
+                  }}>
+                    <DollarSign style={{ width: '18px', height: '18px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff', display: 'block' }}>
+                      Native Billing Currency *
+                    </label>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                      Specify the primary currency in which you charge and quote for your services.
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ minWidth: '220px' }}>
+                  <select
+                    value={nativeCurrency}
+                    onChange={e => setNativeCurrency(e.target.value)}
+                    className="input-glass"
+                    style={{ fontWeight: 700, borderColor: 'rgba(251, 191, 36, 0.4)' }}
+                  >
+                    <option value="INR" style={{ background: '#090e17' }}>INR - Indian Rupee (₹)</option>
+                    <option value="USD" style={{ background: '#090e17' }}>USD - US Dollar ($)</option>
+                    <option value="EUR" style={{ background: '#090e17' }}>EUR - Euro (€)</option>
+                    <option value="GBP" style={{ background: '#090e17' }}>GBP - British Pound (£)</option>
+                    <option value="AUD" style={{ background: '#090e17' }}>AUD - Australian Dollar (A$)</option>
+                    <option value="CAD" style={{ background: '#090e17' }}>CAD - Canadian Dollar (C$)</option>
+                    <option value="SGD" style={{ background: '#090e17' }}>SGD - Singapore Dollar (S$)</option>
+                    <option value="AED" style={{ background: '#090e17' }}>AED - UAE Dirham (د.إ)</option>
+                    <option value="JPY" style={{ background: '#090e17' }}>JPY - Japanese Yen (¥)</option>
+                  </select>
+                </div>
+              </div>
+
               {/* 1. TRANSPORT & DRIVERS FORM */}
               {selectedCategory === 'transport' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} className="animate-fade">
@@ -979,7 +1034,7 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-3 gap-3">
+              <div className="grid grid-2 gap-3">
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     Operating City / District *
@@ -1006,23 +1061,6 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                     placeholder="e.g. Tamil Nadu, India"
                     className="input-glass"
                   />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    Native Currency *
-                  </label>
-                  <select
-                    value={nativeCurrency}
-                    onChange={e => setNativeCurrency(e.target.value)}
-                    className="input-glass"
-                  >
-                    <option value="INR" style={{ background: '#090e17' }}>INR - Indian Rupee (₹)</option>
-                    <option value="USD" style={{ background: '#090e17' }}>USD - US Dollar ($)</option>
-                    <option value="EUR" style={{ background: '#090e17' }}>EUR - Euro (€)</option>
-                    <option value="GBP" style={{ background: '#090e17' }}>GBP - British Pound (£)</option>
-                    <option value="AED" style={{ background: '#090e17' }}>AED - UAE Dirham (د.إ)</option>
-                  </select>
                 </div>
               </div>
 

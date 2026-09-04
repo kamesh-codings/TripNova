@@ -16,12 +16,13 @@ import {
   Phone, 
   Clock
 } from 'lucide-react';
-import { TripPlan, TransportMode, LocalGuide, ItineraryItem } from '../types';
+import { TripPlan, TransportMode, LocalGuide, ItineraryItem, ServiceProviderProfile } from '../types';
 import { LOCAL_GUIDES } from '../data/mockData';
 
 interface TripPlannerProps {
   trips: TripPlan[];
   onSaveTrip: (trip: TripPlan) => void;
+  providerProfile?: ServiceProviderProfile | null;
 }
 
 const POPULAR_DESTINATIONS = [
@@ -34,9 +35,52 @@ const POPULAR_DESTINATIONS = [
   'Puducherry French Quarter & Auroville'
 ];
 
+const getCurrencySymbol = (curr?: string) => {
+  switch (curr) {
+    case 'USD': return '$';
+    case 'EUR': return '€';
+    case 'GBP': return '£';
+    case 'JPY': return '¥';
+    case 'AED': return 'AED ';
+    case 'CAD': return 'CA$';
+    case 'AUD': return 'A$';
+    case 'SGD': return 'S$';
+    case 'INR':
+    default: return '₹';
+  }
+};
+
+const isGuideRelevantToDestination = (dest: string, guideCity?: string, guideState?: string) => {
+  if (!dest || !guideCity) return false;
+  const dLower = dest.toLowerCase();
+  const cLower = guideCity.toLowerCase();
+  
+  if (dLower.includes(cLower) || cLower.includes(dLower)) return true;
+
+  const cityWords = cLower.split(/[\s,/-]+/).filter(w => w.length >= 3);
+  const destWords = dLower.split(/[\s,&/-]+/).filter(w => w.length >= 3);
+
+  for (const cw of cityWords) {
+    if (dLower.includes(cw)) return true;
+  }
+  for (const dw of destWords) {
+    if (cLower.includes(dw)) return true;
+  }
+
+  if (guideState && guideState.length >= 3) {
+    const stateWords = guideState.toLowerCase().split(/[\s,/-]+/).filter(w => w.length >= 4);
+    for (const sw of stateWords) {
+      if (dLower.includes(sw)) return true;
+    }
+  }
+
+  return false;
+};
+
 export const TripPlanner: React.FC<TripPlannerProps> = ({
   trips,
-  onSaveTrip
+  onSaveTrip,
+  providerProfile
 }) => {
   const [boardingPoint, setBoardingPoint] = useState('Chennai Central');
   const [destination, setDestination] = useState('Ooty & Nilgiri Mountain Escapes');
@@ -53,7 +97,39 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
     'Pykara Waterfalls'
   ]);
   const [newSpotInput, setNewSpotInput] = useState('');
-  const [selectedGuide, setSelectedGuide] = useState<LocalGuide | null>(LOCAL_GUIDES[1]);
+
+  // Dynamically resolve registered guide if relevant to destination
+  const isRegisteredGuideMatch = Boolean(
+    providerProfile &&
+    providerProfile.category === 'tour_guide' &&
+    isGuideRelevantToDestination(destination, providerProfile.operatingCity, providerProfile.operatingState)
+  );
+
+  const registeredGuide: (LocalGuide & { isPartner?: boolean; badgeNumber?: string; currency?: string }) | null = isRegisteredGuideMatch && providerProfile
+    ? {
+        id: providerProfile.id || 'reg_partner_guide',
+        name: `${providerProfile.providerName}`,
+        photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        location: `${providerProfile.operatingCity}${providerProfile.operatingState ? `, ${providerProfile.operatingState}` : ''}`,
+        languages: providerProfile.tourGuideDetails?.languagesSpoken?.length ? providerProfile.tourGuideDetails.languagesSpoken : ['English', 'Tamil'],
+        rating: 5.0,
+        reviewsCount: 24,
+        specialty: providerProfile.tourGuideDetails?.specialization || 'Certified Local Heritage Guide',
+        hourlyRate: providerProfile.tourGuideDetails?.hourlyRate || 400,
+        phone: providerProfile.phone || '+91 90000 00000',
+        verified: true,
+        bio: `Verified Partner Guide. Badge: ${providerProfile.tourGuideDetails?.guideBadgeNumber || 'TN-PARTNER'} • ${providerProfile.tourGuideDetails?.experienceYears || 2} yrs experience. ${providerProfile.tourGuideDetails?.hasFirstAidCert ? 'First-Aid Certified.' : ''}`,
+        isPartner: true,
+        badgeNumber: providerProfile.tourGuideDetails?.guideBadgeNumber,
+        currency: providerProfile.nativeCurrency || 'INR'
+      }
+    : null;
+
+  const displayGuides: (LocalGuide & { isPartner?: boolean; badgeNumber?: string; currency?: string })[] = registeredGuide
+    ? [registeredGuide, ...LOCAL_GUIDES.filter(g => g.id !== registeredGuide.id)]
+    : LOCAL_GUIDES;
+
+  const [selectedGuide, setSelectedGuide] = useState<LocalGuide | null>(() => registeredGuide || LOCAL_GUIDES[1]);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const calculateDays = () => {
@@ -464,8 +540,10 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {LOCAL_GUIDES.map(guide => {
+              {displayGuides.map(guide => {
                 const isSelected = selectedGuide?.id === guide.id;
+                const isPartner = guide.isPartner;
+                const currSymbol = getCurrencySymbol(guide.currency);
                 return (
                   <div
                     key={guide.id}
@@ -473,22 +551,49 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                     style={{
                       padding: '14px',
                       borderRadius: '16px',
-                      border: isSelected ? '1px solid #38bdf8' : '1px solid rgba(255,255,255,0.06)',
-                      background: isSelected ? 'rgba(56, 189, 248, 0.15)' : 'rgba(10, 15, 29, 0.75)',
+                      border: isSelected 
+                        ? (isPartner ? '1.5px solid #fbbf24' : '1px solid #38bdf8') 
+                        : (isPartner ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(255,255,255,0.06)'),
+                      background: isSelected 
+                        ? (isPartner ? 'rgba(251, 191, 36, 0.16)' : 'rgba(56, 189, 248, 0.15)') 
+                        : (isPartner ? 'rgba(245, 158, 11, 0.08)' : 'rgba(10, 15, 29, 0.75)'),
                       cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      boxShadow: isPartner ? '0 4px 18px rgba(245, 158, 11, 0.12)' : 'none'
                     }}
                   >
+                    {isPartner && (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span className="badge badge-amber" style={{ fontSize: '0.66rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Sparkles style={{ width: '10px', height: '10px' }} /> Registered Partner Guide
+                        </span>
+                        {guide.badgeNumber && (
+                          <span style={{ fontSize: '0.68rem', color: '#fbbf24', fontFamily: 'monospace', fontWeight: 700 }}>
+                            ID: {guide.badgeNumber}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       <img
                         src={guide.photo}
                         alt={guide.name}
-                        style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }}
+                        style={{ 
+                          width: '48px', 
+                          height: '48px', 
+                          borderRadius: '12px', 
+                          objectFit: 'cover', 
+                          border: isPartner ? '1.5px solid rgba(251, 191, 36, 0.5)' : '1px solid rgba(255,255,255,0.1)' 
+                        }}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="flex items-center justify-between">
-                          <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{guide.name}</h4>
-                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#34d399' }}>₹{guide.hourlyRate}/hr</span>
+                          <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {guide.name}
+                          </h4>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#34d399' }}>
+                            {currSymbol}{guide.hourlyRate}/hr
+                          </span>
                         </div>
                         <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{guide.location}</p>
                         
@@ -499,13 +604,20 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                           <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
                             • {guide.languages.slice(0, 2).join(', ')}
                           </span>
+                          {isPartner && (
+                            <span className="badge badge-green" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>
+                              Govt / Verified
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {isSelected && (
                       <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontStyle: 'italic' }}>"{guide.specialty}"</span>
+                        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontStyle: 'italic', maxWidth: '65%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          "{guide.specialty}"
+                        </span>
                         <a
                           href={`tel:${guide.phone}`}
                           onClick={e => e.stopPropagation()}
