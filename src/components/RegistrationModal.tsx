@@ -8,9 +8,20 @@ import {
   Sparkles, 
   Check, 
   Plus, 
-  Trash2
+  Trash2,
+  MapPin,
+  Navigation,
+  Languages,
+  DollarSign
 } from 'lucide-react';
-import { UserProfile, BloodGroup, TrustedContact } from '../types';
+import { UserProfile, BloodGroup, TrustedContact, UserLocation } from '../types';
+import { LANG_CODE_MAP } from '../utils/speech';
+import { 
+  detectUserCurrentLocation, 
+  getStoredLocation, 
+  getStoredLanguage, 
+  saveStoredLanguage 
+} from '../utils/geoLocator';
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -44,6 +55,9 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     googleId: userProfile.googleId || '',
     avatarUrl: userProfile.avatarUrl || '',
     nativeCurrency: userProfile.nativeCurrency || 'INR',
+    preferredLanguage: userProfile.preferredLanguage || getStoredLanguage(),
+    currentLocation: userProfile.currentLocation || '',
+    locationCoordinates: userProfile.locationCoordinates,
     dob: userProfile.dob || '',
     age: userProfile.age || 0,
     gender: userProfile.gender || 'Male',
@@ -65,6 +79,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4>(1);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [locationDetectMsg, setLocationDetectMsg] = useState<string | null>(null);
 
   // Sync state whenever modal opens with latest profile
   useEffect(() => {
@@ -76,6 +92,9 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         googleId: userProfile.googleId || '',
         avatarUrl: userProfile.avatarUrl || '',
         nativeCurrency: userProfile.nativeCurrency || 'INR',
+        preferredLanguage: userProfile.preferredLanguage || getStoredLanguage(),
+        currentLocation: userProfile.currentLocation || '',
+        locationCoordinates: userProfile.locationCoordinates,
         dob: userProfile.dob || '',
         age: userProfile.age || 0,
         gender: userProfile.gender || 'Male',
@@ -158,8 +177,31 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     }
   };
 
+  const handleDetectLocation = async () => {
+    setIsDetectingLocation(true);
+    setLocationDetectMsg(null);
+    try {
+      const loc = await detectUserCurrentLocation();
+      setFormData(prev => ({
+        ...prev,
+        address: loc.formattedAddress || `${loc.city}, ${loc.state}, ${loc.country}`,
+        currentLocation: `${loc.city}, ${loc.state}, ${loc.country}`,
+        locationCoordinates: { latitude: loc.latitude, longitude: loc.longitude },
+        govtIdState: loc.state ? `${loc.state}, ${loc.country}` : prev.govtIdState
+      }));
+      setLocationDetectMsg(`GPS Active: ${loc.city}, ${loc.state}`);
+    } catch (err: any) {
+      setLocationDetectMsg(err.message || 'GPS detection failed.');
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.preferredLanguage) {
+      saveStoredLanguage(formData.preferredLanguage);
+    }
     const updated = { ...formData, isRegistered: true };
     onSaveProfile(updated);
     setSaveSuccess(true);
@@ -171,7 +213,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', overflowY: 'auto' }}>
-      <div className="glass-panel animate-fade" style={{ width: '100%', maxWidth: '720px', background: '#090e17', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="glass-panel animate-fade" style={{ width: '100%', maxWidth: '750px', background: '#090e17', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
         {/* Modal Header */}
         <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(15, 23, 42, 0.9)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div className="flex items-center gap-3">
@@ -194,10 +236,10 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         {/* Step Tabs */}
         <div className="grid grid-4" style={{ background: 'rgba(10, 15, 29, 0.8)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           {[
-            { step: 1, label: '1. Personal Info', icon: User },
+            { step: 1, label: '1. Personal & Location', icon: User },
             { step: 2, label: '2. Medical & ID', icon: HeartPulse },
             { step: 3, label: '3. 5 Trusted Contacts', icon: PhoneCall },
-            { step: 4, label: '4. Top Picks & Language', icon: Sparkles }
+            { step: 4, label: '4. Top Picks & Languages', icon: Sparkles }
           ].map(tab => (
             <button
               key={tab.step}
@@ -255,8 +297,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 </div>
               </div>
 
-              {/* Google Email & Native Currency */}
-              <div className="grid grid-2 gap-3">
+              {/* Email, Native Currency & Webpage Language */}
+              <div className="grid grid-3 gap-3">
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     Google / Primary Email *
@@ -270,6 +312,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     className="input-glass"
                   />
                 </div>
+
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     Native Currency *
@@ -289,6 +332,27 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     <option value="AUD" style={{ background: '#090e17' }}>AUD - Australian Dollar (A$)</option>
                     <option value="CAD" style={{ background: '#090e17' }}>CAD - Canadian Dollar (C$)</option>
                     <option value="CHF" style={{ background: '#090e17' }}>CHF - Swiss Franc (Fr)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                    Webpage Language *
+                  </label>
+                  <select
+                    value={formData.preferredLanguage || 'English'}
+                    onChange={e => {
+                      const lang = e.target.value;
+                      setFormData({ ...formData, preferredLanguage: lang });
+                      saveStoredLanguage(lang);
+                    }}
+                    className="input-glass"
+                  >
+                    {Object.entries(LANG_CODE_MAP).map(([key, cfg]) => (
+                      <option key={key} value={key} style={{ background: '#090e17' }}>
+                        {cfg.flag} {cfg.nativeName ? `${cfg.name} (${cfg.nativeName})` : cfg.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -316,17 +380,47 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 </div>
               </div>
 
+              {/* Address with Location Detection Option */}
               <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Permanent / Hotel Address *</label>
+                <div className="flex items-center justify-between" style={{ marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>
+                    Permanent / Hotel Address & Current Location *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={isDetectingLocation}
+                    className="btn-secondary"
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: '#34d399',
+                      borderColor: 'rgba(52, 211, 153, 0.4)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <Navigation style={{ width: '12px', height: '12px' }} />
+                    <span>{isDetectingLocation ? 'Detecting GPS...' : '📍 Auto-Detect Current Location'}</span>
+                  </button>
+                </div>
                 <textarea
                   rows={2}
                   required
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter residential or staying address"
+                  placeholder="Enter residential or hotel address (or use Auto-Detect Location)"
                   className="input-glass"
                   style={{ resize: 'none' }}
                 />
+                {locationDetectMsg && (
+                  <div style={{ marginTop: '4px', fontSize: '0.72rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Check style={{ width: '12px', height: '12px' }} />
+                    <span>{locationDetectMsg}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

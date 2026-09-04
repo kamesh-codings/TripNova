@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Compass, 
   MapPin, 
@@ -12,7 +12,8 @@ import {
   PhoneCall, 
   Landmark
 } from 'lucide-react';
-import { UserProfile, ServiceProviderProfile } from '../types';
+import { UserProfile, ServiceProviderProfile, UserLocation } from '../types';
+import { getStoredLocation } from '../utils/geoLocator';
 
 interface NavbarProps {
   activeTab: string;
@@ -35,6 +36,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenProviderRegister,
   onOpenChatbot
 }) => {
+  const [activeLocation, setActiveLocation] = useState<UserLocation | null>(() => getStoredLocation());
+
+  useEffect(() => {
+    const handleLocUpdate = (e: any) => {
+      if (e.detail) setActiveLocation(e.detail);
+    };
+    window.addEventListener('tripnova_location_updated', handleLocUpdate);
+    return () => window.removeEventListener('tripnova_location_updated', handleLocUpdate);
+  }, []);
+
   const navItems = [
     { id: 'dashboard', label: 'Explore', icon: Compass },
     { id: 'spots', label: 'Spots', icon: Landmark },
@@ -104,6 +115,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Actions - Anchored and Protected */}
         <div className="navbar-actions">
+          {/* Detected GPS Location Chip */}
+          {activeLocation && (
+            <div 
+              className="hide-mobile"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '6px 12px',
+                borderRadius: '12px',
+                background: 'rgba(52, 211, 153, 0.12)',
+                border: '1px solid rgba(52, 211, 153, 0.35)',
+                fontSize: '0.74rem',
+                color: '#34d399',
+                fontWeight: 700,
+                cursor: 'default'
+              }}
+              title={`Live GPS Location: ${activeLocation.formattedAddress}`}
+            >
+              <MapPin style={{ width: '13px', height: '13px', flexShrink: 0 }} />
+              <span>{activeLocation.city}</span>
+            </div>
+          )}
+
           {/* AI Bot Button */}
           <button
             onClick={onOpenChatbot}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Compass, 
   UserPlus, 
@@ -11,22 +11,73 @@ import {
   Bot,
   Car,
   Building2,
-  HeartPulse
+  HeartPulse,
+  MapPin,
+  Navigation,
+  Check,
+  AlertCircle
 } from 'lucide-react';
+import { LANG_CODE_MAP } from '../utils/speech';
+import { 
+  detectUserCurrentLocation, 
+  getStoredLocation, 
+  saveStoredLocation, 
+  getStoredLanguage, 
+  saveStoredLanguage 
+} from '../utils/geoLocator';
+import { UserLocation } from '../types';
 
 interface WelcomeGatewayProps {
   isOpen: boolean;
   onSelectRegister: () => void;
   onSelectExplore: () => void;
   onSelectProviderRegister: () => void;
+  onLocationDetected?: (loc: UserLocation) => void;
+  onLanguageChanged?: (lang: string) => void;
 }
 
 export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
   isOpen,
   onSelectRegister,
   onSelectExplore,
-  onSelectProviderRegister
+  onSelectProviderRegister,
+  onLocationDetected,
+  onLanguageChanged
 }) => {
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(() => getStoredLanguage());
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(() => getStoredLocation());
+  const [isDetecting, setIsDetecting] = useState<boolean>(false);
+  const [locationStatus, setLocationStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedLanguage(getStoredLanguage());
+      setUserLocation(getStoredLocation());
+    }
+  }, [isOpen]);
+
+  const handleLanguageSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value;
+    setSelectedLanguage(lang);
+    saveStoredLanguage(lang);
+    if (onLanguageChanged) onLanguageChanged(lang);
+  };
+
+  const handleDetectGPS = async () => {
+    setIsDetecting(true);
+    setLocationStatus(null);
+    try {
+      const loc = await detectUserCurrentLocation();
+      setUserLocation(loc);
+      setLocationStatus(`📍 Detected: ${loc.city}, ${loc.state}`);
+      if (onLocationDetected) onLocationDetected(loc);
+    } catch (err: any) {
+      setLocationStatus(err.message || 'Location detection failed.');
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -46,7 +97,7 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
         maxWidth: '1080px',
         maxHeight: '92vh',
         overflowY: 'auto',
-        padding: '32px 28px',
+        padding: '30px 26px',
         background: 'rgba(15, 23, 42, 0.96)',
         borderRadius: '28px',
         border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -54,14 +105,14 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
-        gap: '24px'
+        gap: '20px'
       }}>
         {/* Header Branding */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <div style={{
-            width: '58px',
-            height: '58px',
-            borderRadius: '18px',
+            width: '54px',
+            height: '54px',
+            borderRadius: '16px',
             background: 'var(--gradient-brand)',
             padding: '2.5px',
             boxShadow: '0 8px 25px rgba(56, 189, 248, 0.4)'
@@ -70,25 +121,128 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
               width: '100%',
               height: '100%',
               background: '#090e17',
-              borderRadius: '16px',
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Compass style={{ width: '28px', height: '28px', color: '#38bdf8' }} />
+              <Compass style={{ width: '26px', height: '26px', color: '#38bdf8' }} />
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-center gap-2">
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.02em', color: '#ffffff' }}>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 900, letterSpacing: '-0.02em', color: '#ffffff' }}>
                 Welcome to <span className="text-gradient">TripNova</span>
               </h1>
               <span className="badge badge-blue">Smart AI Guardian</span>
             </div>
-            <p style={{ fontSize: '0.88rem', color: '#cbd5e1', maxWidth: '560px', margin: '4px auto 0' }}>
-              Select how you would like to proceed with your journey today:
+            <p style={{ fontSize: '0.84rem', color: '#cbd5e1', maxWidth: '560px', margin: '2px auto 0' }}>
+              Your intelligent, fair-fare & safety-first travel companion.
             </p>
+          </div>
+        </div>
+
+        {/* Quick Setup: Webpage Language & Live GPS Location Option */}
+        <div style={{
+          padding: '14px 20px',
+          borderRadius: '18px',
+          background: 'linear-gradient(90deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '14px',
+          textAlign: 'left'
+        }}>
+          {/* 1. Webpage Language Option */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 260px' }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: 'rgba(56, 189, 248, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#38bdf8',
+              flexShrink: 0
+            }}>
+              <Languages style={{ width: '20px', height: '20px' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Webpage Language
+              </label>
+              <select
+                value={selectedLanguage}
+                onChange={handleLanguageSelect}
+                className="input-glass"
+                style={{ padding: '6px 10px', fontSize: '0.82rem', fontWeight: 700, marginTop: '2px', background: '#090e17' }}
+              >
+                {Object.entries(LANG_CODE_MAP).map(([key, cfg]) => (
+                  <option key={key} value={key} style={{ background: '#090e17' }}>
+                    {cfg.flag} {cfg.nativeName ? `${cfg.name} (${cfg.nativeName})` : cfg.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ width: '1px', height: '36px', background: 'rgba(255,255,255,0.08)' }} className="hidden sm:block" />
+
+          {/* 2. Current Location Option */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 300px' }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: userLocation ? 'rgba(52, 211, 153, 0.15)' : 'rgba(251, 191, 36, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: userLocation ? '#34d399' : '#fbbf24',
+              flexShrink: 0
+            }}>
+              <MapPin style={{ width: '20px', height: '20px' }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: '2px' }}>
+                <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Current Location Detection
+                </label>
+                {userLocation && (
+                  <span className="badge badge-green" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>
+                    GPS Active
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleDetectGPS}
+                  disabled={isDetecting}
+                  className="btn-secondary"
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: userLocation ? '#34d399' : '#38bdf8',
+                    borderColor: userLocation ? 'rgba(52, 211, 153, 0.4)' : 'rgba(56, 189, 248, 0.4)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Navigation style={{ width: '12px', height: '12px' }} />
+                  <span>{isDetecting ? 'Detecting GPS...' : userLocation ? 'Update GPS Location' : '📍 Detect My Location'}</span>
+                </button>
+                <span style={{ fontSize: '0.75rem', color: userLocation ? '#f8fafc' : '#94a3b8', fontWeight: 600 }}>
+                  {userLocation ? `${userLocation.city}, ${userLocation.state}` : 'Click to detect your location'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 

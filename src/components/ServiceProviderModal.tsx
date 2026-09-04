@@ -16,7 +16,8 @@ import {
   QrCode,
   MapPin,
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  Navigation
 } from 'lucide-react';
 import { 
   ServiceProviderProfile, 
@@ -27,6 +28,7 @@ import {
   EmergencyMedicalDetails, 
   RentalAgencyDetails 
 } from '../types';
+import { detectUserCurrentLocation } from '../utils/geoLocator';
 
 interface ServiceProviderModalProps {
   isOpen: boolean;
@@ -1034,33 +1036,67 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-2 gap-3">
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    Operating City / District *
+              <div>
+                <div className="flex items-center justify-between" style={{ marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Operating Jurisdiction & Base Region *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={operatingCity}
-                    onChange={e => setOperatingCity(e.target.value)}
-                    placeholder="e.g. Ooty, Nilgiris"
-                    className="input-glass"
-                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const loc = await detectUserCurrentLocation();
+                        setOperatingCity(loc.city);
+                        setOperatingState(loc.state ? `${loc.state}, ${loc.country}` : loc.country);
+                      } catch (err: any) {
+                        alert(err.message || 'Unable to detect location');
+                      }
+                    }}
+                    className="btn-secondary"
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: '#34d399',
+                      borderColor: 'rgba(52, 211, 153, 0.4)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <Navigation style={{ width: '12px', height: '12px' }} />
+                    <span>📍 Auto-Detect Operating Location</span>
+                  </button>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    State / Region *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={operatingState}
-                    onChange={e => setOperatingState(e.target.value)}
-                    placeholder="e.g. Tamil Nadu, India"
-                    className="input-glass"
-                  />
+                <div className="grid grid-2 gap-3">
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                      Operating City / District *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={operatingCity}
+                      onChange={e => setOperatingCity(e.target.value)}
+                      placeholder="e.g. Ooty, Nilgiris"
+                      className="input-glass"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                      State / Region *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={operatingState}
+                      onChange={e => setOperatingState(e.target.value)}
+                      placeholder="e.g. Tamil Nadu, India"
+                      className="input-glass"
+                    />
+                  </div>
                 </div>
               </div>
 

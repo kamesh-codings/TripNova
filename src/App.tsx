@@ -13,7 +13,7 @@ import { ProfileView } from './components/ProfileView';
 import { NovaAIBot } from './components/NovaAIBot';
 import { WelcomeGateway } from './components/WelcomeGateway';
 import { SpotsExplorer } from './components/SpotsExplorer';
-import { UserProfile, TripPlan, ServiceProviderProfile } from './types';
+import { UserProfile, TripPlan, ServiceProviderProfile, UserLocation } from './types';
 import { DEFAULT_USER_PROFILE } from './data/mockData';
 import { 
   getStoredProfile, 
@@ -43,9 +43,8 @@ export const App: React.FC = () => {
   const [isGatewayOpen, setIsGatewayOpen] = useState<boolean>(() => {
     const profile = getStoredProfile();
     const provider = getStoredProviderProfile();
-    if ((profile && profile.isRegistered) || provider) return false;
     const dismissed = sessionStorage.getItem(GATEWAY_SHOWN_KEY);
-    return !dismissed;
+    return (!profile.isRegistered && !provider && !dismissed);
   });
 
   const [isRegisterOpen, setIsRegisterOpen] = useState<boolean>(false);
@@ -74,6 +73,32 @@ export const App: React.FC = () => {
     sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
     setIsGatewayOpen(false);
     setIsProviderRegisterOpen(true);
+  };
+
+  const handleLocationDetectedFromGateway = (loc: UserLocation) => {
+    setUserProfile(prev => {
+      const updated = {
+        ...prev,
+        address: prev.address || loc.formattedAddress,
+        currentLocation: `${loc.city}, ${loc.state}, ${loc.country}`,
+        locationCoordinates: { latitude: loc.latitude, longitude: loc.longitude }
+      };
+      saveStoredProfile(updated);
+      return updated;
+    });
+    showToast(`📍 Live Location Detected: ${loc.city}, ${loc.state}`);
+  };
+
+  const handleLanguageChangedFromGateway = (lang: string) => {
+    setUserProfile(prev => {
+      const updated = {
+        ...prev,
+        preferredLanguage: lang
+      };
+      saveStoredProfile(updated);
+      return updated;
+    });
+    showToast(`🌐 Webpage Language set to ${lang}`);
   };
 
   const handleSaveProfile = (updatedProfile: UserProfile) => {
@@ -283,6 +308,8 @@ export const App: React.FC = () => {
         onSelectRegister={handleSelectRegisterFromGateway}
         onSelectExplore={handleSelectExploreFromGateway}
         onSelectProviderRegister={handleSelectProviderRegisterFromGateway}
+        onLocationDetected={handleLocationDetectedFromGateway}
+        onLanguageChanged={handleLanguageChangedFromGateway}
       />
 
       {/* 2. Consumer / Tourist Registration Modal */}

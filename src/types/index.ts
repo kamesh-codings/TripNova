@@ -28,9 +28,23 @@ export interface UserProfile {
   govtIdNumber: string;
   govtIdState: string; // e.g. "Tamil Nadu (TN), India"
   languagesKnown: string[]; // e.g. ["English", "Tamil", "Hindi"]
+  preferredLanguage?: string; // e.g. "English" or "Tamil"
+  currentLocation?: string; // e.g. "Chennai, Tamil Nadu, India"
+  locationCoordinates?: { latitude: number; longitude: number };
   trustedContacts: TrustedContact[]; // 5 trusted contacts
   interestedTopPicks: string[]; // e.g. ["Heritage & Temples", "Hill Stations", "Beach & Coastal", "Adventure", "Food & Culture"]
   isRegistered: boolean;
+}
+
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  city: string;
+  state: string;
+  country: string;
+  formattedAddress: string;
+  timestamp: string;
+  isApproximate?: boolean;
 }
 
 export type ProviderCategory = 
