@@ -9,6 +9,7 @@ import { AntiScamEstimator } from './components/AntiScamEstimator';
 import { TravelTools } from './components/TravelTools';
 import { RegistrationModal } from './components/RegistrationModal';
 import { ServiceProviderModal } from './components/ServiceProviderModal';
+import { LoginModal } from './components/LoginModal';
 import { ProfileView } from './components/ProfileView';
 import { NovaAIBot } from './components/NovaAIBot';
 import { WelcomeGateway } from './components/WelcomeGateway';
@@ -49,6 +50,7 @@ export const App: React.FC = () => {
 
   const [isRegisterOpen, setIsRegisterOpen] = useState<boolean>(false);
   const [isProviderRegisterOpen, setIsProviderRegisterOpen] = useState<boolean>(false);
+  const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
   const [isSOSModalOpen, setIsSOSModalOpen] = useState<boolean>(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState<boolean>(false);
 
@@ -132,6 +134,24 @@ export const App: React.FC = () => {
     showToast('Service Provider profile successfully deleted.');
   };
 
+  const handleLoginSuccess = (result: { type: 'tourist'; profile: UserProfile } | { type: 'provider'; profile: ServiceProviderProfile }) => {
+    sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
+    setIsGatewayOpen(false);
+    setIsLoginOpen(false);
+
+    if (result.type === 'tourist') {
+      setUserProfile(result.profile);
+      saveStoredProfile(result.profile);
+      setActiveTab('dashboard');
+      showToast(`Welcome back, ${result.profile.name}! Logged in as Tourist.`);
+    } else {
+      setProviderProfile(result.profile);
+      saveStoredProviderProfile(result.profile);
+      setActiveTab('dashboard');
+      showToast(`Welcome back, ${result.profile.businessName || result.profile.providerName}! Logged in as Partner.`);
+    }
+  };
+
   const handleLogout = () => {
     deleteStoredProfile();
     deleteStoredProviderProfile();
@@ -168,6 +188,7 @@ export const App: React.FC = () => {
         onOpenRegister={() => setIsRegisterOpen(true)}
         onOpenProviderRegister={() => setIsProviderRegisterOpen(true)}
         onOpenChatbot={() => setIsChatbotOpen(!isChatbotOpen)}
+        onOpenLogin={() => setIsLoginOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -314,17 +335,37 @@ export const App: React.FC = () => {
         <Sparkles style={{ width: '22px', height: '22px' }} />
       </button>
 
-      {/* 1. Welcome Gateway: 3 Options (Consumer Register vs Explore vs Provider Register) */}
+      {/* 1. Welcome Gateway: 3 Options + Login */}
       <WelcomeGateway
         isOpen={isGatewayOpen}
         onSelectRegister={handleSelectRegisterFromGateway}
         onSelectExplore={handleSelectExploreFromGateway}
         onSelectProviderRegister={handleSelectProviderRegisterFromGateway}
+        onOpenLogin={() => {
+          sessionStorage.setItem(GATEWAY_SHOWN_KEY, 'true');
+          setIsGatewayOpen(false);
+          setIsLoginOpen(true);
+        }}
         onLocationDetected={handleLocationDetectedFromGateway}
         onLanguageChanged={handleLanguageChangedFromGateway}
       />
 
-      {/* 2. Consumer / Tourist Registration Modal */}
+      {/* 2. Login & Password Reset Modal */}
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        onOpenTouristRegister={() => {
+          setIsLoginOpen(false);
+          setIsRegisterOpen(true);
+        }}
+        onOpenProviderRegister={() => {
+          setIsLoginOpen(false);
+          setIsProviderRegisterOpen(true);
+        }}
+      />
+
+      {/* 3. Consumer / Tourist Registration Modal */}
       <RegistrationModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
@@ -332,7 +373,7 @@ export const App: React.FC = () => {
         onSaveProfile={handleSaveProfile}
       />
 
-      {/* 3. Service Provider Registration Modal */}
+      {/* 4. Service Provider Registration Modal */}
       <ServiceProviderModal
         isOpen={isProviderRegisterOpen}
         onClose={() => setIsProviderRegisterOpen(false)}
@@ -340,7 +381,7 @@ export const App: React.FC = () => {
         existingProfile={providerProfile}
       />
 
-      {/* 4. Nova AI Concierge */}
+      {/* 5. Nova AI Concierge */}
       <NovaAIBot
         isOpen={isChatbotOpen}
         onClose={() => setIsChatbotOpen(false)}
@@ -349,7 +390,7 @@ export const App: React.FC = () => {
         onNavigateTab={setActiveTab}
       />
 
-      {/* 5. Mobile Bottom Navigation */}
+      {/* 6. Mobile Bottom Navigation */}
       <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );

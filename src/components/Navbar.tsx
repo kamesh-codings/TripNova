@@ -11,7 +11,8 @@ import {
   Sparkles, 
   PhoneCall, 
   Landmark,
-  LogOut
+  LogOut,
+  Lock
 } from 'lucide-react';
 import { UserProfile, ServiceProviderProfile, UserLocation } from '../types';
 import { getStoredLocation } from '../utils/geoLocator';
@@ -25,6 +26,7 @@ interface NavbarProps {
   onOpenRegister: () => void;
   onOpenProviderRegister?: () => void;
   onOpenChatbot: () => void;
+  onOpenLogin?: () => void;
   onLogout?: () => void;
 }
 
@@ -37,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRegister,
   onOpenProviderRegister,
   onOpenChatbot,
+  onOpenLogin,
   onLogout
 }) => {
   const [activeLocation, setActiveLocation] = useState<UserLocation | null>(() => getStoredLocation());
@@ -163,6 +166,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             <PhoneCall style={{ width: '15px', height: '15px' }} />
             <span>SOS</span>
           </button>
+
+          {/* Quick Log In Button for Unregistered Users */}
+          {!userProfile.isRegistered && !providerProfile && onOpenLogin && (
+            <button
+              onClick={onOpenLogin}
+              className="btn-secondary hide-mobile"
+              style={{
+                padding: '8px 14px',
+                fontSize: '0.8rem',
+                color: '#38bdf8',
+                borderColor: 'rgba(56, 189, 248, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Sign in with Username & Password"
+            >
+              <Lock style={{ width: '14px', height: '14px' }} />
+              <span>Log In</span>
+            </button>
+          )}
 
           {/* Integrated Top-Right My Profile / Register Button (Dual-Mode: Tourist or Provider) */}
           <button

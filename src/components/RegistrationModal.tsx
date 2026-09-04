@@ -12,7 +12,10 @@ import {
   MapPin,
   Navigation,
   Languages,
-  DollarSign
+  DollarSign,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { UserProfile, BloodGroup, TrustedContact, UserLocation } from '../types';
 import { LANG_CODE_MAP } from '../utils/speech';
@@ -51,6 +54,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const [formData, setFormData] = useState<UserProfile>(() => ({
     id: userProfile.id || `usr_${Date.now()}`,
     name: userProfile.name || '',
+    username: userProfile.username || '',
+    password: userProfile.password || '',
     email: userProfile.email || '',
     googleId: userProfile.googleId || '',
     avatarUrl: userProfile.avatarUrl || '',
@@ -77,6 +82,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     isRegistered: userProfile.isRegistered || false
   }));
 
+  const [showPassword, setShowPassword] = useState(false);
   const [activeStep, setActiveStep] = useState<1 | 2 | 3 | 4>(1);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -88,6 +94,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       setFormData({
         id: userProfile.id || `usr_${Date.now()}`,
         name: userProfile.name || '',
+        username: userProfile.username || '',
+        password: userProfile.password || '',
         email: userProfile.email || '',
         googleId: userProfile.googleId || '',
         avatarUrl: userProfile.avatarUrl || '',
@@ -297,11 +305,66 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 </div>
               </div>
 
+              {/* Username & Password Account Credentials */}
+              <div className="grid grid-2 gap-3" style={{ background: 'rgba(56, 189, 248, 0.05)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.15)' }}>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                    <User style={{ width: '12px', height: '12px' }} />
+                    Account Username *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.username || ''}
+                    onChange={e => setFormData({ ...formData, username: e.target.value.trim().toLowerCase() })}
+                    placeholder="e.g. kamesh_traveler"
+                    className="input-glass"
+                  />
+                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>Used for quick login</span>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                    <Lock style={{ width: '12px', height: '12px' }} />
+                    Account Password *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={formData.password || ''}
+                      onChange={e => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Enter secure password"
+                      className="input-glass"
+                      style={{ paddingRight: '36px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '4px'
+                      }}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff style={{ width: '14px', height: '14px' }} /> : <Eye style={{ width: '14px', height: '14px' }} />}
+                    </button>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>For account login & data sync</span>
+                </div>
+              </div>
+
               {/* Email, Native Currency & Webpage Language */}
               <div className="grid grid-3 gap-3">
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    Google / Primary Email *
+                    Google / Primary Email * (For Password Reset)
                   </label>
                   <input
                     type="email"

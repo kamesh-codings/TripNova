@@ -12,6 +12,8 @@ export interface TrustedContact {
 export interface UserProfile {
   id: string;
   name: string;
+  username?: string;
+  password?: string;
   email?: string;
   googleId?: string;
   avatarUrl?: string;
@@ -58,6 +60,8 @@ export interface BaseProviderInfo {
   id: string;
   providerName: string;
   businessName: string;
+  username?: string;
+  password?: string;
   email: string;
   phone: string;
   category: ProviderCategory;

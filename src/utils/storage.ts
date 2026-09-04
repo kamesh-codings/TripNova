@@ -3,8 +3,30 @@ import { DEFAULT_USER_PROFILE } from '../data/mockData';
 
 const PROFILE_KEY = 'tripnova_user_profile';
 const PROVIDER_KEY = 'tripnova_provider_profile';
+const USERS_LIST_KEY = 'tripnova_registered_users_list';
+const PROVIDERS_LIST_KEY = 'tripnova_registered_providers_list';
 const TRIPS_KEY = 'tripnova_saved_trips';
 const SOS_HISTORY_KEY = 'tripnova_sos_logs';
+
+export const getAllRegisteredUsers = (): UserProfile[] => {
+  try {
+    const data = localStorage.getItem(USERS_LIST_KEY);
+    if (data) return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to parse users list', e);
+  }
+  return [];
+};
+
+export const getAllRegisteredProviders = (): ServiceProviderProfile[] => {
+  try {
+    const data = localStorage.getItem(PROVIDERS_LIST_KEY);
+    if (data) return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to parse providers list', e);
+  }
+  return [];
+};
 
 export const getStoredProfile = (): UserProfile => {
   try {
@@ -24,6 +46,22 @@ export const getStoredProfile = (): UserProfile => {
 export const saveStoredProfile = (profile: UserProfile): void => {
   try {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+
+    // Also persist in users registry
+    if (profile.isRegistered && (profile.username || profile.email)) {
+      const allUsers = getAllRegisteredUsers();
+      const existingIdx = allUsers.findIndex(u => 
+        (profile.username && u.username?.toLowerCase() === profile.username.toLowerCase()) || 
+        (profile.email && u.email?.toLowerCase() === profile.email.toLowerCase()) ||
+        u.id === profile.id
+      );
+      if (existingIdx >= 0) {
+        allUsers[existingIdx] = profile;
+      } else {
+        allUsers.push(profile);
+      }
+      localStorage.setItem(USERS_LIST_KEY, JSON.stringify(allUsers));
+    }
   } catch (e) {
     console.error('Failed to save user profile', e);
   }
@@ -55,6 +93,22 @@ export const getStoredProviderProfile = (): ServiceProviderProfile | null => {
 export const saveStoredProviderProfile = (profile: ServiceProviderProfile): void => {
   try {
     localStorage.setItem(PROVIDER_KEY, JSON.stringify(profile));
+
+    // Also persist in providers registry
+    if (profile.username || profile.email) {
+      const allProviders = getAllRegisteredProviders();
+      const existingIdx = allProviders.findIndex(p => 
+        (profile.username && p.username?.toLowerCase() === profile.username.toLowerCase()) || 
+        (profile.email && p.email?.toLowerCase() === profile.email.toLowerCase()) ||
+        p.id === profile.id
+      );
+      if (existingIdx >= 0) {
+        allProviders[existingIdx] = profile;
+      } else {
+        allProviders.push(profile);
+      }
+      localStorage.setItem(PROVIDERS_LIST_KEY, JSON.stringify(allProviders));
+    }
   } catch (e) {
     console.error('Failed to save provider profile', e);
   }
@@ -66,6 +120,126 @@ export const deleteStoredProviderProfile = (): void => {
   } catch (e) {
     console.error('Failed to delete provider profile', e);
   }
+};
+
+/**
+ * Authenticate either Tourist or Service Provider using Username/Email and Password
+ */
+export const authenticateAccount = (
+  identifier: string,
+  passwordAttempt: string
+): { type: 'tourist'; profile: UserProfile } | { type: 'provider'; profile: ServiceProviderProfile } | null => {
+  const cleanId = identifier.trim().toLowerCase();
+  const cleanPass = passwordAttempt.trim();
+
+  // 1. Check current active tourist profile
+  const activeTourist = getStoredProfile();
+  if (activeTourist.isRegistered && cleanPass) {
+    const matchesUser = activeTourist.username?.toLowerCase() === cleanId || activeTourist.email?.toLowerCase() === cleanId;
+    if (matchesUser && (!activeTourist.password || activeTourist.password === cleanPass)) {
+      return { type: 'tourist', profile: activeTourist };
+    }
+  }
+
+  // 2. Check registered tourist registry
+  const allUsers = getAllRegisteredUsers();
+  const foundUser = allUsers.find(u => 
+    u.username?.toLowerCase() === cleanId || u.email?.toLowerCase() === cleanId
+  );
+  if (foundUser && (!foundUser.password || foundUser.password === cleanPass)) {
+    return { type: 'tourist', profile: foundUser };
+  }
+
+  // 3. Check current active provider profile
+  const activeProvider = getStoredProviderProfile();
+  if (activeProvider && cleanPass) {
+    const matchesProvider = activeProvider.username?.toLowerCase() === cleanId || activeProvider.email?.toLowerCase() === cleanId;
+    if (matchesProvider && (!activeProvider.password || activeProvider.password === cleanPass)) {
+      return { type: 'provider', profile: activeProvider };
+    }
+  }
+
+  // 4. Check registered provider registry
+  const allProviders = getAllRegisteredProviders();
+  const foundProvider = allProviders.find(p => 
+    p.username?.toLowerCase() === cleanId || p.email?.toLowerCase() === cleanId
+  );
+  if (foundProvider && (!foundProvider.password || foundProvider.password === cleanPass)) {
+    return { type: 'provider', profile: foundProvider };
+  }
+
+  return null;
+};
+
+/**
+ * Find account by email for password reset flow
+ */
+export const findAccountByEmail = (
+  email: string
+): { type: 'tourist'; profile: UserProfile } | { type: 'provider'; profile: ServiceProviderProfile } | null => {
+  const cleanEmail = email.trim().toLowerCase();
+
+  const allUsers = getAllRegisteredUsers();
+  const activeUser = getStoredProfile();
+  if (activeUser.isRegistered && activeUser.email?.toLowerCase() === cleanEmail) {
+    return { type: 'tourist', profile: activeUser };
+  }
+  const foundUser = allUsers.find(u => u.email?.toLowerCase() === cleanEmail);
+  if (foundUser) return { type: 'tourist', profile: foundUser };
+
+  const activeProvider = getStoredProviderProfile();
+  if (activeProvider && activeProvider.email?.toLowerCase() === cleanEmail) {
+    return { type: 'provider', profile: activeProvider };
+  }
+  const allProviders = getAllRegisteredProviders();
+  const foundProvider = allProviders.find(p => p.email?.toLowerCase() === cleanEmail);
+  if (foundProvider) return { type: 'provider', profile: foundProvider };
+
+  return null;
+};
+
+/**
+ * Update password for an account matching given email
+ */
+export const updateAccountPassword = (email: string, newPassword: string): boolean => {
+  const cleanEmail = email.trim().toLowerCase();
+  let updated = false;
+
+  // Check tourist active
+  const activeUser = getStoredProfile();
+  if (activeUser.isRegistered && activeUser.email?.toLowerCase() === cleanEmail) {
+    activeUser.password = newPassword;
+    saveStoredProfile(activeUser);
+    updated = true;
+  }
+
+  // Check tourist registry
+  const allUsers = getAllRegisteredUsers();
+  const userIdx = allUsers.findIndex(u => u.email?.toLowerCase() === cleanEmail);
+  if (userIdx >= 0) {
+    allUsers[userIdx].password = newPassword;
+    localStorage.setItem(USERS_LIST_KEY, JSON.stringify(allUsers));
+    updated = true;
+  }
+
+  // Check provider active
+  const activeProvider = getStoredProviderProfile();
+  if (activeProvider && activeProvider.email?.toLowerCase() === cleanEmail) {
+    activeProvider.password = newPassword;
+    saveStoredProviderProfile(activeProvider);
+    updated = true;
+  }
+
+  // Check provider registry
+  const allProviders = getAllRegisteredProviders();
+  const provIdx = allProviders.findIndex(p => p.email?.toLowerCase() === cleanEmail);
+  if (provIdx >= 0) {
+    allProviders[provIdx].password = newPassword;
+    localStorage.setItem(PROVIDERS_LIST_KEY, JSON.stringify(allProviders));
+    updated = true;
+  }
+
+  return updated;
 };
 
 export const getStoredTrips = (): TripPlan[] => {

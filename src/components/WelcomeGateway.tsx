@@ -15,7 +15,9 @@ import {
   MapPin,
   Navigation,
   Check,
-  AlertCircle
+  AlertCircle,
+  Lock,
+  User
 } from 'lucide-react';
 import { LANG_CODE_MAP } from '../utils/speech';
 import { 
@@ -32,6 +34,7 @@ interface WelcomeGatewayProps {
   onSelectRegister: () => void;
   onSelectExplore: () => void;
   onSelectProviderRegister: () => void;
+  onOpenLogin: () => void;
   onLocationDetected?: (loc: UserLocation) => void;
   onLanguageChanged?: (lang: string) => void;
 }
@@ -41,6 +44,7 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
   onSelectRegister,
   onSelectExplore,
   onSelectProviderRegister,
+  onOpenLogin,
   onLocationDetected,
   onLanguageChanged
 }) => {
@@ -244,6 +248,62 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Already have an account? Sign In Banner */}
+        <div style={{
+          padding: '12px 20px',
+          borderRadius: '16px',
+          background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(251, 191, 36, 0.12) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.35)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+        }}>
+          <div className="flex items-center gap-3 text-left">
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'rgba(56, 189, 248, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#38bdf8'
+            }}>
+              <Lock style={{ width: '18px', height: '18px' }} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>
+                  Already have an account?
+                </span>
+                <span className="badge badge-blue" style={{ fontSize: '0.65rem' }}>Tourist & Partner Login</span>
+              </div>
+              <p style={{ fontSize: '0.74rem', color: '#94a3b8', margin: '2px 0 0' }}>
+                Sign in with your Username & Password. (Password reset available via registered email).
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenLogin}
+            className="btn-primary"
+            style={{
+              padding: '8px 20px',
+              fontSize: '0.82rem',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>Log In to Account</span>
+            <ArrowRight style={{ width: '14px', height: '14px' }} />
+          </button>
         </div>
 
         {/* 3 Choice Cards: Consumer Register vs Explore Mode vs Service Provider Register */}

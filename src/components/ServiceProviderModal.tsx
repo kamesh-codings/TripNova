@@ -17,7 +17,11 @@ import {
   MapPin,
   DollarSign,
   AlertCircle,
-  Navigation
+  Navigation,
+  User,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { 
   ServiceProviderProfile, 
@@ -96,6 +100,9 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
   // Common Info
   const [providerName, setProviderName] = useState(existingProfile?.providerName || '');
   const [businessName, setBusinessName] = useState(existingProfile?.businessName || '');
+  const [username, setUsername] = useState(existingProfile?.username || '');
+  const [password, setPassword] = useState(existingProfile?.password || '');
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState(existingProfile?.email || '');
   const [phone, setPhone] = useState(existingProfile?.phone || '');
   const [operatingCity, setOperatingCity] = useState(existingProfile?.operatingCity || '');
@@ -174,6 +181,8 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
       id: providerId,
       providerName: providerName.trim() || 'Verified Partner',
       businessName: businessName.trim() || providerName.trim(),
+      username: username.trim().toLowerCase(),
+      password: password.trim(),
       email: email.trim(),
       phone: phone.trim(),
       category: selectedCategory,
@@ -1006,10 +1015,65 @@ export const ServiceProviderModal: React.FC<ServiceProviderModalProps> = ({
                 </div>
               </div>
 
+              {/* Partner Account Credentials */}
+              <div className="grid grid-2 gap-3" style={{ background: 'rgba(251, 191, 36, 0.05)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(251, 191, 36, 0.15)' }}>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                    <User style={{ width: '12px', height: '12px' }} />
+                    Partner Username *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={username}
+                    onChange={e => setUsername(e.target.value.trim().toLowerCase())}
+                    placeholder="e.g. murugan_travels"
+                    className="input-glass"
+                  />
+                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>Used for partner portal login</span>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                    <Lock style={{ width: '12px', height: '12px' }} />
+                    Partner Password *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="Enter partner password"
+                      className="input-glass"
+                      style={{ paddingRight: '36px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '4px'
+                      }}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff style={{ width: '14px', height: '14px' }} /> : <Eye style={{ width: '14px', height: '14px' }} />}
+                    </button>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>Required to manage listings & profile</span>
+                </div>
+              </div>
+
               <div className="grid grid-2 gap-3">
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    Google / Business Email ID *
+                    Google / Business Email ID * (For Password Reset)
                   </label>
                   <input
                     type="email"
