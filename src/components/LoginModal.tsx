@@ -24,6 +24,11 @@ import {
   findAccountByEmail, 
   updateAccountPassword 
 } from '../utils/storage';
+import {
+  loginWithBackendAPI,
+  requestPasswordResetAPI,
+  completePasswordResetAPI
+} from '../utils/api';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -64,28 +69,45 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const result = authenticateAccount(identifier, password);
-      setIsSubmitting(false);
-
-      if (result) {
-        onLoginSuccess(result);
+    try {
+      // 1. Try Backend MySQL API
+      const backendRes = await loginWithBackendAPI(identifier, password);
+      if (backendRes && backendRes.success && backendRes.profile) {
+        setIsSubmitting(false);
+        onLoginSuccess({
+          type: backendRes.type || roleType,
+          profile: backendRes.profile
+        });
         onClose();
-        // Reset state
         setIdentifier('');
         setPassword('');
-      } else {
-        setLoginError('Invalid Username/Email or Password. Please check credentials or use Forgot Password.');
+        return;
       }
-    }, 400);
+    } catch (err) {
+      console.warn('Backend login fallback to local storage:', err);
+    }
+
+    // 2. Try Local Multi-Account Storage Registry
+    const result = authenticateAccount(identifier, password);
+    setIsSubmitting(false);
+
+    if (result) {
+      onLoginSuccess(result);
+      onClose();
+      // Reset state
+      setIdentifier('');
+      setPassword('');
+    } else {
+      setLoginError('Invalid Username/Email or Password. If you haven\'t registered this account yet, click "Register as Tourist" below.');
+    }
   };
 
-  const handleSendResetEmail = (e: React.FormEvent) => {
+  const handleSendResetEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError(null);
     const cleanEmail = recoveryEmail.trim().toLowerCase();
@@ -95,6 +117,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       return;
     }
 
+    // 1. Try backend API for OTP
+    try {
+      const apiRes = await requestPasswordResetAPI(cleanEmail);
+      if (apiRes && apiRes.success && apiRes.code) {
+        setGeneratedCode(apiRes.code);
+        setEmailSentNotice(`A password reset verification code has been dispatched to ${cleanEmail}. (Code: ${apiRes.code})`);
+        setView('reset_otp_password');
+        return;
+      }
+    } catch (e) {}
+
+    // 2. Check local registry
     const found = findAccountByEmail(cleanEmail);
     if (!found) {
       setResetError(`No account registered with email "${cleanEmail}". Please check your email or register a new account.`);
@@ -108,7 +142,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setView('reset_otp_password');
   };
 
-  const handleCompleteReset = (e: React.FormEvent) => {
+  const handleCompleteReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setResetError(null);
 
@@ -127,6 +161,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       return;
     }
 
+    // 1. Try backend reset
+    try {
+      await completePasswordResetAPI(recoveryEmail.trim().toLowerCase(), resetCodeInput, newPassword);
+    } catch (e) {}
+
+    // 2. Update local registry
     const updated = updateAccountPassword(recoveryEmail.trim().toLowerCase(), newPassword);
     if (updated) {
       setView('reset_success');
