@@ -1,0 +1,10 @@
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+
+# MySQL/PostgreSQL dumps (if any)
+*.sql.gz
+*.dump
