@@ -413,165 +413,169 @@ export const SpotsExplorer: React.FC<SpotsExplorerProps> = ({ onSelectSpot, onNa
 
         {/* Spots Grid */}
         {filteredPlaces.length > 0 ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))',
-            gap: '16px'
-          }}>
-            {filteredPlaces.map((place) => (
-              <div
-                key={place.id}
-                className="glass-panel glass-panel-hover"
-                style={{
-                  padding: '20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '14px',
-                  position: 'relative'
-                }}
-              >
-                <div>
-                  {/* Card Header: Category Badge & Rating */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
-                    <span className="badge badge-purple" style={{ textTransform: 'capitalize' }}>
-                      {place.category.replace('_', ' ')}
-                    </span>
-                    <div className="flex items-center gap-1" style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: 700 }}>
-                      <Star style={{ width: '14px', height: '14px', fill: '#fbbf24' }} />
-                      <span>{Number(place.avg_rating).toFixed(1)}</span>
-                      <span style={{ color: '#64748b', fontSize: '0.72rem' }}>({place.review_count || 500}+)</span>
+          <>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))',
+              gap: '16px'
+            }}>
+              {filteredPlaces.slice(0, visibleCount).map((place) => (
+                <div
+                  key={place.id}
+                  className="glass-panel glass-panel-hover"
+                  style={{
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '14px',
+                    position: 'relative'
+                  }}
+                >
+                  <div>
+                    {/* Card Header: Category Badge & Rating */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                      <span className="badge badge-purple" style={{ textTransform: 'capitalize' }}>
+                        {place.category.replace('_', ' ')}
+                      </span>
+                      <div className="flex items-center gap-1" style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: 700 }}>
+                        <Star style={{ width: '14px', height: '14px', fill: '#fbbf24' }} />
+                        <span>{Number(place.avg_rating).toFixed(1)}</span>
+                        <span style={{ color: '#64748b', fontSize: '0.72rem' }}>({place.review_count || 500}+)</span>
+                      </div>
                     </div>
 
-                  {/* Spot Title */}
-                  <h4 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff', marginBottom: '4px', lineHeight: 1.3 }}>
-                    {place.name}
-                  </h4>
+                    {/* Spot Title */}
+                    <h4 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff', marginBottom: '4px', lineHeight: 1.3 }}>
+                      {place.name}
+                    </h4>
 
-                  {/* Location Info */}
-                  <div className="flex items-center gap-1" style={{ color: '#94a3b8', fontSize: '0.78rem', marginBottom: '10px' }}>
-                    <MapPin style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
-                    <span>{place.location_name || 'Destination'}, {place.location_state || 'India'}</span>
-                  </div>
+                    {/* Location Info */}
+                    <div className="flex items-center gap-1" style={{ color: '#94a3b8', fontSize: '0.78rem', marginBottom: '10px' }}>
+                      <MapPin style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
+                      <span>{place.location_name || 'Destination'}, {place.location_state || 'India'}</span>
+                    </div>
 
-                  {/* Description Excerpt */}
-                  {place.description && (
-                    <p style={{
-                      color: '#cbd5e1',
-                      fontSize: '0.78rem',
-                      lineHeight: 1.45,
-                      marginBottom: '12px',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}>
-                      {place.description}
-                    </p>
-                  )}
-
-                  {/* Fetched Details Pill Grid */}
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '6px',
-                    fontSize: '0.72rem',
-                    marginBottom: '10px'
-                  }}>
-                    {place.best_season && (
-                      <span style={{
-                        background: 'rgba(168, 85, 247, 0.12)',
-                        color: '#c084fc',
-                        border: '1px solid rgba(168, 85, 247, 0.25)',
-                        borderRadius: '6px',
-                        padding: '3px 8px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
+                    {/* Description Excerpt */}
+                    {place.description && (
+                      <p style={{
+                        color: '#cbd5e1',
+                        fontSize: '0.78rem',
+                        lineHeight: 1.45,
+                        marginBottom: '12px',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
                       }}>
-                        <Calendar style={{ width: '11px', height: '11px' }} /> Season: {place.best_season}
-                      </span>
+                        {place.description}
+                      </p>
                     )}
 
-                    {place.avg_visit_time && (
-                      <span style={{
-                        background: 'rgba(56, 189, 248, 0.12)',
-                        color: '#38bdf8',
-                        border: '1px solid rgba(56, 189, 248, 0.25)',
-                        borderRadius: '6px',
-                        padding: '3px 8px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        <Clock style={{ width: '11px', height: '11px' }} /> Duration: {place.avg_visit_time}
-                      </span>
-                    )}
-
-                    <span style={{
-                      background: 'rgba(52, 211, 153, 0.12)',
-                      color: '#34d399',
-                      border: '1px solid rgba(52, 211, 153, 0.25)',
-                      borderRadius: '6px',
-                      padding: '3px 8px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
+                    {/* Fetched Details Pill Grid */}
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '6px',
+                      fontSize: '0.72rem',
+                      marginBottom: '10px'
                     }}>
-                      <Ticket style={{ width: '11px', height: '11px' }} /> {place.entry_fee === 0 ? 'Free Entry' : `₹${place.entry_fee}`}
-                    </span>
-
-                    {(place.map_url || (place.latitude && place.longitude)) && (
-                      <a
-                        href={place.map_url || `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          background: 'rgba(245, 158, 11, 0.12)',
-                          color: '#fbbf24',
-                          border: '1px solid rgba(245, 158, 11, 0.25)',
+                      {place.best_season && (
+                        <span style={{
+                          background: 'rgba(168, 85, 247, 0.12)',
+                          color: '#c084fc',
+                          border: '1px solid rgba(168, 85, 247, 0.25)',
                           borderRadius: '6px',
                           padding: '3px 8px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px',
-                          textDecoration: 'none'
-                        }}
-                      >
-                        <Compass style={{ width: '11px', height: '11px' }} /> GPS View
-                      </a>
-                    )}
+                          gap: '4px'
+                        }}>
+                          <Calendar style={{ width: '11px', height: '11px' }} /> Season: {place.best_season}
+                        </span>
+                      )}
+
+                      {place.avg_visit_time && (
+                        <span style={{
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          color: '#38bdf8',
+                          border: '1px solid rgba(56, 189, 248, 0.25)',
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <Clock style={{ width: '11px', height: '11px' }} /> Duration: {place.avg_visit_time}
+                        </span>
+                      )}
+
+                      <span style={{
+                        background: 'rgba(52, 211, 153, 0.12)',
+                        color: '#34d399',
+                        border: '1px solid rgba(52, 211, 153, 0.25)',
+                        borderRadius: '6px',
+                        padding: '3px 8px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <Ticket style={{ width: '11px', height: '11px' }} /> {place.entry_fee === 0 ? 'Free Entry' : `₹${place.entry_fee}`}
+                      </span>
+
+                      {(place.map_url || (place.latitude && place.longitude)) && (
+                        <a
+                          href={place.map_url || `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            background: 'rgba(245, 158, 11, 0.12)',
+                            color: '#fbbf24',
+                            border: '1px solid rgba(245, 158, 11, 0.25)',
+                            borderRadius: '6px',
+                            padding: '3px 8px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <Compass style={{ width: '11px', height: '11px' }} /> GPS View
+                        </a>
+                      )}
+                    </div>
                   </div>
 
-                {/* Card Bottom Actions */}
-                <div style={{
-                  paddingTop: '12px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px'
-                }}>
-                  <button
-                    onClick={() => setSelectedSpotModal(place)}
-                    className="btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <Info style={{ width: '12px', height: '12px', color: '#38bdf8' }} />
-                    <span>View Guide</span>
-                  </button>
+                  {/* Card Bottom Actions */}
+                  <div style={{
+                    paddingTop: '12px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px'
+                  }}>
+                    <button
+                      onClick={() => setSelectedSpotModal(place)}
+                      className="btn-secondary"
+                      style={{ padding: '6px 12px', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Info style={{ width: '12px', height: '12px', color: '#38bdf8' }} />
+                      <span>View Guide</span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      if (onSelectSpot) onSelectSpot(place.name);
-                      if (onNavigateTab) onNavigateTab('planner');
-                    }}
-                    className="btn-primary"
-                    style={{ padding: '6px 12px', fontSize: '0.74rem' }}
-                  >
-                    <span>Add to Itinerary</span>
-                    <ChevronRight style={{ width: '12px', height: '12px' }} />
-                  </button>
+                    <button
+                      onClick={() => {
+                        if (onSelectSpot) onSelectSpot(place.name);
+                        if (onNavigateTab) onNavigateTab('planner');
+                      }}
+                      className="btn-primary"
+                      style={{ padding: '6px 12px', fontSize: '0.74rem' }}
+                    >
+                      <span>Add to Itinerary</span>
+                      <ChevronRight style={{ width: '12px', height: '12px' }} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
