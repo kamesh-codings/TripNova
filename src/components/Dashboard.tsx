@@ -322,7 +322,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {activeTrip ? activeTrip.title : 'Nilgiris Expedition'}
             </h4>
             <p style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-              {activeTrip ? `${activeTrip.durationDays} Days • ${activeTrip.transportMode}` : '5 Days • Train & Cab'}
+              {activeTrip ? `${activeTrip.durationDays} Days • ${activeTrip.travelerCount || 2} Travelers • ${activeTrip.transportMode}` : '5 Days • 2 Travelers • Train & Cab'}
             </p>
           </div>
           <div className="flex items-center gap-1" style={{ fontSize: '0.78rem', fontWeight: 700, color: '#38bdf8' }}>

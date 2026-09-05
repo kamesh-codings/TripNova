@@ -1,9 +1,10 @@
 /**
  * =============================================================================
- * TripNova Database Connection Manager
+ * TripNova Database Connection & Sync Manager
  * =============================================================================
- * Supports MySQL (Default / Production) with auto-creation of database and tables,
- * plus SQLite zero-config fallback.
+ * Supports MySQL (Production / Cloud) and SQLite zero-config fallback.
+ * Automatically synchronizes places, locations, cultural rules, and safety contacts
+ * from seed.sql so that new tourist spots added in the future are instantly active.
  */
 
 require('dotenv').config();
@@ -15,6 +16,165 @@ const DB_TYPE = (process.env.DB_TYPE || 'mysql').toLowerCase();
 let mysqlPool = null;
 let sqliteDb = null;
 let isInitialized = false;
+
+// =============================================================================
+// Helper: Parse seed.sql for Locations, Places, Rules & Safety Contacts
+// =============================================================================
+function parseSeedSql() {
+  const seedSqlPath = path.resolve(__dirname, '../database/seed.sql');
+  if (!fs.existsSync(seedSqlPath)) return { locations: [], places: [], contacts: [] };
+
+  const sqlContent = fs.readFileSync(seedSqlPath, 'utf8');
+
+  // 1. Locations
+  const locations = [];
+  const locBlockMatch = sqlContent.match(/INSERT INTO `locations`[\s\S]*?\);/);
+  if (locBlockMatch) {
+    const lines = locBlockMatch[0].split('\n');
+    let current = [];
+    let inTuple = false;
+    for (const line of lines) {
+      const tr = line.trim();
+      if (tr.startsWith('(')) { inTuple = true; current = []; }
+      if (inTuple) current.push(tr);
+      if (tr.endsWith('),') || tr.endsWith(');')) {
+        inTuple = false;
+        const tupleStr = current.join(' ');
+        const m = tupleStr.match(/^\(\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([\s\S]*?)',\s*'[^']+',\s*'[^']+'\s*\)[,;]?$/);
+        if (m) {
+          locations.push({
+            id: m[1],
+            name: m[2],
+            state: m[3],
+            country: m[4],
+            currency_code: m[5],
+            description: m[6].replace(/''/g, "'").trim()
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Places
+  const places = [];
+  const placesBlockMatch = sqlContent.match(/INSERT INTO `places`[\s\S]*?\);/);
+  if (placesBlockMatch) {
+    const lines = placesBlockMatch[0].split('\n');
+    let current = [];
+    let inTuple = false;
+    for (const line of lines) {
+      const tr = line.trim();
+      if (tr.startsWith('(')) { inTuple = true; current = []; }
+      if (inTuple) current.push(tr);
+      if (tr.endsWith('),') || tr.endsWith(');')) {
+        inTuple = false;
+        const tupleStr = current.join(' ');
+        const m = tupleStr.match(/^\(\s*'([^']+)',\s*'([^']+)',\s*'([\s\S]*?)',\s*'([^']+)',\s*([0-9.]+),\s*([0-9]+),\s*([0-9.]+),\s*'([\s\S]*?)',\s*'[^']+',\s*'[^']+'\s*\)[,;]?$/);
+        if (m) {
+          places.push({
+            id: m[1],
+            location_id: m[2],
+            name: m[3].replace(/''/g, "'").trim(),
+            category: m[4],
+            avg_rating: parseFloat(m[5]),
+            review_count: parseInt(m[6], 10),
+            entry_fee: parseFloat(m[7]),
+            opening_hours: m[8].replace(/''/g, "'").trim()
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Safety Contacts
+  const contacts = [];
+  const contactsBlockMatch = sqlContent.match(/INSERT INTO `safety_contacts`[\s\S]*?\);/);
+  if (contactsBlockMatch) {
+    const lines = contactsBlockMatch[0].split('\n');
+    let current = [];
+    let inTuple = false;
+    for (const line of lines) {
+      const tr = line.trim();
+      if (tr.startsWith('(')) { inTuple = true; current = []; }
+      if (inTuple) current.push(tr);
+      if (tr.endsWith('),') || tr.endsWith(');')) {
+        inTuple = false;
+        const tupleStr = current.join(' ');
+        const m = tupleStr.match(/^\(\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'([^']+)',\s*'[^']+',\s*'[^']+'\s*\)[,;]?$/);
+        if (m) {
+          contacts.push({
+            id: m[1],
+            location_id: m[2],
+            service_type: m[3],
+            contact_number: m[4],
+            operating_hours: m[5]
+          });
+        }
+      }
+    }
+  }
+
+  return { locations, places, contacts };
+}
+
+// Synchronize parsed seed data into Database
+async function syncSeedDataToDatabase(queryFn, engine) {
+  try {
+    const { locations, places, contacts } = parseSeedSql();
+
+    // 1. Sync Locations
+    for (const loc of locations) {
+      if (engine === 'mysql') {
+        await queryFn(`
+          INSERT INTO locations (id, name, state, country, currency_code, description)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE name=VALUES(name), state=VALUES(state), country=VALUES(country), currency_code=VALUES(currency_code), description=VALUES(description)
+        `, [loc.id, loc.name, loc.state, loc.country, loc.currency_code, loc.description]);
+      } else {
+        await queryFn(`
+          INSERT OR REPLACE INTO locations (id, name, state, country, currency_code, description)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `, [loc.id, loc.name, loc.state, loc.country, loc.currency_code, loc.description]);
+      }
+    }
+
+    // 2. Sync Places
+    for (const p of places) {
+      if (engine === 'mysql') {
+        await queryFn(`
+          INSERT INTO places (id, location_id, name, category, avg_rating, review_count, entry_fee, opening_hours)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE location_id=VALUES(location_id), name=VALUES(name), category=VALUES(category), avg_rating=VALUES(avg_rating), review_count=VALUES(review_count), entry_fee=VALUES(entry_fee), opening_hours=VALUES(opening_hours)
+        `, [p.id, p.location_id, p.name, p.category, p.avg_rating, p.review_count, p.entry_fee, p.opening_hours]);
+      } else {
+        await queryFn(`
+          INSERT OR REPLACE INTO places (id, location_id, name, category, avg_rating, review_count, entry_fee, opening_hours)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [p.id, p.location_id, p.name, p.category, p.avg_rating, p.review_count, p.entry_fee, p.opening_hours]);
+      }
+    }
+
+    // 3. Sync Safety Contacts
+    for (const sc of contacts) {
+      if (engine === 'mysql') {
+        await queryFn(`
+          INSERT INTO safety_contacts (id, location_id, service_type, contact_number, operating_hours)
+          VALUES (?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE service_type=VALUES(service_type), contact_number=VALUES(contact_number), operating_hours=VALUES(operating_hours)
+        `, [sc.id, sc.location_id, sc.service_type, sc.contact_number, sc.operating_hours]);
+      } else {
+        await queryFn(`
+          INSERT OR REPLACE INTO safety_contacts (id, location_id, service_type, contact_number, operating_hours)
+          VALUES (?, ?, ?, ?, ?)
+        `, [sc.id, sc.location_id, sc.service_type, sc.contact_number, sc.operating_hours]);
+      }
+    }
+
+    console.log(`✅ Database synced with seed.sql: ${locations.length} locations, ${places.length} places, ${contacts.length} safety contacts.`);
+  } catch (err) {
+    console.warn('⚠️ Seed data sync notice:', err.message);
+  }
+}
 
 // =============================================================================
 // 1. MySQL Implementation
@@ -30,7 +190,6 @@ async function initMySQL() {
 
   console.log(`🔌 Attempting MySQL connection to ${user}@${host}:${port}...`);
 
-  // Step 1: Connect to MySQL Server without specifying DB to ensure database exists
   try {
     const rootConn = await mysql.createConnection({
       host,
@@ -46,7 +205,6 @@ async function initMySQL() {
     console.warn(`⚠️ Could not auto-create database (might lack root privileges or DB already exists):`, err.message);
   }
 
-  // Step 2: Create Connection Pool to the specific database
   const pool = mysql.createPool({
     host,
     port,
@@ -60,7 +218,6 @@ async function initMySQL() {
     keepAliveInitialDelay: 10000
   });
 
-  // Verify connection
   const conn = await pool.getConnection();
   conn.release();
   console.log(`🚀 MySQL Connected successfully to \`${database}\` on ${host}:${port}`);
@@ -68,10 +225,8 @@ async function initMySQL() {
   return pool;
 }
 
-// Bootstrap MySQL Schema
 async function bootstrapMySQL(pool) {
   const tableQueries = [
-    // 1. Users (Tourists / Consumers)
     `CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(64) PRIMARY KEY,
       username VARCHAR(64) UNIQUE,
@@ -104,7 +259,6 @@ async function bootstrapMySQL(pool) {
       INDEX idx_user_username (username)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
-    // 2. Service Providers (Partners)
     `CREATE TABLE IF NOT EXISTS service_providers (
       id VARCHAR(64) PRIMARY KEY,
       username VARCHAR(64) UNIQUE,
@@ -131,7 +285,6 @@ async function bootstrapMySQL(pool) {
       INDEX idx_provider_email (email)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
-    // 3. Locations
     `CREATE TABLE IF NOT EXISTS locations (
       id VARCHAR(64) PRIMARY KEY,
       name VARCHAR(128) NOT NULL,
@@ -143,22 +296,20 @@ async function bootstrapMySQL(pool) {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
-    // 4. Places
     `CREATE TABLE IF NOT EXISTS places (
       id VARCHAR(64) PRIMARY KEY,
       location_id VARCHAR(64) NOT NULL,
-      name VARCHAR(128) NOT NULL,
+      name VARCHAR(150) NOT NULL,
       category VARCHAR(64) NOT NULL,
       avg_rating DECIMAL(3, 2) DEFAULT 0.00,
       review_count INT DEFAULT 0,
       entry_fee DECIMAL(10, 2) DEFAULT 0.00,
-      opening_hours VARCHAR(128),
+      opening_hours VARCHAR(255),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
-    // 5. Trips & Itineraries
     `CREATE TABLE IF NOT EXISTS trips (
       id VARCHAR(64) PRIMARY KEY,
       user_id VARCHAR(64),
@@ -171,13 +322,24 @@ async function bootstrapMySQL(pool) {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
-    // 6. Safety Contacts
     `CREATE TABLE IF NOT EXISTS safety_contacts (
       id VARCHAR(64) PRIMARY KEY,
       location_id VARCHAR(64) NOT NULL,
-      service_type VARCHAR(64) NOT NULL,
+      service_type VARCHAR(100) NOT NULL,
       contact_number VARCHAR(64) NOT NULL,
-      operating_hours VARCHAR(64) DEFAULT '24/7',
+      operating_hours VARCHAR(100) DEFAULT '24/7',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+    `CREATE TABLE IF NOT EXISTS cultural_rules (
+      id VARCHAR(64) PRIMARY KEY,
+      location_id VARCHAR(64) NOT NULL,
+      rule_type VARCHAR(64) NOT NULL,
+      title VARCHAR(150) NOT NULL,
+      description TEXT NOT NULL,
+      severity VARCHAR(32) DEFAULT 'standard',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
@@ -188,27 +350,18 @@ async function bootstrapMySQL(pool) {
     try {
       await pool.query(q);
     } catch (err) {
-      console.warn('⚠️ Table bootstrap notice:', err.message);
+      console.warn('⚠️ MySQL table bootstrap notice:', err.message);
     }
   }
 
-  // Seed sample tourist if empty
-  try {
-    const [rows] = await pool.query('SELECT COUNT(*) as count FROM users');
-    if (rows[0].count === 0) {
-      await pool.query(`
-        INSERT INTO users (id, username, password, email, full_name, dob, age, gender, blood_group, native_currency, preferred_language, is_registered)
-        VALUES ('usr_demo_kamesh', 'kamesh_traveler', 'kamesh123', 'kamesh.travel@gmail.com', 'Kameshwaram S', '2001-05-14', 25, 'Male', 'O+', 'INR', 'English', 1)
-      `);
-      console.log('🌱 Seeded default demo tourist in MySQL.');
-    }
-  } catch (e) {
-    // Ignore seed errors
-  }
+  await syncSeedDataToDatabase(async (sql, params) => {
+    const [rows] = await pool.query(sql, params);
+    return rows;
+  }, 'mysql');
 }
 
 // =============================================================================
-// 2. SQLite Fallback Implementation
+// 2. SQLite Implementation
 // =============================================================================
 function initSQLite() {
   const sqlite3 = require('sqlite3').verbose();
@@ -302,6 +455,54 @@ async function bootstrapSqlite(db) {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS locations (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT 'Tamil Nadu',
+      country TEXT NOT NULL DEFAULT 'India',
+      currency_code TEXT NOT NULL DEFAULT 'INR',
+      description TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS places (
+      id TEXT PRIMARY KEY,
+      location_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      avg_rating REAL DEFAULT 0.00,
+      review_count INTEGER DEFAULT 0,
+      entry_fee REAL DEFAULT 0.00,
+      opening_hours TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS safety_contacts (
+      id TEXT PRIMARY KEY,
+      location_id TEXT NOT NULL,
+      service_type TEXT NOT NULL,
+      contact_number TEXT NOT NULL,
+      operating_hours TEXT DEFAULT '24/7',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS cultural_rules (
+      id TEXT PRIMARY KEY,
+      location_id TEXT NOT NULL,
+      rule_type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      severity TEXT DEFAULT 'standard',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS trips (
       id TEXT PRIMARY KEY,
       user_id TEXT,
@@ -310,16 +511,8 @@ async function bootstrapSqlite(db) {
       start_date TEXT,
       end_date TEXT,
       itinerary_data TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS locations (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      state TEXT NOT NULL DEFAULT 'Tamil Nadu',
-      country TEXT NOT NULL DEFAULT 'India',
-      currency_code TEXT NOT NULL DEFAULT 'INR',
-      description TEXT
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `;
 
@@ -327,6 +520,8 @@ async function bootstrapSqlite(db) {
   for (const stmt of statements) {
     await runSqliteQuery(db, stmt);
   }
+
+  await syncSeedDataToDatabase((sql, params) => runSqliteQuery(db, sql, params), 'sqlite');
 }
 
 // =============================================================================
@@ -351,7 +546,6 @@ const db = {
       }
     }
 
-    // Fallback or explicit sqlite
     sqliteDb = initSQLite();
     await bootstrapSqlite(sqliteDb);
     this.engine = 'sqlite';
@@ -375,6 +569,17 @@ const db = {
 
   getEngine() {
     return this.engine;
+  },
+
+  async reSyncSeedData() {
+    if (this.engine === 'mysql' && mysqlPool) {
+      await syncSeedDataToDatabase(async (sql, params) => {
+        const [rows] = await mysqlPool.query(sql, params);
+        return rows;
+      }, 'mysql');
+    } else if (sqliteDb) {
+      await syncSeedDataToDatabase((sql, params) => runSqliteQuery(sqliteDb, sql, params), 'sqlite');
+    }
   }
 };
 

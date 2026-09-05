@@ -49,6 +49,12 @@ export const SpotsExplorer: React.FC<SpotsExplorerProps> = ({ onSelectSpot, onNa
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [visibleCount, setVisibleCount] = useState<number>(24);
+
+  // Reset pagination on filter change
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [selectedCountry, selectedState, selectedLocationId, selectedCategory, searchQuery]);
 
   // Initial Data Load
   useEffect(() => {
@@ -377,86 +383,115 @@ export const SpotsExplorer: React.FC<SpotsExplorerProps> = ({ onSelectSpot, onNa
 
         {/* Spots Grid */}
         {filteredPlaces.length > 0 ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '16px'
-          }}>
-            {filteredPlaces.map((place) => (
-              <div
-                key={place.id}
-                className="glass-panel glass-panel-hover"
-                style={{
-                  padding: '20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '14px'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
-                    <span className="badge badge-purple" style={{ textTransform: 'capitalize' }}>
-                      {place.category.replace('_', ' ')}
-                    </span>
-                    <div className="flex items-center gap-1" style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: 700 }}>
-                      <Star style={{ width: '14px', height: '14px', fill: '#fbbf24' }} />
-                      <span>{place.avg_rating.toFixed(1)}</span>
-                      <span style={{ color: '#64748b', fontSize: '0.72rem' }}>({place.review_count})</span>
-                    </div>
-                  </div>
-
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginBottom: '6px', lineHeight: 1.3 }}>
-                    {place.name}
-                  </h4>
-
-                  <div className="flex items-center gap-1" style={{ color: '#94a3b8', fontSize: '0.78rem', marginBottom: '10px' }}>
-                    <MapPin style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
-                    <span>{place.location_name || 'Destination'}, {place.location_state || 'Tamil Nadu'}</span>
-                  </div>
-
-                  {/* Details Badges */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.75rem', color: '#cbd5e1' }}>
-                    {place.opening_hours && (
-                      <div className="flex items-center gap-2">
-                        <Clock style={{ width: '13px', height: '13px', color: '#a855f7' }} />
-                        <span>{place.opening_hours}</span>
+          <>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '16px'
+            }}>
+              {filteredPlaces.slice(0, visibleCount).map((place) => (
+                <div
+                  key={place.id}
+                  className="glass-panel glass-panel-hover"
+                  style={{
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '14px'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                      <span className="badge badge-purple" style={{ textTransform: 'capitalize' }}>
+                        {place.category.replace('_', ' ')}
+                      </span>
+                      <div className="flex items-center gap-1" style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: 700 }}>
+                        <Star style={{ width: '14px', height: '14px', fill: '#fbbf24' }} />
+                        <span>{place.avg_rating.toFixed(1)}</span>
+                        <span style={{ color: '#64748b', fontSize: '0.72rem' }}>({place.review_count})</span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Ticket style={{ width: '13px', height: '13px', color: '#34d399' }} />
-                      <span>Entry Fee: {place.entry_fee === 0 ? 'Free Entry' : `₹${place.entry_fee}`}</span>
+                    </div>
+
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', marginBottom: '6px', lineHeight: 1.3 }}>
+                      {place.name}
+                    </h4>
+
+                    <div className="flex items-center gap-1" style={{ color: '#94a3b8', fontSize: '0.78rem', marginBottom: '10px' }}>
+                      <MapPin style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
+                      <span>{place.location_name || 'Destination'}, {place.location_state || 'Tamil Nadu'}</span>
+                    </div>
+
+                    {/* Details Badges */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                      {place.opening_hours && (
+                        <div className="flex items-center gap-2">
+                          <Clock style={{ width: '13px', height: '13px', color: '#a855f7' }} />
+                          <span>{place.opening_hours}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Ticket style={{ width: '13px', height: '13px', color: '#34d399' }} />
+                        <span>Entry Fee: {place.entry_fee === 0 ? 'Free Entry' : `₹${place.entry_fee}`}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Card Bottom CTA */}
-                <div style={{
-                  paddingTop: '12px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <button
-                    onClick={() => {
-                      if (onSelectSpot) onSelectSpot(place.name);
-                      if (onNavigateTab) onNavigateTab('planner');
-                    }}
-                    className="btn-primary"
-                    style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-                  >
-                    <span>Add to Itinerary</span>
-                    <ChevronRight style={{ width: '12px', height: '12px' }} />
-                  </button>
+                  {/* Card Bottom CTA */}
+                  <div style={{
+                    paddingTop: '12px',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <button
+                      onClick={() => {
+                        if (onSelectSpot) onSelectSpot(place.name);
+                        if (onNavigateTab) onNavigateTab('planner');
+                      }}
+                      className="btn-primary"
+                      style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+                    >
+                      <span>Add to Itinerary</span>
+                      <ChevronRight style={{ width: '12px', height: '12px' }} />
+                    </button>
 
-                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                    ID: {place.id}
-                  </span>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                      ID: {place.id}
+                    </span>
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Load More Pagination Bar */}
+            {filteredPlaces.length > visibleCount && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                marginTop: '16px',
+                padding: '16px'
+              }}>
+                <button
+                  onClick={() => setVisibleCount(prev => Math.min(prev + 24, filteredPlaces.length))}
+                  className="btn-secondary"
+                  style={{ padding: '10px 24px', fontSize: '0.9rem', fontWeight: 700 }}
+                >
+                  Load More ({Math.min(24, filteredPlaces.length - visibleCount)} remaining)
+                </button>
+                <button
+                  onClick={() => setVisibleCount(filteredPlaces.length)}
+                  className="btn-glass"
+                  style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+                >
+                  Show All ({filteredPlaces.length})
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           /* Zero Places Display (Handled cleanly as requested) */
           <div className="glass-panel" style={{

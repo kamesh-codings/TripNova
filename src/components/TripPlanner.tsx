@@ -10,11 +10,14 @@ import {
   Hotel, 
   Sparkles, 
   Plus, 
+  Minus,
   Check, 
   UserCheck, 
   Star, 
   Phone, 
-  Clock
+  Clock,
+  Users,
+  User
 } from 'lucide-react';
 import { TripPlan, TransportMode, LocalGuide, ItineraryItem, ServiceProviderProfile } from '../types';
 import { LOCAL_GUIDES } from '../data/mockData';
@@ -87,8 +90,9 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
   const [transportMode, setTransportMode] = useState<TransportMode>('Train');
   const [startDate, setStartDate] = useState('2026-09-15');
   const [endDate, setEndDate] = useState('2026-09-19');
+  const [travelerCount, setTravelerCount] = useState<number>(2);
   const [budgetType, setBudgetType] = useState<'suggested' | 'manual'>('suggested');
-  const [budgetAmount, setBudgetAmount] = useState<number>(15000);
+  const [budgetAmount, setBudgetAmount] = useState<number>(28000);
   
   const [selectedSpots, setSelectedSpots] = useState<string[]>([
     'Nilgiri Mountain Railway',
@@ -141,16 +145,30 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
   };
 
   const durationDays = calculateDays();
+  const safeTravelers = Math.max(1, travelerCount || 1);
+  const roomsCount = Math.ceil(safeTravelers / 2);
+
+  // Scaled Multi-Traveler Cost Vectors
+  const travelCost = (transportMode === 'Cab / Taxi' || transportMode === 'Self-Drive / Rental')
+    ? Math.round(durationDays * 1600 * Math.ceil(safeTravelers / 4))
+    : Math.round(durationDays * 1200 * safeTravelers);
+
+  const stayCost = Math.round(durationDays * 1800 * roomsCount);
+  const foodCost = Math.round(durationDays * 900 * safeTravelers);
+  const activitiesCost = Math.round(durationDays * 600 * safeTravelers);
+  const bufferCost = Math.round(durationDays * 350 * safeTravelers);
 
   const suggestedBreakdown = {
-    travel: Math.round(durationDays * 1200),
-    stay: Math.round(durationDays * 1800),
-    food: Math.round(durationDays * 900),
-    activities: Math.round(durationDays * 600),
-    buffer: Math.round(durationDays * 500)
+    travel: travelCost,
+    stay: stayCost,
+    food: foodCost,
+    activities: activitiesCost,
+    buffer: bufferCost
   };
+
   const totalSuggested = Object.values(suggestedBreakdown).reduce((a, b) => a + b, 0);
   const effectiveBudget = budgetType === 'suggested' ? totalSuggested : budgetAmount;
+  const perPersonBudget = Math.round(effectiveBudget / safeTravelers);
 
   const handleAddSpot = () => {
     if (newSpotInput.trim() && !selectedSpots.includes(newSpotInput.trim())) {
@@ -171,11 +189,11 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
         id: `it_gen_${Date.now()}_${day}`,
         day,
         time: day === 1 ? '07:30 AM' : '09:00 AM',
-        title: `Day ${day}: Explore ${spotForDay}`,
-        description: `Scheduled exploration of ${spotForDay} with certified travel guidance and local food breaks.`,
+        title: `Day ${day}: Explore ${spotForDay} (${safeTravelers} Traveler${safeTravelers > 1 ? 's' : ''})`,
+        description: `Scheduled exploration of ${spotForDay} for ${safeTravelers} traveler(s) with certified guidance and authentic local dining stops.`,
         spotName: spotForDay,
-        residencyName: day === 1 ? 'Eco-Residency Heritage Stay' : 'Highland Mountain Retreat',
-        transportNotes: transportMode === 'Train' ? 'Mountain Steam Heritage Train' : `${transportMode} Ride`,
+        residencyName: day === 1 ? `Eco-Residency Heritage Stay (${roomsCount} Room${roomsCount > 1 ? 's' : ''})` : `Highland Mountain Retreat (${roomsCount} Room${roomsCount > 1 ? 's' : ''})`,
+        transportNotes: transportMode === 'Train' ? `Mountain Steam Train (${safeTravelers} Reserved Tickets)` : `${transportMode} Booking`,
         estimatedCost: Math.round(effectiveBudget / durationDays),
         weatherForecast: day === 2 
           ? { temp: '17°C', condition: 'Rain & Mist', alert: '⚠️ Hill Fog: Proceed with daytime driver' }
@@ -192,11 +210,13 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
       startDate,
       endDate,
       durationDays,
+      travelerCount: safeTravelers,
+      roomsCount,
       budgetType,
       budgetAmount: effectiveBudget,
       suggestedBudgetBreakdown: suggestedBreakdown,
       selectedSpots,
-      selectedResidencies: ['Eco-Residency Heritage Stay', 'Highland Mountain Retreat'],
+      selectedResidencies: [`Eco-Residency Heritage Stay (${roomsCount} Room${roomsCount > 1 ? 's' : ''})`, `Highland Mountain Retreat (${roomsCount} Room${roomsCount > 1 ? 's' : ''})`],
       itinerary: generatedItinerary,
       assignedGuide: selectedGuide || undefined,
       createdAt: new Date().toISOString(),
@@ -353,6 +373,125 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
               </div>
             </div>
 
+            {/* Group Size / Traveler Count Selector */}
+            <div>
+              <div className="flex items-center justify-between" style={{ marginBottom: '6px' }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Users style={{ width: '14px', height: '14px', color: '#38bdf8' }} />
+                  Travelers & Group Size (Min 1, No Upper Limit)
+                </label>
+                <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 700 }}>
+                  {safeTravelers} {safeTravelers === 1 ? 'Traveler' : 'Travelers'} • {roomsCount} {roomsCount === 1 ? 'Room' : 'Rooms'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Stepper Control */}
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  background: 'rgba(10, 15, 29, 0.85)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '12px',
+                  padding: '4px 6px',
+                  gap: '8px'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setTravelerCount(Math.max(1, safeTravelers - 1))}
+                    disabled={safeTravelers <= 1}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: safeTravelers <= 1 ? 'rgba(255,255,255,0.05)' : 'rgba(56, 189, 248, 0.2)',
+                      color: safeTravelers <= 1 ? '#64748b' : '#38bdf8',
+                      cursor: safeTravelers <= 1 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800
+                    }}
+                    title="Decrease Travelers"
+                  >
+                    <Minus style={{ width: '14px', height: '14px' }} />
+                  </button>
+
+                  <input
+                    type="number"
+                    min={1}
+                    value={travelerCount}
+                    onChange={e => {
+                      const val = parseInt(e.target.value);
+                      setTravelerCount(isNaN(val) ? 1 : Math.max(1, val));
+                    }}
+                    style={{
+                      width: '52px',
+                      textAlign: 'center',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#ffffff',
+                      fontWeight: 900,
+                      fontSize: '1rem',
+                      fontFamily: 'monospace',
+                      outline: 'none'
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setTravelerCount(safeTravelers + 1)}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'rgba(56, 189, 248, 0.2)',
+                      color: '#38bdf8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800
+                    }}
+                    title="Increase Travelers"
+                  >
+                    <Plus style={{ width: '14px', height: '14px' }} />
+                  </button>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  {[
+                    { count: 1, label: 'Solo (1)' },
+                    { count: 2, label: 'Couple (2)' },
+                    { count: 4, label: 'Small Group (4)' },
+                    { count: 6, label: 'Family (6)' },
+                    { count: 10, label: 'Large Group (10)' }
+                  ].map(preset => (
+                    <button
+                      key={preset.count}
+                      type="button"
+                      onClick={() => setTravelerCount(preset.count)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '10px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: safeTravelers === preset.count ? '1px solid #38bdf8' : '1px solid rgba(255,255,255,0.08)',
+                        background: safeTravelers === preset.count ? 'rgba(56, 189, 248, 0.25)' : 'rgba(10, 15, 29, 0.65)',
+                        color: safeTravelers === preset.count ? '#38bdf8' : '#94a3b8'
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-3 gap-3">
               <div>
                 <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>From Date</label>
@@ -425,44 +564,69 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
             </div>
 
             {budgetType === 'suggested' ? (
-              <div style={{ padding: '16px', background: 'rgba(10, 15, 29, 0.85)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="flex items-center justify-between">
-                  <span style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>Estimated Total for {durationDays} Days:</span>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 900, color: '#34d399', fontFamily: 'monospace' }}>₹{totalSuggested.toLocaleString()}</span>
+              <div style={{ padding: '16px', background: 'rgba(10, 15, 29, 0.85)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <span style={{ fontSize: '0.78rem', color: '#cbd5e1', display: 'block' }}>
+                      Estimated Total Group Budget ({safeTravelers} {safeTravelers === 1 ? 'Person' : 'People'} • {durationDays} Days):
+                    </span>
+                    <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#34d399', fontFamily: 'monospace' }}>
+                      ₹{totalSuggested.toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span className="badge badge-purple" style={{ fontSize: '0.76rem', padding: '4px 10px' }}>
+                      ₹{perPersonBudget.toLocaleString()} / traveler
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', marginTop: '3px' }}>
+                      🏨 {roomsCount} {roomsCount === 1 ? 'Room' : 'Rooms'} ({safeTravelers > 1 ? 'shared 2/room' : 'single room'})
+                    </span>
+                  </div>
                 </div>
+
                 <div className="grid grid-5 gap-2" style={{ textAlign: 'center' }}>
-                  <div style={{ padding: '8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>Travel</span>
-                    <strong style={{ fontSize: '0.8rem', color: '#38bdf8' }}>₹{suggestedBreakdown.travel}</strong>
+                  <div style={{ padding: '10px 8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Travel</span>
+                    <strong style={{ fontSize: '0.82rem', color: '#38bdf8', display: 'block' }}>₹{suggestedBreakdown.travel.toLocaleString()}</strong>
+                    <span style={{ fontSize: '0.62rem', color: '#64748b' }}>{transportMode}</span>
                   </div>
-                  <div style={{ padding: '8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>Stay</span>
-                    <strong style={{ fontSize: '0.8rem', color: '#38bdf8' }}>₹{suggestedBreakdown.stay}</strong>
+                  <div style={{ padding: '10px 8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Stay</span>
+                    <strong style={{ fontSize: '0.82rem', color: '#38bdf8', display: 'block' }}>₹{suggestedBreakdown.stay.toLocaleString()}</strong>
+                    <span style={{ fontSize: '0.62rem', color: '#64748b' }}>{roomsCount} {roomsCount === 1 ? 'Room' : 'Rooms'}</span>
                   </div>
-                  <div style={{ padding: '8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>Food</span>
-                    <strong style={{ fontSize: '0.8rem', color: '#38bdf8' }}>₹{suggestedBreakdown.food}</strong>
+                  <div style={{ padding: '10px 8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Food</span>
+                    <strong style={{ fontSize: '0.82rem', color: '#38bdf8', display: 'block' }}>₹{suggestedBreakdown.food.toLocaleString()}</strong>
+                    <span style={{ fontSize: '0.62rem', color: '#64748b' }}>All Meals</span>
                   </div>
-                  <div style={{ padding: '8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block' }}>Activities</span>
-                    <strong style={{ fontSize: '0.8rem', color: '#38bdf8' }}>₹{suggestedBreakdown.activities}</strong>
+                  <div style={{ padding: '10px 8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Activities</span>
+                    <strong style={{ fontSize: '0.82rem', color: '#38bdf8', display: 'block' }}>₹{suggestedBreakdown.activities.toLocaleString()}</strong>
+                    <span style={{ fontSize: '0.62rem', color: '#64748b' }}>Entry & Tours</span>
                   </div>
-                  <div style={{ padding: '8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
-                    <span style={{ fontSize: '0.65rem', color: '#fbbf24', display: 'block' }}>Buffer</span>
-                    <strong style={{ fontSize: '0.8rem', color: '#fbbf24' }}>₹{suggestedBreakdown.buffer}</strong>
+                  <div style={{ padding: '10px 8px', background: 'rgba(30, 41, 59, 0.6)', borderRadius: '10px' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#fbbf24', display: 'block' }}>Buffer</span>
+                    <strong style={{ fontSize: '0.82rem', color: '#fbbf24', display: 'block' }}>₹{suggestedBreakdown.buffer.toLocaleString()}</strong>
+                    <span style={{ fontSize: '0.62rem', color: '#fbbf24' }}>Emergency</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div>
-                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Enter Custom Budget (₹ INR)</label>
-                <input
-                  type="number"
-                  value={budgetAmount}
-                  onChange={e => setBudgetAmount(parseInt(e.target.value) || 0)}
-                  className="input-glass"
-                  style={{ fontFamily: 'monospace', fontSize: '1rem', fontWeight: 800, color: '#34d399' }}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block' }}>Enter Total Custom Budget (₹ INR for {safeTravelers} Travelers)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={budgetAmount}
+                    onChange={e => setBudgetAmount(parseInt(e.target.value) || 0)}
+                    className="input-glass"
+                    style={{ fontFamily: 'monospace', fontSize: '1.1rem', fontWeight: 800, color: '#34d399', flex: 1 }}
+                  />
+                  <span className="badge badge-purple" style={{ padding: '8px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                    ≈ ₹{Math.round(budgetAmount / safeTravelers).toLocaleString()} / person
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -649,12 +813,15 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                       {trip.boardingPoint} $\rightarrow$ {trip.destination}
                     </p>
                   </div>
-                  <span className="badge badge-blue">{trip.durationDays} Days</span>
+                  <div className="flex items-center gap-1">
+                    <span className="badge badge-blue">{trip.durationDays} Days</span>
+                    <span className="badge badge-purple" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>👥 {trip.travelerCount || 1}</span>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between" style={{ fontSize: '0.72rem', color: '#cbd5e1', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span>Budget: ₹{trip.budgetAmount.toLocaleString()}</span>
-                  <span style={{ color: '#38bdf8', fontWeight: 700 }}>{trip.transportMode}</span>
+                  <span>Budget: ₹{trip.budgetAmount.toLocaleString()} (₹{Math.round(trip.budgetAmount / (trip.travelerCount || 1)).toLocaleString()}/p)</span>
+                  <span style={{ color: '#38bdf8', fontWeight: 700 }}>{trip.transportMode} • 🏨 {trip.roomsCount || 1} Rm</span>
                 </div>
               </div>
             ))}

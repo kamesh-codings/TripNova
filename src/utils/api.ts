@@ -98,16 +98,9 @@ export const FALLBACK_LOCATIONS: LocationItem[] = [
   { id: 'loc-ksd', name: 'Kasaragod', state: 'Kerala', country: 'India', currency_code: 'INR', description: 'Northernmost coastal district featuring Bekal Fort battlements.' }
 ];
 
-export const FALLBACK_PLACES: PlaceItem[] = [
-  { id: 'plc-marina-beach', location_id: 'loc-chn', name: 'Marina Beach & Promenade', category: 'beach', avg_rating: 4.5, review_count: 2, entry_fee: 0, opening_hours: '24 Hours (Best: 05:00 - 08:30 & 16:30 - 20:30)', location_name: 'Chennai', location_state: 'Tamil Nadu' },
-  { id: 'plc-kapaleeshwarar-temple', location_id: 'loc-chn', name: 'Kapaleeshwarar Temple', category: 'religious', avg_rating: 4.8, review_count: 2, entry_fee: 0, opening_hours: '05:30 - 12:00, 16:00 - 21:00', location_name: 'Chennai', location_state: 'Tamil Nadu' },
-  { id: 'plc-brihadisvara-temple', location_id: 'loc-tnj', name: 'Brihadisvara Temple (Big Temple)', category: 'historical', avg_rating: 4.9, review_count: 2, entry_fee: 0, opening_hours: '06:00 - 12:30, 16:00 - 20:30', location_name: 'Thanjavur', location_state: 'Tamil Nadu' },
-  { id: 'plc-meenakshi-amman', location_id: 'loc-mdu', name: 'Meenakshi Amman Temple', category: 'religious', avg_rating: 4.9, review_count: 4, entry_fee: 0, opening_hours: '05:00 - 12:30, 16:00 - 22:00', location_name: 'Madurai', location_state: 'Tamil Nadu' },
-  { id: 'plc-mamallapuram-shore', location_id: 'loc-cgl', name: 'Shore Temple & Rock Reliefs', category: 'historical', avg_rating: 4.7, review_count: 3, entry_fee: 40, opening_hours: '06:00 - 18:00', location_name: 'Chengalpattu', location_state: 'Tamil Nadu' },
-  { id: 'plc-ooty-lake-train', location_id: 'loc-nlg', name: 'Nilgiri Mountain Railway & Doddabetta', category: 'nature', avg_rating: 4.8, review_count: 5, entry_fee: 30, opening_hours: '08:30 - 18:00', location_name: 'Nilgiris', location_state: 'Tamil Nadu' },
-  { id: 'plc-alappuzha-backwaters', location_id: 'loc-alp', name: 'Punnamada Lake & Houseboat Route', category: 'nature', avg_rating: 4.8, review_count: 6, entry_fee: 0, opening_hours: '06:00 - 18:30', location_name: 'Alappuzha', location_state: 'Kerala' },
-  { id: 'plc-fort-kochi', location_id: 'loc-ekm', name: 'Fort Kochi Chinese Fishing Nets', category: 'cultural', avg_rating: 4.6, review_count: 4, entry_fee: 0, opening_hours: '24 Hours', location_name: 'Ernakulam', location_state: 'Kerala' }
-];
+import { SEED_PLACES } from '../data/seedPlacesData';
+
+export const FALLBACK_PLACES: PlaceItem[] = SEED_PLACES;
 
 // Check backend health & connectivity
 export async function checkBackendHealth(): Promise<{ isConnected: boolean; locationsCount: number }> {
@@ -156,11 +149,12 @@ export async function fetchLocations(state?: string, search?: string): Promise<L
   });
 }
 
-// Fetch Places (by location_id, category, search)
-export async function fetchPlaces(locationId?: string, category?: string, search?: string): Promise<PlaceItem[]> {
+// Fetch Places (by location_id, category, search, state)
+export async function fetchPlaces(locationId?: string, category?: string, search?: string, state?: string): Promise<PlaceItem[]> {
   try {
     const params = new URLSearchParams();
-    if (locationId) params.append('location_id', locationId);
+    if (locationId && locationId !== 'all') params.append('location_id', locationId);
+    if (state && state !== 'All') params.append('state', state);
     if (category && category !== 'all') params.append('category', category);
     if (search) params.append('search', search);
 
@@ -178,8 +172,9 @@ export async function fetchPlaces(locationId?: string, category?: string, search
 
   // Local fallback
   return FALLBACK_PLACES.filter(p => {
-    if (locationId && p.location_id !== locationId) return false;
-    if (category && category !== 'all' && p.category !== category) return false;
+    if (locationId && locationId !== 'all' && p.location_id !== locationId) return false;
+    if (state && state !== 'All' && p.location_state && p.location_state.toLowerCase() !== state.toLowerCase()) return false;
+    if (category && category !== 'all' && p.category.toLowerCase() !== category.toLowerCase()) return false;
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
