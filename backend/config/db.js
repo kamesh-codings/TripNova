@@ -139,6 +139,9 @@ async function bootstrapMySQL(pool) {
       country VARCHAR(128) NOT NULL DEFAULT 'India',
       currency_code VARCHAR(16) NOT NULL DEFAULT 'INR',
       description TEXT,
+      latitude DECIMAL(10, 6),
+      longitude DECIMAL(10, 6),
+      region VARCHAR(64) DEFAULT 'Southern',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
@@ -153,6 +156,15 @@ async function bootstrapMySQL(pool) {
       review_count INT DEFAULT 0,
       entry_fee DECIMAL(10, 2) DEFAULT 0.00,
       opening_hours VARCHAR(128),
+      latitude DECIMAL(10, 6),
+      longitude DECIMAL(10, 6),
+      map_url TEXT,
+      description TEXT,
+      best_season VARCHAR(128),
+      avg_visit_time VARCHAR(128),
+      transport TEXT,
+      nearby_hotels TEXT,
+      nearby_restaurants TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
@@ -319,7 +331,35 @@ async function bootstrapSqlite(db) {
       state TEXT NOT NULL DEFAULT 'Tamil Nadu',
       country TEXT NOT NULL DEFAULT 'India',
       currency_code TEXT NOT NULL DEFAULT 'INR',
-      description TEXT
+      description TEXT,
+      latitude REAL,
+      longitude REAL,
+      region TEXT DEFAULT 'Southern',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS places (
+      id TEXT PRIMARY KEY,
+      location_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      avg_rating REAL DEFAULT 0.0,
+      review_count INTEGER DEFAULT 0,
+      entry_fee REAL DEFAULT 0.0,
+      opening_hours TEXT,
+      latitude REAL,
+      longitude REAL,
+      map_url TEXT,
+      description TEXT,
+      best_season TEXT,
+      avg_visit_time TEXT,
+      transport TEXT,
+      nearby_hotels TEXT,
+      nearby_restaurants TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
     );
   `;
 

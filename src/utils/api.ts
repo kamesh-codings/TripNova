@@ -18,6 +18,9 @@ export interface LocationItem {
   country: string;
   currency_code: string;
   description: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  region?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -33,6 +36,16 @@ export interface PlaceItem {
   opening_hours: string;
   location_name?: string;
   location_state?: string;
+  location_region?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  map_url?: string | null;
+  description?: string;
+  best_season?: string;
+  avg_visit_time?: string;
+  transport?: string;
+  nearby_hotels?: string;
+  nearby_restaurants?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -99,14 +112,14 @@ export const FALLBACK_LOCATIONS: LocationItem[] = [
 ];
 
 export const FALLBACK_PLACES: PlaceItem[] = [
-  { id: 'plc-marina-beach', location_id: 'loc-chn', name: 'Marina Beach & Promenade', category: 'beach', avg_rating: 4.5, review_count: 2, entry_fee: 0, opening_hours: '24 Hours (Best: 05:00 - 08:30 & 16:30 - 20:30)', location_name: 'Chennai', location_state: 'Tamil Nadu' },
-  { id: 'plc-kapaleeshwarar-temple', location_id: 'loc-chn', name: 'Kapaleeshwarar Temple', category: 'religious', avg_rating: 4.8, review_count: 2, entry_fee: 0, opening_hours: '05:30 - 12:00, 16:00 - 21:00', location_name: 'Chennai', location_state: 'Tamil Nadu' },
-  { id: 'plc-brihadisvara-temple', location_id: 'loc-tnj', name: 'Brihadisvara Temple (Big Temple)', category: 'historical', avg_rating: 4.9, review_count: 2, entry_fee: 0, opening_hours: '06:00 - 12:30, 16:00 - 20:30', location_name: 'Thanjavur', location_state: 'Tamil Nadu' },
-  { id: 'plc-meenakshi-amman', location_id: 'loc-mdu', name: 'Meenakshi Amman Temple', category: 'religious', avg_rating: 4.9, review_count: 4, entry_fee: 0, opening_hours: '05:00 - 12:30, 16:00 - 22:00', location_name: 'Madurai', location_state: 'Tamil Nadu' },
-  { id: 'plc-mamallapuram-shore', location_id: 'loc-cgl', name: 'Shore Temple & Rock Reliefs', category: 'historical', avg_rating: 4.7, review_count: 3, entry_fee: 40, opening_hours: '06:00 - 18:00', location_name: 'Chengalpattu', location_state: 'Tamil Nadu' },
-  { id: 'plc-ooty-lake-train', location_id: 'loc-nlg', name: 'Nilgiri Mountain Railway & Doddabetta', category: 'nature', avg_rating: 4.8, review_count: 5, entry_fee: 30, opening_hours: '08:30 - 18:00', location_name: 'Nilgiris', location_state: 'Tamil Nadu' },
-  { id: 'plc-alappuzha-backwaters', location_id: 'loc-alp', name: 'Punnamada Lake & Houseboat Route', category: 'nature', avg_rating: 4.8, review_count: 6, entry_fee: 0, opening_hours: '06:00 - 18:30', location_name: 'Alappuzha', location_state: 'Kerala' },
-  { id: 'plc-fort-kochi', location_id: 'loc-ekm', name: 'Fort Kochi Chinese Fishing Nets', category: 'cultural', avg_rating: 4.6, review_count: 4, entry_fee: 0, opening_hours: '24 Hours', location_name: 'Ernakulam', location_state: 'Kerala' }
+  { id: 'plc-marina-beach', location_id: 'loc-chn', name: 'Marina Beach & Promenade', category: 'beach', avg_rating: 4.5, review_count: 2, entry_fee: 0, opening_hours: '24 Hours (Best: 05:00 - 08:30 & 16:30 - 20:30)', location_name: 'Chennai', location_state: 'Tamil Nadu', latitude: 13.0827, longitude: 80.2707, best_season: 'Nov-Feb', avg_visit_time: '2-3 hours' },
+  { id: 'plc-kapaleeshwarar-temple', location_id: 'loc-chn', name: 'Kapaleeshwarar Temple', category: 'religious', avg_rating: 4.8, review_count: 2, entry_fee: 0, opening_hours: '05:30 - 12:00, 16:00 - 21:00', location_name: 'Chennai', location_state: 'Tamil Nadu', latitude: 13.0827, longitude: 80.2707, best_season: 'Oct-Mar', avg_visit_time: '1-2 hours' },
+  { id: 'plc-brihadisvara-temple', location_id: 'loc-tnj', name: 'Brihadisvara Temple (Big Temple)', category: 'historical', avg_rating: 4.9, review_count: 2, entry_fee: 0, opening_hours: '06:00 - 12:30, 16:00 - 20:30', location_name: 'Thanjavur', location_state: 'Tamil Nadu', latitude: 10.7870, longitude: 79.1378, best_season: 'Oct-Mar', avg_visit_time: '2-3 hours' },
+  { id: 'plc-meenakshi-amman', location_id: 'loc-mdu', name: 'Meenakshi Amman Temple', category: 'religious', avg_rating: 4.9, review_count: 4, entry_fee: 0, opening_hours: '05:00 - 12:30, 16:00 - 22:00', location_name: 'Madurai', location_state: 'Tamil Nadu', latitude: 9.9252, longitude: 78.1198, best_season: 'Oct-Mar', avg_visit_time: '2-3 hours' },
+  { id: 'plc-mamallapuram-shore', location_id: 'loc-cgl', name: 'Shore Temple & Rock Reliefs', category: 'historical', avg_rating: 4.7, review_count: 3, entry_fee: 40, opening_hours: '06:00 - 18:00', location_name: 'Chengalpattu', location_state: 'Tamil Nadu', latitude: 12.6819, longitude: 79.9888, best_season: 'Oct-Mar', avg_visit_time: '2-3 hours' },
+  { id: 'plc-ooty-lake-train', location_id: 'loc-nlg', name: 'Nilgiri Mountain Railway & Doddabetta', category: 'nature', avg_rating: 4.8, review_count: 5, entry_fee: 30, opening_hours: '08:30 - 18:00', location_name: 'Nilgiris', location_state: 'Tamil Nadu', latitude: 11.4102, longitude: 76.6950, best_season: 'Oct-Jun', avg_visit_time: '3-4 hours' },
+  { id: 'plc-alappuzha-backwaters', location_id: 'loc-alp', name: 'Punnamada Lake & Houseboat Route', category: 'nature', avg_rating: 4.8, review_count: 6, entry_fee: 0, opening_hours: '06:00 - 18:30', location_name: 'Alappuzha', location_state: 'Kerala', latitude: 9.4981, longitude: 76.3388, best_season: 'Sep-Mar', avg_visit_time: '4-6 hours' },
+  { id: 'plc-fort-kochi', location_id: 'loc-ekm', name: 'Fort Kochi Chinese Fishing Nets', category: 'cultural', avg_rating: 4.6, review_count: 4, entry_fee: 0, opening_hours: '24 Hours', location_name: 'Ernakulam', location_state: 'Kerala', latitude: 9.9656, longitude: 76.2425, best_season: 'Oct-Feb', avg_visit_time: '1-2 hours' }
 ];
 
 // Check backend health & connectivity
@@ -156,16 +169,17 @@ export async function fetchLocations(state?: string, search?: string): Promise<L
   });
 }
 
-// Fetch Places (by location_id, category, search)
-export async function fetchPlaces(locationId?: string, category?: string, search?: string): Promise<PlaceItem[]> {
+// Fetch Places (by location_id, category, search, state)
+export async function fetchPlaces(locationId?: string, category?: string, search?: string, state?: string): Promise<PlaceItem[]> {
   try {
     const params = new URLSearchParams();
-    if (locationId) params.append('location_id', locationId);
+    if (locationId && locationId !== 'all') params.append('location_id', locationId);
+    if (state && state !== 'All') params.append('state', state);
     if (category && category !== 'all') params.append('category', category);
     if (search) params.append('search', search);
 
     const url = `${API_BASE_URL}/places${params.toString() ? `?${params.toString()}` : ''}`;
-    const res = await fetch(url, { headers: defaultHeaders, signal: AbortSignal.timeout(3500) });
+    const res = await fetch(url, { headers: defaultHeaders, signal: AbortSignal.timeout(6000) });
     if (res.ok) {
       const data = await res.json();
       if (data.data && Array.isArray(data.data)) {

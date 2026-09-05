@@ -5,28 +5,33 @@ const db = require('../config/db');
 // GET /api/places - List all tourist places with search and filtering
 router.get('/', async (req, res) => {
   try {
-    const { location_id, category, search, limit = 500, offset = 0 } = req.query;
+    const { location_id, state, category, search, limit = 2000, offset = 0 } = req.query;
     let sql = `
-      SELECT p.*, l.name as location_name, l.state as location_state
+      SELECT p.*, l.name as location_name, l.state as location_state, l.region as location_region
       FROM places p
       LEFT JOIN locations l ON p.location_id = l.id
       WHERE 1=1
     `;
     const params = [];
 
-    if (location_id) {
+    if (location_id && location_id !== 'all') {
       sql += ' AND p.location_id = ?';
       params.push(location_id);
     }
 
-    if (category) {
+    if (state && state !== 'All') {
+      sql += ' AND LOWER(l.state) = LOWER(?)';
+      params.push(state);
+    }
+
+    if (category && category !== 'all') {
       sql += ' AND p.category = ?';
       params.push(category);
     }
 
     if (search) {
-      sql += ' AND (LOWER(p.name) LIKE LOWER(?) OR LOWER(p.category) LIKE LOWER(?))';
-      params.push(`%${search}%`, `%${search}%`);
+      sql += ' AND (LOWER(p.name) LIKE LOWER(?) OR LOWER(p.category) LIKE LOWER(?) OR LOWER(p.description) LIKE LOWER(?) OR LOWER(l.name) LIKE LOWER(?))';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     sql += ' ORDER BY p.avg_rating DESC LIMIT ? OFFSET ?';
