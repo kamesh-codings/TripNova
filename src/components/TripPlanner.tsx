@@ -26,7 +26,8 @@ import {
   Tag,
   Info,
   ChevronRight,
-  Trash2
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import { TripPlan, TransportMode, LocalGuide, ItineraryItem, ServiceProviderProfile } from '../types';
 import { LOCAL_GUIDES } from '../data/mockData';
@@ -83,33 +84,25 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
   const [apiProviders, setApiProviders] = useState<any[]>([]);
   const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
 
-  // 1. Boarding Hierarchical Filters (Country -> State -> City -> Specific Spot/Station)
+  // 1. Boarding Hierarchical State (starts clean without prefilled demo values)
   const [boardingCountry, setBoardingCountry] = useState<string>('India');
-  const [boardingState, setBoardingState] = useState<string>('Tamil Nadu');
-  const [boardingCityId, setBoardingCityId] = useState<string>('loc-chn');
-  const [boardingSpotId, setBoardingSpotId] = useState<string>('plc-marina-beach');
+  const [boardingState, setBoardingState] = useState<string>('');
+  const [boardingCityId, setBoardingCityId] = useState<string>('');
+  const [boardingSpotId, setBoardingSpotId] = useState<string>('');
   const [customBoardingText, setCustomBoardingText] = useState<string>('');
 
-  // 2. Destination Hierarchical Filters (Country -> State -> City -> Main Spot/Attraction)
+  // 2. Destination Hierarchical State (starts clean without prefilled demo values)
   const [destCountry, setDestCountry] = useState<string>('India');
-  const [destState, setDestState] = useState<string>('Tamil Nadu');
-  const [destCityId, setDestCityId] = useState<string>('loc-nlg');
-  const [destSpotId, setDestSpotId] = useState<string>('plc-botanical-ooty');
+  const [destState, setDestState] = useState<string>('');
+  const [destCityId, setDestCityId] = useState<string>('');
+  const [destSpotId, setDestSpotId] = useState<string>('');
   const [customDestText, setCustomDestText] = useState<string>('');
 
-  // Travel Dates & Config
+  // Travel Dates & Config (clean initial state)
   const [transportMode, setTransportMode] = useState<TransportMode>('Train');
-  const [startDate, setStartDate] = useState<string>(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
-  });
-  const [endDate, setEndDate] = useState<string>(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 11);
-    return d.toISOString().split('T')[0];
-  });
-  const [travelerCount, setTravelerCount] = useState<number>(2);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [travelerCount, setTravelerCount] = useState<number>(1);
   const [budgetType, setBudgetType] = useState<'suggested' | 'manual'>('suggested');
   const [customBudgetAmount, setCustomBudgetAmount] = useState<number>(0);
   
@@ -118,6 +111,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
   const [newSpotInput, setNewSpotInput] = useState<string>('');
   const [selectedGuide, setSelectedGuide] = useState<LocalGuide | null>(null);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Load database locations and places on component mount
   useEffect(() => {
@@ -141,9 +135,9 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
     loadMasterData();
   }, []);
 
-  // Available unique States & UTs (Sorted with Tamil Nadu & Kerala prominent)
+  // Available unique States & UTs (Alphabetical with Tamil Nadu & Kerala prominent)
   const availableStates = useMemo(() => {
-    if (!allLocations.length) return ['Tamil Nadu', 'Kerala', 'Karnataka', 'Rajasthan', 'Goa', 'Delhi', 'Uttar Pradesh'];
+    if (!allLocations.length) return ['Tamil Nadu', 'Kerala', 'Karnataka', 'Maharashtra', 'Rajasthan', 'Goa', 'Delhi', 'Uttar Pradesh'];
     const states = Array.from(new Set(allLocations.map(l => l.state))).sort((a, b) => {
       if (a === 'Tamil Nadu') return -1;
       if (b === 'Tamil Nadu') return 1;
@@ -156,32 +150,36 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
 
   // Filtered Cities for Boarding
   const boardingCities = useMemo(() => {
+    if (!boardingState) return [];
     return allLocations.filter(l => l.state.toLowerCase() === boardingState.toLowerCase());
   }, [allLocations, boardingState]);
 
   // Filtered Spots for Boarding City
   const boardingCitySpots = useMemo(() => {
+    if (!boardingCityId) return [];
     return allPlaces.filter(p => p.location_id === boardingCityId);
   }, [allPlaces, boardingCityId]);
 
   // Filtered Cities for Destination
   const destCities = useMemo(() => {
+    if (!destState) return [];
     return allLocations.filter(l => l.state.toLowerCase() === destState.toLowerCase());
   }, [allLocations, destState]);
 
   // Filtered Spots for Destination City
   const destCitySpots = useMemo(() => {
+    if (!destCityId) return [];
     return allPlaces.filter(p => p.location_id === destCityId);
   }, [allPlaces, destCityId]);
 
   // Selected Boarding Object & Coordinates
-  const currentBoardingCity = allLocations.find(l => l.id === boardingCityId) || boardingCities[0];
+  const currentBoardingCity = allLocations.find(l => l.id === boardingCityId);
   const currentBoardingSpot = allPlaces.find(p => p.id === boardingSpotId);
   const boardingLat = currentBoardingSpot?.latitude || currentBoardingCity?.latitude || 13.0827;
   const boardingLng = currentBoardingSpot?.longitude || currentBoardingCity?.longitude || 80.2707;
 
   // Selected Destination Object & Coordinates
-  const currentDestCity = allLocations.find(l => l.id === destCityId) || destCities[0];
+  const currentDestCity = allLocations.find(l => l.id === destCityId);
   const currentDestSpot = allPlaces.find(p => p.id === destSpotId);
   const destLat = currentDestSpot?.latitude || currentDestCity?.latitude || 11.4102;
   const destLng = currentDestSpot?.longitude || currentDestCity?.longitude || 76.6950;
@@ -189,28 +187,29 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
   // Format final Boarding and Destination strings
   const resolvedBoardingString = useMemo(() => {
     if (customBoardingText.trim()) return customBoardingText.trim();
+    if (!boardingState && !boardingCityId) return '';
     const spotName = currentBoardingSpot ? currentBoardingSpot.name : '';
-    const cityName = currentBoardingCity ? currentBoardingCity.name : boardingState;
-    return spotName ? `${spotName}, ${cityName}, ${boardingState}` : `${cityName}, ${boardingState}`;
+    const cityName = currentBoardingCity ? currentBoardingCity.name : '';
+    const parts = [spotName, cityName, boardingState].filter(Boolean);
+    return parts.join(', ');
   }, [customBoardingText, currentBoardingSpot, currentBoardingCity, boardingState]);
 
   const resolvedDestString = useMemo(() => {
     if (customDestText.trim()) return customDestText.trim();
+    if (!destState && !destCityId) return '';
     const spotName = currentDestSpot ? currentDestSpot.name : '';
-    const cityName = currentDestCity ? currentDestCity.name : destState;
-    return spotName ? `${spotName}, ${cityName}, ${destState}` : `${cityName}, ${destState}`;
+    const cityName = currentDestCity ? currentDestCity.name : '';
+    const parts = [spotName, cityName, destState].filter(Boolean);
+    return parts.join(', ');
   }, [customDestText, currentDestSpot, currentDestCity, destState]);
 
-  // When destination city/state changes, auto-populate recommended spots from destination
+  // When destination city/state changes, auto-suggest spots for that destination
   useEffect(() => {
     if (destCitySpots.length > 0) {
-      // Pick top 4 spots
-      const topSpots = destCitySpots.slice(0, 4).map(s => s.name);
+      const topSpots = destCitySpots.slice(0, 3).map(s => s.name);
       setSelectedSpots(topSpots);
-    } else if (currentDestCity) {
-      setSelectedSpots([`${currentDestCity.name} Central Sightseeing`, `${currentDestCity.name} Heritage & Culture Walk`]);
     }
-  }, [destCityId, destCitySpots.length]);
+  }, [destCityId]);
 
   // Calculate Duration in Days
   const calculateDays = () => {
@@ -227,35 +226,32 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
 
   // Accurate Geodesic Route Distance (One-way and Round-trip)
   const oneWayDistanceKm = useMemo(() => {
-    if (boardingCityId === destCityId && !customBoardingText && !customDestText) {
+    if (!resolvedBoardingString || !resolvedDestString) return 120;
+    if (boardingCityId && destCityId && boardingCityId === destCityId && !customBoardingText && !customDestText) {
       return 35; // Local city sightseeing circuit
     }
     return calculateHaversineKm(boardingLat, boardingLng, destLat, destLng);
-  }, [boardingLat, boardingLng, destLat, destLng, boardingCityId, destCityId, customBoardingText, customDestText]);
+  }, [boardingLat, boardingLng, destLat, destLng, boardingCityId, destCityId, customBoardingText, customDestText, resolvedBoardingString, resolvedDestString]);
 
   const roundTripDistanceKm = oneWayDistanceKm * 2;
 
   // ===========================================================================
-  // 3. Accurate Budget Calculation Engine
+  // Accurate Budget Calculation Engine
   // ===========================================================================
   const accurateBudget = useMemo(() => {
     // 1. Inter-city Transport Cost (Round-trip)
     let travelCost = 0;
     switch (transportMode) {
       case 'Flight':
-        // Flight tariff: ₹3,200 base + ₹3.60/km per passenger round-trip
         travelCost = Math.round((3200 + oneWayDistanceKm * 3.6) * 2 * safeTravelers);
         break;
       case 'Train':
-        // Train tariff: ₹180 base + ₹1.15/km per passenger round-trip (AC 3-Tier/Chair benchmark)
         travelCost = Math.round((180 + oneWayDistanceKm * 1.15) * 2 * safeTravelers);
         break;
       case 'Bus':
-        // Bus tariff: ₹140 base + ₹1.45/km per passenger round-trip (AC Sleeper/Volvo benchmark)
         travelCost = Math.round((140 + oneWayDistanceKm * 1.45) * 2 * safeTravelers);
         break;
       case 'Cab / Taxi':
-        // Outstation Cab tariff: ₹14/km + ₹450/day driver allowance (shared among up to 4 travelers per vehicle)
         {
           const cabsNeeded = Math.ceil(safeTravelers / 4);
           const mileageCost = roundTripDistanceKm * 14;
@@ -264,7 +260,6 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
         }
         break;
       case 'Self-Drive / Rental':
-        // Self-drive rental: ₹1,600/day + ₹8.50/km fuel (shared among up to 5 travelers per vehicle)
         {
           const carsNeeded = Math.ceil(safeTravelers / 5);
           const rentalCost = durationDays * 1600;
@@ -280,11 +275,10 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
     const nights = Math.max(1, durationDays - 1);
     const stayCost = Math.round(nights * 2100 * roomsCount);
 
-    // 3. Food & Dining Cost (₹700 per person per day: breakfast, lunch, authentic regional dinner)
+    // 3. Food & Dining Cost (₹700 per person per day)
     const foodCost = Math.round(durationDays * 700 * safeTravelers);
 
     // 4. Activities & Sightseeing Entry Fees
-    // Calculate exact entry fees from chosen spots + ₹200/day local guide/camera/toll fees
     let spotsTotalFee = 0;
     for (const sName of selectedSpots) {
       const match = allPlaces.find(p => p.name.toLowerCase() === sName.toLowerCase());
@@ -292,7 +286,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
     }
     const activitiesCost = Math.round((spotsTotalFee * safeTravelers) + (durationDays * 200 * safeTravelers));
 
-    // 5. Local Destination Transit (₹250/person/day for auto/taxis at destination)
+    // 5. Local Destination Transit (₹250/person/day)
     const localTransitCost = Math.round(durationDays * 250 * safeTravelers);
 
     // 6. Safety Emergency & Buffer Reserve (8% of subtotal)
@@ -343,7 +337,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
   };
 
   // ===========================================================================
-  // 5. Local Guide Reach Engine (Filtered relevant to selected destination)
+  // Local Guide Reach Engine (Filtered relevant to selected destination)
   // ===========================================================================
   const relevantGuides = useMemo(() => {
     const destCityName = currentDestCity ? currentDestCity.name.toLowerCase() : '';
@@ -388,11 +382,8 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
     }));
 
     const pool = [...(registeredGuide ? [registeredGuide] : []), ...apiGuidesFormatted, ...LOCAL_GUIDES];
-
-    // Deduplicate by ID
     const uniquePool = Array.from(new Map(pool.map(g => [g.id, g])).values());
 
-    // Sort by relevance to destination
     const scored = uniquePool.map(guide => {
       const gLoc = guide.location.toLowerCase();
       let score = 0;
@@ -406,18 +397,33 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
     return scored.map(s => s.guide);
   }, [currentDestCity, destState, providerProfile, apiProviders]);
 
-  // Set default guide when relevantGuides updates
+  // Auto-set guide on destination change
   useEffect(() => {
-    if (relevantGuides.length > 0 && (!selectedGuide || !relevantGuides.some(g => g.id === selectedGuide.id))) {
+    if (relevantGuides.length > 0) {
       setSelectedGuide(relevantGuides[0]);
     }
   }, [relevantGuides]);
 
   // Create and Save Itinerary
   const handleCreateTripPlan = () => {
+    if (!resolvedBoardingString) {
+      setValidationError('Please select or specify a Boarding Point.');
+      return;
+    }
+    if (!resolvedDestString) {
+      setValidationError('Please select or specify a Destination.');
+      return;
+    }
+    if (!startDate || !endDate) {
+      setValidationError('Please select your departure and return travel dates.');
+      return;
+    }
+
+    setValidationError(null);
+
     const generatedItinerary: ItineraryItem[] = [];
     for (let day = 1; day <= durationDays; day++) {
-      const spotForDay = selectedSpots[(day - 1) % selectedSpots.length] || `${currentDestCity?.name || 'Destination'} Sightseeing`;
+      const spotForDay = selectedSpots[(day - 1) % (selectedSpots.length || 1)] || `${currentDestCity?.name || 'Destination'} Discovery`;
       generatedItinerary.push({
         id: `it_gen_${Date.now()}_${day}`,
         day,
@@ -436,7 +442,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
 
     const newTrip: TripPlan = {
       id: `trip_${Date.now()}`,
-      title: `${(currentDestCity?.name || destState)} Expedition`,
+      title: `${(currentDestCity?.name || destState || 'India')} Expedition`,
       boardingPoint: resolvedBoardingString,
       destination: resolvedDestString,
       transportMode,
@@ -479,9 +485,11 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
             <span className="badge badge-blue" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               <Compass style={{ width: '12px', height: '12px' }} /> Smart India Trip Planner
             </span>
-            <span className="badge badge-green" style={{ fontSize: '0.72rem' }}>
-              🛣️ Route Distance: ~{oneWayDistanceKm} km ({roundTripDistanceKm} km round-trip)
-            </span>
+            {resolvedBoardingString && resolvedDestString && (
+              <span className="badge badge-green" style={{ fontSize: '0.72rem' }}>
+                🛣️ Route Distance: ~{oneWayDistanceKm} km ({roundTripDistanceKm} km round-trip)
+              </span>
+            )}
           </div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ffffff', marginTop: '6px', margin: 0 }}>
             Design Your Tailored Itinerary
@@ -508,64 +516,96 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
         </button>
       </div>
 
+      {validationError && (
+        <div style={{
+          padding: '12px 16px',
+          background: 'rgba(239, 68, 68, 0.15)',
+          border: '1px solid rgba(239, 68, 68, 0.4)',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          color: '#fca5a5',
+          fontSize: '0.82rem'
+        }}>
+          <AlertCircle style={{ width: '16px', height: '16px', color: '#ef4444', flexShrink: 0 }} />
+          <span>{validationError}</span>
+        </div>
+      )}
+
       {/* Main Configuration Grid */}
       <div className="grid grid-12 gap-5">
         {/* Left 7 cols: Route, Dates, Transport, Budget, Spots */}
-        <div className="col-span-7 lg-col-span-12" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="col-span-7 lg-col-span-12" style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
           
           {/* ================================================================= */}
           {/* 1. Boarding Point & Destination Hierarchical Selectors */}
           {/* ================================================================= */}
-          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0, overflow: 'hidden' }}>
             <div className="flex items-center justify-between">
               <h3 style={{ fontSize: '0.96rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <MapPin style={{ width: '18px', height: '18px', color: '#38bdf8' }} />
-                1. Boarding Point & Destination (Hierarchical Filter)
+                1. Boarding Point & Destination
               </h3>
               <span className="badge badge-purple" style={{ fontSize: '0.68rem' }}>
                 Country ➔ State ➔ City ➔ Place
               </span>
             </div>
 
-            {/* A. Boarding Location Section */}
+            {/* A. Boarding Location Section (Clean 2x2 Grid Layout) */}
             <div style={{
               background: 'rgba(15, 23, 42, 0.75)',
-              border: '1px solid rgba(56, 189, 248, 0.2)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
               borderRadius: '16px',
               padding: '16px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px'
+              gap: '12px',
+              minWidth: 0,
+              overflow: 'hidden'
             }}>
               <div className="flex items-center justify-between">
                 <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   🛫 Origin / Boarding Point
                 </span>
-                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                  GPS: {boardingLat.toFixed(2)}° N, {boardingLng.toFixed(2)}° E
-                </span>
+                {boardingState && (
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    GPS: {boardingLat.toFixed(2)}° N, {boardingLng.toFixed(2)}° E
+                  </span>
+                )}
               </div>
 
-              {/* 4-Tier Hierarchical Selector for Boarding */}
-              <div className="grid grid-4 gap-2">
+              {/* 2x2 Hierarchical Selector Layout */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', minWidth: 0 }}>
                 {/* 1. Country */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     1. Country
                   </label>
                   <select
                     value={boardingCountry}
                     onChange={e => setBoardingCountry(e.target.value)}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   >
-                    <option value="India">🇮🇳 India</option>
+                    <option value="India">India</option>
                   </select>
                 </div>
 
                 {/* 2. State */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     2. State / UT
                   </label>
                   <select
@@ -573,16 +613,24 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                     onChange={e => {
                       const newState = e.target.value;
                       setBoardingState(newState);
-                      const matchingCities = allLocations.filter(l => l.state.toLowerCase() === newState.toLowerCase());
-                      if (matchingCities.length > 0) {
-                        setBoardingCityId(matchingCities[0].id);
-                        const matchingSpots = allPlaces.filter(p => p.location_id === matchingCities[0].id);
-                        if (matchingSpots.length > 0) setBoardingSpotId(matchingSpots[0].id);
-                      }
+                      setBoardingCityId('');
+                      setBoardingSpotId('');
                     }}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   >
+                    <option value="">Select State / UT</option>
                     {availableStates.map(s => (
                       <option key={s} value={s}>{s}</option>
                     ))}
@@ -590,8 +638,8 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                 </div>
 
                 {/* 3. City / District */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     3. City / District
                   </label>
                   <select
@@ -599,30 +647,59 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                     onChange={e => {
                       const newCityId = e.target.value;
                       setBoardingCityId(newCityId);
-                      const matchingSpots = allPlaces.filter(p => p.location_id === newCityId);
-                      if (matchingSpots.length > 0) setBoardingSpotId(matchingSpots[0].id);
+                      setBoardingSpotId('');
                     }}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    disabled={!boardingState}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      opacity: !boardingState ? 0.6 : 1
+                    }}
                   >
+                    <option value="">{boardingState ? 'Select City / District' : 'Choose State First'}</option>
                     {boardingCities.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                 </div>
 
-                {/* 4. Specific Spot / Station */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                {/* 4. Spot / Station / Area */}
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     4. Spot / Station
                   </label>
                   <select
                     value={boardingSpotId}
                     onChange={e => setBoardingSpotId(e.target.value)}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    disabled={!boardingCityId}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      opacity: !boardingCityId ? 0.6 : 1
+                    }}
                   >
-                    <option value="">{currentBoardingCity?.name || 'City'} Central Hub</option>
+                    <option value="">{boardingCityId ? `${currentBoardingCity?.name || 'City'} Central Hub` : 'Choose City First'}</option>
                     {boardingCitySpots.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
@@ -630,24 +707,40 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                 </div>
               </div>
 
-              {/* Custom boarding point override */}
-              <div>
+              {/* Custom pickup override */}
+              <div style={{ minWidth: 0 }}>
                 <input
                   type="text"
                   value={customBoardingText}
                   onChange={e => setCustomBoardingText(e.target.value)}
-                  placeholder="Or enter custom pickup / railway station / airport name..."
-                  className="input-glass"
-                  style={{ fontSize: '0.78rem', padding: '8px 12px' }}
+                  placeholder="Or type specific pickup address, railway station, or airport..."
+                  style={{
+                    width: '100%',
+                    minWidth: 0,
+                    boxSizing: 'border-box',
+                    background: 'rgba(10, 15, 29, 0.85)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    padding: '9px 12px',
+                    color: '#ffffff',
+                    fontSize: '0.78rem',
+                    outline: 'none'
+                  }}
                 />
               </div>
 
-              <div style={{ fontSize: '0.74rem', color: '#38bdf8', fontWeight: 600 }}>
-                📍 <strong>Selected Boarding:</strong> {resolvedBoardingString}
-              </div>
+              {resolvedBoardingString ? (
+                <div style={{ fontSize: '0.74rem', color: '#38bdf8', fontWeight: 600 }}>
+                  📍 <strong>Selected Boarding:</strong> {resolvedBoardingString}
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.72rem', color: '#64748b', fontStyle: 'italic' }}>
+                  Please select your boarding location above.
+                </div>
+              )}
             </div>
 
-            {/* B. Destination Location Section */}
+            {/* B. Destination Location Section (Clean 2x2 Grid Layout) */}
             <div style={{
               background: 'rgba(15, 23, 42, 0.75)',
               border: '1px solid rgba(168, 85, 247, 0.25)',
@@ -655,37 +748,52 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
               padding: '16px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px'
+              gap: '12px',
+              minWidth: 0,
+              overflow: 'hidden'
             }}>
               <div className="flex items-center justify-between">
                 <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   🎯 Destination / Target Region
                 </span>
-                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                  GPS: {destLat.toFixed(2)}° N, {destLng.toFixed(2)}° E
-                </span>
+                {destState && (
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    GPS: {destLat.toFixed(2)}° N, {destLng.toFixed(2)}° E
+                  </span>
+                )}
               </div>
 
-              {/* 4-Tier Hierarchical Selector for Destination */}
-              <div className="grid grid-4 gap-2">
+              {/* 2x2 Hierarchical Selector Layout */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', minWidth: 0 }}>
                 {/* 1. Country */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     1. Country
                   </label>
                   <select
                     value={destCountry}
                     onChange={e => setDestCountry(e.target.value)}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   >
-                    <option value="India">🇮🇳 India</option>
+                    <option value="India">India</option>
                   </select>
                 </div>
 
                 {/* 2. State */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     2. State / UT
                   </label>
                   <select
@@ -693,16 +801,25 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                     onChange={e => {
                       const newState = e.target.value;
                       setDestState(newState);
-                      const matchingCities = allLocations.filter(l => l.state.toLowerCase() === newState.toLowerCase());
-                      if (matchingCities.length > 0) {
-                        setDestCityId(matchingCities[0].id);
-                        const matchingSpots = allPlaces.filter(p => p.location_id === matchingCities[0].id);
-                        if (matchingSpots.length > 0) setDestSpotId(matchingSpots[0].id);
-                      }
+                      setDestCityId('');
+                      setDestSpotId('');
+                      setSelectedSpots([]);
                     }}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
                   >
+                    <option value="">Select Destination State / UT</option>
                     {availableStates.map(s => (
                       <option key={s} value={s}>{s}</option>
                     ))}
@@ -710,8 +827,8 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                 </div>
 
                 {/* 3. City / District */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     3. City / District
                   </label>
                   <select
@@ -719,12 +836,25 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                     onChange={e => {
                       const newCityId = e.target.value;
                       setDestCityId(newCityId);
-                      const matchingSpots = allPlaces.filter(p => p.location_id === newCityId);
-                      if (matchingSpots.length > 0) setDestSpotId(matchingSpots[0].id);
+                      setDestSpotId('');
                     }}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    disabled={!destState}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      opacity: !destState ? 0.6 : 1
+                    }}
                   >
+                    <option value="">{destState ? 'Select City / District' : 'Choose State First'}</option>
                     {destCities.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -732,17 +862,33 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                 </div>
 
                 {/* 4. Highlight Spot / Attraction */}
-                <div>
-                  <label style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
                     4. Main Spot
                   </label>
                   <select
                     value={destSpotId}
                     onChange={e => setDestSpotId(e.target.value)}
-                    className="input-field"
-                    style={{ padding: '8px', fontSize: '0.78rem', background: '#090e17', color: '#ffffff' }}
+                    disabled={!destCityId}
+                    style={{
+                      width: '100%',
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      background: '#090e17',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      borderRadius: '10px',
+                      padding: '9px 12px',
+                      color: '#ffffff',
+                      fontSize: '0.78rem',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      opacity: !destCityId ? 0.6 : 1
+                    }}
                   >
-                    <option value="">{currentDestCity?.name || 'Destination'} Main Attraction</option>
+                    <option value="">{destCityId ? `${currentDestCity?.name || 'City'} Central Region` : 'Choose City First'}</option>
                     {destCitySpots.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
@@ -751,27 +897,43 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
               </div>
 
               {/* Custom destination override */}
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <input
                   type="text"
                   value={customDestText}
                   onChange={e => setCustomDestText(e.target.value)}
-                  placeholder="Or enter custom destination / landmark name..."
-                  className="input-glass"
-                  style={{ fontSize: '0.78rem', padding: '8px 12px' }}
+                  placeholder="Or type specific destination / resort / landmark name..."
+                  style={{
+                    width: '100%',
+                    minWidth: 0,
+                    boxSizing: 'border-box',
+                    background: 'rgba(10, 15, 29, 0.85)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    padding: '9px 12px',
+                    color: '#ffffff',
+                    fontSize: '0.78rem',
+                    outline: 'none'
+                  }}
                 />
               </div>
 
-              <div style={{ fontSize: '0.74rem', color: '#c084fc', fontWeight: 600 }}>
-                🎯 <strong>Selected Destination:</strong> {resolvedDestString}
-              </div>
+              {resolvedDestString ? (
+                <div style={{ fontSize: '0.74rem', color: '#c084fc', fontWeight: 600 }}>
+                  🎯 <strong>Selected Destination:</strong> {resolvedDestString}
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.72rem', color: '#64748b', fontStyle: 'italic' }}>
+                  Please select your destination region above.
+                </div>
+              )}
             </div>
           </div>
 
           {/* ================================================================= */}
           {/* 2. Mode of Transport & Travel Dates */}
           {/* ================================================================= */}
-          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0 }}>
             <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
               <Calendar style={{ width: '18px', height: '18px', color: '#38bdf8' }} />
               2. Mode of Transport & Travel Dates
@@ -786,8 +948,8 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                   { mode: 'Flight' as TransportMode, icon: Plane, rateLabel: 'Fastest' },
                   { mode: 'Train' as TransportMode, icon: Train, rateLabel: 'Economical' },
                   { mode: 'Bus' as TransportMode, icon: Bus, rateLabel: 'Direct' },
-                  { mode: 'Cab / Taxi' as TransportMode, icon: Car, rateLabel: 'Private Door-to-Door' },
-                  { mode: 'Self-Drive / Rental' as TransportMode, icon: Car, rateLabel: 'Flexible' }
+                  { mode: 'Cab / Taxi' as TransportMode, icon: Car, rateLabel: 'Private Cab' },
+                  { mode: 'Self-Drive / Rental' as TransportMode, icon: Car, rateLabel: 'Rental' }
                 ].map(t => {
                   const Icon = t.icon;
                   const isSelected = transportMode === t.mode;
@@ -964,7 +1126,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                   Total Duration
                 </label>
                 <div className="input-glass" style={{ color: '#38bdf8', fontWeight: 800 }}>
-                  {durationDays} Days / {accurateBudget.nights} Nights
+                  {startDate && endDate ? `${durationDays} Days / ${accurateBudget.nights} Nights` : 'Select Dates'}
                 </div>
               </div>
             </div>
@@ -973,7 +1135,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
           {/* ================================================================= */}
           {/* 3. Budget Estimator (Accurate Cost Vectors) */}
           {/* ================================================================= */}
-          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0 }}>
             <div className="flex items-center justify-between">
               <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <DollarSign style={{ width: '18px', height: '18px', color: '#34d399' }} />
@@ -1100,11 +1262,11 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
           {/* ================================================================= */}
           {/* 4. Spots & Attraction Suggestions (Planner) */}
           {/* ================================================================= */}
-          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0 }}>
             <div className="flex items-center justify-between">
               <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <Hotel style={{ width: '18px', height: '18px', color: '#c084fc' }} />
-                4. Spots & Attraction Suggestions ({destState} • {currentDestCity?.name || 'Destination'})
+                4. Spots & Attraction Suggestions ({destState || 'All India'} • {currentDestCity?.name || 'Destination'})
               </h3>
               <span className="badge badge-blue" style={{ fontSize: '0.68rem' }}>
                 {selectedSpots.length} Selected
@@ -1112,7 +1274,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
             </div>
 
             {/* Dynamic Suggestions from selected Destination */}
-            {destCitySpots.length > 0 && (
+            {destCitySpots.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>
                   Top Recommended Spots in {currentDestCity?.name}:
@@ -1134,10 +1296,11 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           gap: '8px',
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s',
+                          minWidth: 0
                         }}
                       >
-                        <div style={{ overflow: 'hidden' }}>
+                        <div style={{ overflow: 'hidden', minWidth: 0 }}>
                           <div style={{ fontSize: '0.78rem', fontWeight: 700, color: isAdded ? '#ffffff' : '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {spot.name}
                           </div>
@@ -1169,6 +1332,10 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                   })}
                 </div>
               </div>
+            ) : (
+              <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: 0, fontStyle: 'italic' }}>
+                Select a destination city or state above to load recommended tourist spots, or add custom landmarks below.
+              </p>
             )}
 
             {/* Custom Spot Addition */}
@@ -1193,45 +1360,47 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
             </div>
 
             {/* Selected Spots Badges */}
-            <div className="flex flex-wrap gap-2">
-              {selectedSpots.map(spot => (
-                <span 
-                  key={spot}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '10px',
-                    background: 'rgba(10, 15, 29, 0.9)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    fontSize: '0.78rem',
-                    color: '#f8fafc',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <MapPin style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
-                  {spot}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSpot(spot)}
-                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', marginLeft: '4px' }}
-                    title="Remove Spot"
+            {selectedSpots.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedSpots.map(spot => (
+                  <span 
+                    key={spot}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '10px',
+                      background: 'rgba(10, 15, 29, 0.9)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      fontSize: '0.78rem',
+                      color: '#f8fafc',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
                   >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
+                    <MapPin style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
+                    {spot}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSpot(spot)}
+                      style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', marginLeft: '4px' }}
+                      title="Remove Spot"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right 5 cols: Local Guide Reach Relevant to Destination */}
-        <div className="col-span-5 lg-col-span-12" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="col-span-5 lg-col-span-12" style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
           
           {/* ================================================================= */}
           {/* 5. Local Guide Reach (Filtered by Destination) */}
           {/* ================================================================= */}
-          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', borderColor: 'rgba(56, 189, 248, 0.3)', minWidth: 0 }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <UserCheck style={{ width: '20px', height: '20px', color: '#38bdf8' }} />
@@ -1240,12 +1409,12 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                 </h3>
               </div>
               <span className="badge badge-green" style={{ fontSize: '0.68rem' }}>
-                Verified for {currentDestCity?.name || destState}
+                Verified for {currentDestCity?.name || destState || 'India'}
               </span>
             </div>
             
             <p style={{ fontSize: '0.78rem', color: '#cbd5e1', margin: 0 }}>
-              Authorized government & regional heritage guides operating in <strong>{currentDestCity?.name || destState}</strong>.
+              Authorized government & regional heritage guides operating in <strong>{currentDestCity?.name || destState || 'India'}</strong>.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1268,7 +1437,8 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                         : (isPartner ? 'rgba(245, 158, 11, 0.08)' : 'rgba(10, 15, 29, 0.75)'),
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      boxShadow: isPartner ? '0 4px 18px rgba(245, 158, 11, 0.12)' : 'none'
+                      boxShadow: isPartner ? '0 4px 18px rgba(245, 158, 11, 0.12)' : 'none',
+                      minWidth: 0
                     }}
                   >
                     {isPartner && (
@@ -1284,7 +1454,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', minWidth: 0 }}>
                       <img
                         src={guide.photo}
                         alt={guide.name}
@@ -1293,20 +1463,21 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                           height: '48px', 
                           borderRadius: '12px', 
                           objectFit: 'cover', 
-                          border: isPartner ? '1.5px solid rgba(251, 191, 36, 0.5)' : '1px solid rgba(255,255,255,0.1)' 
+                          border: isPartner ? '1.5px solid rgba(251, 191, 36, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+                          flexShrink: 0
                         }}
                       />
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="flex items-center justify-between gap-1">
-                          <h4 style={{ fontSize: '0.86rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                          <h4 style={{ fontSize: '0.86rem', fontWeight: 800, color: '#ffffff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {guide.name}
                           </h4>
-                          <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          <span style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
                             <Star style={{ width: '12px', height: '12px', fill: '#fbbf24' }} /> {guide.rating}
                           </span>
                         </div>
 
-                        <span style={{ fontSize: '0.7rem', color: '#38bdf8', display: 'block', marginTop: '2px' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#38bdf8', display: 'block', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           📍 {guide.location}
                         </span>
 
@@ -1349,7 +1520,7 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
 
           {/* Saved Trips Quick Access */}
           {trips.length > 0 && (
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
               <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
                 <Landmark style={{ width: '16px', height: '16px', color: '#a855f7' }} />
                 Your Saved Itineraries ({trips.length})
@@ -1365,18 +1536,20 @@ export const TripPlanner: React.FC<TripPlannerProps> = ({
                       border: '1px solid rgba(255,255,255,0.06)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between'
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                      minWidth: 0
                     }}
                   >
-                    <div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#ffffff', display: 'block' }}>
+                    <div style={{ overflow: 'hidden', minWidth: 0 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#ffffff', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {trip.title}
                       </span>
-                      <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                      <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {trip.startDate} ➔ {trip.endDate} • {trip.travelerCount} Travelers • ₹{trip.budgetAmount.toLocaleString()}
                       </span>
                     </div>
-                    <span className="badge badge-green" style={{ fontSize: '0.65rem' }}>Active</span>
+                    <span className="badge badge-green" style={{ fontSize: '0.65rem', flexShrink: 0 }}>Active</span>
                   </div>
                 ))}
               </div>
