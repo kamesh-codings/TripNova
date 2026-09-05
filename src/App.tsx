@@ -14,6 +14,7 @@ import { ProfileView } from './components/ProfileView';
 import { NovaAIBot } from './components/NovaAIBot';
 import { WelcomeGateway } from './components/WelcomeGateway';
 import { SpotsExplorer } from './components/SpotsExplorer';
+import { SOSBroadcastModal } from './components/SOSBroadcastModal';
 import { UserProfile, TripPlan, ServiceProviderProfile, UserLocation } from './types';
 import { DEFAULT_USER_PROFILE } from './data/mockData';
 import { 
@@ -417,7 +418,14 @@ export const App: React.FC = () => {
         onNavigateTab={setActiveTab}
       />
 
-      {/* 6. Mobile Bottom Navigation */}
+      {/* 6. Emergency SOS Broadcast Modal (Global) */}
+      <SOSBroadcastModal
+        isOpen={isSOSModalOpen}
+        onClose={() => setIsSOSModalOpen(false)}
+        userProfile={userProfile}
+      />
+
+      {/* 7. Mobile Bottom Navigation */}
       <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
