@@ -15,7 +15,7 @@ import {
   Lock
 } from 'lucide-react';
 import { UserProfile, ServiceProviderProfile, UserLocation } from '../types';
-import { getStoredLocation } from '../utils/geoLocator';
+import { getStoredLocation, detectUserCurrentLocation } from '../utils/geoLocator';
 
 interface NavbarProps {
   activeTab: string;
@@ -43,6 +43,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout
 }) => {
   const [activeLocation, setActiveLocation] = useState<UserLocation | null>(() => getStoredLocation());
+  const [isRefreshingLoc, setIsRefreshingLoc] = useState<boolean>(false);
 
   useEffect(() => {
     const handleLocUpdate = (e: any) => {
@@ -51,6 +52,19 @@ export const Navbar: React.FC<NavbarProps> = ({
     window.addEventListener('tripnova_location_updated', handleLocUpdate);
     return () => window.removeEventListener('tripnova_location_updated', handleLocUpdate);
   }, []);
+
+  const handleRefreshLocation = async () => {
+    if (isRefreshingLoc) return;
+    setIsRefreshingLoc(true);
+    try {
+      const loc = await detectUserCurrentLocation();
+      setActiveLocation(loc);
+    } catch {
+      // Handled silently by multi-tiered fallback
+    } finally {
+      setIsRefreshingLoc(false);
+    }
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Explore', icon: Compass },
@@ -121,49 +135,41 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Actions - Anchored and Protected */}
         <div className="navbar-actions">
-          {/* Detected GPS Location Chip */}
-          {activeLocation && (
-            <div 
-              className="hide-mobile"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '6px 12px',
-                borderRadius: '12px',
-                background: 'rgba(52, 211, 153, 0.12)',
-                border: '1px solid rgba(52, 211, 153, 0.35)',
-                fontSize: '0.74rem',
-                color: '#34d399',
-                fontWeight: 700,
-                cursor: 'default'
-              }}
-              title={`Live GPS Location: ${activeLocation.formattedAddress}`}
-            >
-              <MapPin style={{ width: '13px', height: '13px', flexShrink: 0 }} />
-              <span>{activeLocation.city}</span>
-            </div>
-          )}
-
-          {/* AI Bot Button */}
-          <button
-            onClick={onOpenChatbot}
-            className="btn-secondary hide-mobile"
-            style={{ padding: '8px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
-            title="Open Nova AI Travel Concierge"
+          {/* Interactive Live Location Chip */}
+          <div 
+            className="navbar-gps-chip hide-mobile"
+            onClick={handleRefreshLocation}
+            style={{ cursor: 'pointer', userSelect: 'none' }}
+            title={
+              activeLocation 
+                ? `Live Location: ${activeLocation.formattedAddress} (Click to refresh)` 
+                : 'Click to auto-detect live location'
+            }
           >
-            <Sparkles style={{ width: '15px', height: '15px', color: '#c084fc' }} />
-            <span>Nova AI</span>
-          </button>
+            <MapPin style={{ 
+              width: '13px', 
+              height: '13px', 
+              flexShrink: 0,
+              color: isRefreshingLoc ? '#fbbf24' : '#34d399',
+              animation: isRefreshingLoc ? 'spin 1s linear infinite' : 'none'
+            }} />
+            <span className="navbar-gps-text">
+              {isRefreshingLoc 
+                ? 'Detecting...' 
+                : activeLocation 
+                ? activeLocation.city 
+                : 'Detect Location'}
+            </span>
+          </div>
 
           {/* SOS Emergency Trigger */}
           <button
             onClick={onOpenSOS}
             className="btn-sos"
-            style={{ padding: '8px 16px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+            style={{ padding: '7px 16px', fontSize: '0.8rem', whiteSpace: 'nowrap', fontWeight: 800 }}
             title="Instant SOS to 5 Trusted Contacts"
           >
-            <PhoneCall style={{ width: '15px', height: '15px' }} />
+            <PhoneCall style={{ width: '14px', height: '14px' }} />
             <span>SOS</span>
           </button>
 
@@ -173,17 +179,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onOpenLogin}
               className="btn-secondary hide-mobile"
               style={{
-                padding: '8px 14px',
-                fontSize: '0.8rem',
+                padding: '6px 11px',
+                fontSize: '0.76rem',
                 color: '#38bdf8',
                 borderColor: 'rgba(56, 189, 248, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '5px',
+                whiteSpace: 'nowrap'
               }}
               title="Sign in with Username & Password"
             >
-              <Lock style={{ width: '14px', height: '14px' }} />
+              <Lock style={{ width: '13px', height: '13px' }} />
               <span>Log In</span>
             </button>
           )}
@@ -221,11 +228,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
               >
                 {userProfile.isRegistered ? (
-                  userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '14px', height: '14px' }} />
+                  userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <User style={{ width: '13px', height: '13px' }} />
                 ) : providerProfile ? (
-                  providerProfile.businessName ? providerProfile.businessName.charAt(0).toUpperCase() : <ShieldCheck style={{ width: '14px', height: '14px' }} />
+                  providerProfile.businessName ? providerProfile.businessName.charAt(0).toUpperCase() : <ShieldCheck style={{ width: '13px', height: '13px' }} />
                 ) : (
-                  <User style={{ width: '14px', height: '14px' }} />
+                  <User style={{ width: '13px', height: '13px' }} />
                 )}
               </div>
             )}
@@ -234,7 +241,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {userProfile.isRegistered 
                   ? (userProfile.name.split(' ')[0] || 'My Profile')
                   : providerProfile 
-                  ? (providerProfile.businessName.length > 14 ? providerProfile.businessName.slice(0, 14) + '...' : providerProfile.businessName)
+                  ? (providerProfile.businessName.length > 12 ? providerProfile.businessName.slice(0, 12) + '...' : providerProfile.businessName)
                   : 'Register'}
               </span>
               <span className="profile-sub-text">
@@ -253,17 +260,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onLogout}
               className="btn-secondary"
               style={{
-                padding: '8px 12px',
-                fontSize: '0.78rem',
+                padding: '6px 10px',
+                fontSize: '0.76rem',
                 color: '#f87171',
                 borderColor: 'rgba(239, 68, 68, 0.35)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '5px',
+                whiteSpace: 'nowrap'
               }}
               title="Log Out of Session"
             >
-              <LogOut style={{ width: '14px', height: '14px' }} />
+              <LogOut style={{ width: '13px', height: '13px' }} />
               <span className="hide-mobile">Logout</span>
             </button>
           )}

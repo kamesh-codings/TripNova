@@ -3,8 +3,8 @@ import { UserLocation } from '../types';
 const LOCATION_KEY = 'tripnova_user_location';
 const LANGUAGE_KEY = 'tripnova_selected_language';
 
-// Known hubs for smart offline proximity fallback
-const KNOWN_HUBS = [
+// Known hubs for smart offline proximity fallback & quick selection
+export const KNOWN_HUBS = [
   { name: 'Chennai', state: 'Tamil Nadu', country: 'India', lat: 13.0827, lng: 80.2707 },
   { name: 'Ooty (Udhagamandalam)', state: 'Tamil Nadu', country: 'India', lat: 11.4102, lng: 76.6950 },
   { name: 'Madurai', state: 'Tamil Nadu', country: 'India', lat: 9.9252, lng: 78.1198 },
@@ -67,7 +67,7 @@ export const saveStoredLanguage = (language: string): void => {
 };
 
 // Calculate nearest known hub if reverse geocoding is unavailable
-function getClosestHub(lat: number, lng: number) {
+export function getClosestHub(lat: number, lng: number) {
   let closest = KNOWN_HUBS[0];
   let minDistance = Infinity;
 
@@ -84,12 +84,41 @@ function getClosestHub(lat: number, lng: number) {
 }
 
 /**
- * Reverse geocode coordinates using OpenStreetMap Nominatim or Open-Meteo with fallback
+ * Reverse geocode coordinates using BigDataCloud with OpenStreetMap and Proximity fallbacks
  */
-export async function reverseGeocodeCoordinates(lat: number, lng: number): Promise<{ city: string; state: string; country: string; formattedAddress: string }> {
+export async function reverseGeocodeCoordinates(
+  lat: number, 
+  lng: number
+): Promise<{ city: string; state: string; country: string; formattedAddress: string }> {
+  // 1. Try BigDataCloud (CORS friendly, fast, high accuracy)
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      const city = data.city || data.locality || data.principalSubdivision || 'Local City';
+      const state = data.principalSubdivision || '';
+      const country = data.countryName || 'India';
+      const formattedAddress = [city, state, country].filter(Boolean).join(', ');
+      if (city) {
+        return { city, state, country, formattedAddress };
+      }
+    }
+  } catch {
+    // Continue to next fallback
+  }
+
+  // 2. Try Nominatim (OpenStreetMap)
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`,
@@ -110,78 +139,189 @@ export async function reverseGeocodeCoordinates(lat: number, lng: number): Promi
 
       return { city, state, country, formattedAddress };
     }
-  } catch (e) {
-    console.warn('Online reverse geocoding timed out or failed, using proximity hub resolver', e);
+  } catch {
+    // Continue to hub fallback
   }
 
-  // Smart Offline Fallback
+  // 3. Smart Offline Proximity Hub Fallback
   const hub = getClosestHub(lat, lng);
   return {
     city: hub.name,
     state: hub.state,
     country: hub.country,
-    formattedAddress: `${hub.name}, ${hub.state}, ${hub.country} (GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)})`
+    formattedAddress: `${hub.name}, ${hub.state}, ${hub.country}`
   };
 }
 
 /**
- * Detect current device location via browser Geolocation API
+ * IP-based geolocation fallback when browser GPS is denied, unavailable, or on desktop
  */
-export function detectUserCurrentLocation(): Promise<UserLocation> {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Geolocation is not supported by your browser.'));
-      return;
-    }
+export async function detectIPLocation(): Promise<UserLocation> {
+  // 1. BigDataCloud Client Info / Reverse Geocode
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const geoInfo = await reverseGeocodeCoordinates(latitude, longitude);
-          const locationData: UserLocation = {
-            latitude,
-            longitude,
-            city: geoInfo.city,
-            state: geoInfo.state,
-            country: geoInfo.country,
-            formattedAddress: geoInfo.formattedAddress,
-            timestamp: new Date().toISOString()
-          };
-          saveStoredLocation(locationData);
-          resolve(locationData);
-        } catch (err) {
-          const hub = getClosestHub(latitude, longitude);
-          const fallbackLocation: UserLocation = {
-            latitude,
-            longitude,
-            city: hub.name,
-            state: hub.state,
-            country: hub.country,
-            formattedAddress: `${hub.name}, ${hub.state}, ${hub.country}`,
-            timestamp: new Date().toISOString(),
-            isApproximate: true
-          };
-          saveStoredLocation(fallbackLocation);
-          resolve(fallbackLocation);
-        }
-      },
-      (error) => {
-        let msg = 'Unable to retrieve your location.';
-        if (error.code === error.PERMISSION_DENIED) {
-          msg = 'Location permission was denied. Please allow location access in your browser.';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          msg = 'Location information is currently unavailable.';
-        } else if (error.code === error.TIMEOUT) {
-          msg = 'Location request timed out.';
-        }
-        reject(new Error(msg));
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
+    const res = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client', {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      const lat = data.latitude || 13.0827;
+      const lng = data.longitude || 80.2707;
+      const city = data.city || data.locality || data.principalSubdivision || 'Chennai';
+      const state = data.principalSubdivision || 'Tamil Nadu';
+      const country = data.countryName || 'India';
+      const formattedAddress = [city, state, country].filter(Boolean).join(', ');
+
+      const loc: UserLocation = {
+        latitude: lat,
+        longitude: lng,
+        city,
+        state,
+        country,
+        formattedAddress,
+        timestamp: new Date().toISOString(),
+        isApproximate: true
+      };
+      saveStoredLocation(loc);
+      return loc;
+    }
+  } catch {
+    // Fall through to next provider
+  }
+
+  // 2. ipwho.is provider
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const res = await fetch('https://ipwho.is/', {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success !== false) {
+        const lat = data.latitude || 13.0827;
+        const lng = data.longitude || 80.2707;
+        const city = data.city || 'Chennai';
+        const state = data.region || 'Tamil Nadu';
+        const country = data.country || 'India';
+        const formattedAddress = `${city}, ${state}, ${country}`;
+
+        const loc: UserLocation = {
+          latitude: lat,
+          longitude: lng,
+          city,
+          state,
+          country,
+          formattedAddress,
+          timestamp: new Date().toISOString(),
+          isApproximate: true
+        };
+        saveStoredLocation(loc);
+        return loc;
       }
-    );
-  });
+    }
+  } catch {
+    // Fall through to default hub
+  }
+
+  // 3. Final default hub fallback (Never fails)
+  const defaultHub = KNOWN_HUBS[0]; // Chennai
+  const fallbackLoc: UserLocation = {
+    latitude: defaultHub.lat,
+    longitude: defaultHub.lng,
+    city: defaultHub.name,
+    state: defaultHub.state,
+    country: defaultHub.country,
+    formattedAddress: `${defaultHub.name}, ${defaultHub.state}, ${defaultHub.country}`,
+    timestamp: new Date().toISOString(),
+    isApproximate: true
+  };
+  saveStoredLocation(fallbackLoc);
+  return fallbackLoc;
 }
+
+/**
+ * Resilient multi-tiered location detector:
+ * Tier 1: Hardware Browser GPS (Fast 3.5s timeout)
+ * Tier 2: Real-time IP Geolocation fallback
+ * Tier 3: Known Hub fallback
+ * Guaranteed to NEVER reject or throw an unhandled error.
+ */
+export async function detectUserCurrentLocation(): Promise<UserLocation> {
+  if (typeof window !== 'undefined' && navigator.geolocation) {
+    try {
+      const gpsResult = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 3500,
+            maximumAge: 300000 // 5 minutes cache
+          }
+        );
+      });
+
+      const { latitude, longitude } = gpsResult.coords;
+      const geoInfo = await reverseGeocodeCoordinates(latitude, longitude);
+      const locationData: UserLocation = {
+        latitude,
+        longitude,
+        city: geoInfo.city,
+        state: geoInfo.state,
+        country: geoInfo.country,
+        formattedAddress: geoInfo.formattedAddress,
+        timestamp: new Date().toISOString(),
+        isApproximate: false
+      };
+      saveStoredLocation(locationData);
+      return locationData;
+    } catch {
+      // GPS permission denied, timed out, or unavailable; seamlessly fallback to IP geolocation
+      console.log('GPS unavailable or permission denied, using IP geolocation fallback...');
+    }
+  }
+
+  // Tier 2 Fallback: Fast IP Geolocation
+  return await detectIPLocation();
+}
+
+/**
+ * Manually set or override user location (e.g. from city selector or manual search)
+ */
+export function setManualUserLocation(
+  city: string,
+  state: string = '',
+  country: string = 'India',
+  latitude?: number,
+  longitude?: number
+): UserLocation {
+  const hub = KNOWN_HUBS.find(h => h.name.toLowerCase().includes(city.toLowerCase()));
+  const finalLat = latitude ?? hub?.lat ?? 13.0827;
+  const finalLng = longitude ?? hub?.lng ?? 80.2707;
+  const finalState = state || hub?.state || '';
+  const finalCountry = country || hub?.country || 'India';
+  const formattedAddress = [city, finalState, finalCountry].filter(Boolean).join(', ');
+
+  const locationData: UserLocation = {
+    latitude: finalLat,
+    longitude: finalLng,
+    city,
+    state: finalState,
+    country: finalCountry,
+    formattedAddress,
+    timestamp: new Date().toISOString(),
+    isApproximate: false
+  };
+
+  saveStoredLocation(locationData);
+  return locationData;
+}
+

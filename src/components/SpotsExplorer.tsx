@@ -57,6 +57,12 @@ export const SpotsExplorer: React.FC<SpotsExplorerProps> = ({ onSelectSpot, onNa
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [visibleCount, setVisibleCount] = useState<number>(24);
+
+  // Reset pagination on filter change
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [selectedCountry, selectedState, selectedLocationId, selectedCategory, searchQuery]);
 
   // Spot Detail Modal State
   const [selectedSpotModal, setSelectedSpotModal] = useState<PlaceItem | null>(null);
@@ -436,7 +442,6 @@ export const SpotsExplorer: React.FC<SpotsExplorerProps> = ({ onSelectSpot, onNa
                       <span>{Number(place.avg_rating).toFixed(1)}</span>
                       <span style={{ color: '#64748b', fontSize: '0.72rem' }}>({place.review_count || 500}+)</span>
                     </div>
-                  </div>
 
                   {/* Spot Title */}
                   <h4 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#ffffff', marginBottom: '4px', lineHeight: 1.3 }}>
@@ -537,7 +542,6 @@ export const SpotsExplorer: React.FC<SpotsExplorerProps> = ({ onSelectSpot, onNa
                       </a>
                     )}
                   </div>
-                </div>
 
                 {/* Card Bottom Actions */}
                 <div style={{
@@ -569,9 +573,36 @@ export const SpotsExplorer: React.FC<SpotsExplorerProps> = ({ onSelectSpot, onNa
                     <ChevronRight style={{ width: '12px', height: '12px' }} />
                   </button>
                 </div>
+              ))}
+            </div>
+
+            {/* Load More Pagination Bar */}
+            {filteredPlaces.length > visibleCount && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                marginTop: '16px',
+                padding: '16px'
+              }}>
+                <button
+                  onClick={() => setVisibleCount(prev => Math.min(prev + 24, filteredPlaces.length))}
+                  className="btn-secondary"
+                  style={{ padding: '10px 24px', fontSize: '0.9rem', fontWeight: 700 }}
+                >
+                  Load More ({Math.min(24, filteredPlaces.length - visibleCount)} remaining)
+                </button>
+                <button
+                  onClick={() => setVisibleCount(filteredPlaces.length)}
+                  className="btn-glass"
+                  style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+                >
+                  Show All ({filteredPlaces.length})
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           /* Zero Places Display */
           <div className="glass-panel" style={{

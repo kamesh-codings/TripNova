@@ -17,12 +17,12 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   address: '',
   govtIdType: 'Aadhaar Card',
   govtIdNumber: '',
-  govtIdState: 'Tamil Nadu (TN), India',
-  languagesKnown: ['English', 'Tamil'],
+  govtIdState: '',
+  languagesKnown: [],
   trustedContacts: [
     { id: 'tc1', name: '', relationship: 'Family', phone: '', isPrimary: true }
   ],
-  interestedTopPicks: ['Heritage & Temples', 'Hill Stations', 'Nature & Waterfalls', 'Food & Culture', 'Beaches & Coastal Drives'],
+  interestedTopPicks: [],
   isRegistered: false
 };
 

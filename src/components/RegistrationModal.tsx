@@ -9,19 +9,14 @@ import {
   Check, 
   Plus, 
   Trash2,
-  MapPin,
   Navigation,
-  Languages,
-  DollarSign,
   Lock,
   Eye,
   EyeOff
 } from 'lucide-react';
-import { UserProfile, BloodGroup, TrustedContact, UserLocation } from '../types';
-import { LANG_CODE_MAP } from '../utils/speech';
+import { UserProfile, BloodGroup, TrustedContact } from '../types';
 import { 
   detectUserCurrentLocation, 
-  getStoredLocation, 
   getStoredLanguage, 
   saveStoredLanguage 
 } from '../utils/geoLocator';
@@ -66,19 +61,19 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     dob: userProfile.dob || '',
     age: userProfile.age || 0,
     gender: userProfile.gender || 'Male',
-    bloodGroup: userProfile.bloodGroup || 'O+',
+    bloodGroup: userProfile.bloodGroup || 'Unknown',
     allergies: userProfile.allergies || '',
     medicalConditions: userProfile.medicalConditions || '',
     disability: userProfile.disability || '',
     address: userProfile.address || '',
     govtIdType: userProfile.govtIdType || 'Aadhaar Card',
     govtIdNumber: userProfile.govtIdNumber || '',
-    govtIdState: userProfile.govtIdState || 'Tamil Nadu (TN), India',
-    languagesKnown: userProfile.languagesKnown?.length ? userProfile.languagesKnown : ['English', 'Tamil'],
+    govtIdState: userProfile.govtIdState || '',
+    languagesKnown: userProfile.languagesKnown || [],
     trustedContacts: userProfile.trustedContacts?.length ? userProfile.trustedContacts : [
-      { id: 'tc1', name: '', relationship: 'Family', phone: '', isPrimary: true }
+      { id: 'tc1', name: '', relationship: '', phone: '', isPrimary: true }
     ],
-    interestedTopPicks: userProfile.interestedTopPicks?.length ? userProfile.interestedTopPicks : ['Heritage & Temples', 'Hill Stations'],
+    interestedTopPicks: userProfile.interestedTopPicks || [],
     isRegistered: userProfile.isRegistered || false
   }));
 
@@ -88,7 +83,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationDetectMsg, setLocationDetectMsg] = useState<string | null>(null);
 
-  // Sync state whenever modal opens with latest profile
+  // Sync state whenever modal opens with clean state or existing user profile
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -106,19 +101,19 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         dob: userProfile.dob || '',
         age: userProfile.age || 0,
         gender: userProfile.gender || 'Male',
-        bloodGroup: userProfile.bloodGroup || 'O+',
+        bloodGroup: userProfile.bloodGroup || 'Unknown',
         allergies: userProfile.allergies || '',
         medicalConditions: userProfile.medicalConditions || '',
         disability: userProfile.disability || '',
         address: userProfile.address || '',
         govtIdType: userProfile.govtIdType || 'Aadhaar Card',
         govtIdNumber: userProfile.govtIdNumber || '',
-        govtIdState: userProfile.govtIdState || 'Tamil Nadu (TN), India',
-        languagesKnown: userProfile.languagesKnown?.length ? userProfile.languagesKnown : ['English', 'Tamil'],
+        govtIdState: userProfile.govtIdState || '',
+        languagesKnown: userProfile.languagesKnown || [],
         trustedContacts: userProfile.trustedContacts?.length ? userProfile.trustedContacts : [
-          { id: 'tc1', name: '', relationship: 'Family', phone: '', isPrimary: true }
+          { id: 'tc1', name: '', relationship: '', phone: '', isPrimary: true }
         ],
-        interestedTopPicks: userProfile.interestedTopPicks?.length ? userProfile.interestedTopPicks : ['Heritage & Temples', 'Hill Stations'],
+        interestedTopPicks: userProfile.interestedTopPicks || [],
         isRegistered: userProfile.isRegistered || false
       });
       setActiveStep(1);
@@ -153,7 +148,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       const newContact: TrustedContact = {
         id: `tc_${Date.now()}`,
         name: '',
-        relationship: 'Friend',
+        relationship: '',
         phone: ''
       };
       setFormData(prev => ({ ...prev, trustedContacts: [...prev.trustedContacts, newContact] }));
@@ -197,9 +192,9 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         locationCoordinates: { latitude: loc.latitude, longitude: loc.longitude },
         govtIdState: loc.state ? `${loc.state}, ${loc.country}` : prev.govtIdState
       }));
-      setLocationDetectMsg(`GPS Active: ${loc.city}, ${loc.state}`);
-    } catch (err: any) {
-      setLocationDetectMsg(err.message || 'GPS detection failed.');
+      setLocationDetectMsg(`📍 ${loc.isApproximate ? 'Detected (IP/Network)' : 'GPS Active'}: ${loc.city}, ${loc.state}`);
+    } catch {
+      setLocationDetectMsg('📍 Auto-detected default location.');
     } finally {
       setIsDetectingLocation(false);
     }
@@ -229,8 +224,10 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               <User style={{ width: '20px', height: '20px' }} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff' }}>Tourist Profile & Safety Registration</h2>
-              <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Essential for your digital Emergency Card and personalized travel picks</p>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff' }}>
+                {userProfile.isRegistered ? 'Edit Tourist Profile & Safety Details' : 'Tourist Profile & Safety Registration'}
+              </h2>
+              <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Step {activeStep} of 4: Digital Emergency Card & Personalized Travel Picks</p>
             </div>
           </div>
           <button 
@@ -246,8 +243,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
           {[
             { step: 1, label: '1. Personal & Location', icon: User },
             { step: 2, label: '2. Medical & ID', icon: HeartPulse },
-            { step: 3, label: '3. 5 Trusted Contacts', icon: PhoneCall },
-            { step: 4, label: '4. Top Picks & Languages', icon: Sparkles }
+            { step: 3, label: '3. Top Picks & Languages', icon: Sparkles },
+            { step: 4, label: '4. 5 Trusted Contacts', icon: PhoneCall }
           ].map(tab => (
             <button
               key={tab.step}
@@ -274,8 +271,16 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
           ))}
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSave} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Form Body - Prevent Enter key from triggering premature submission */}
+        <form 
+          onSubmit={handleSave} 
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+              e.preventDefault();
+            }
+          }}
+          style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}
+        >
           {activeStep === 1 && (
             <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="grid grid-2 gap-3">
@@ -320,7 +325,6 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     placeholder="e.g. kamesh_traveler"
                     className="input-glass"
                   />
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>Used for quick login</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
@@ -333,88 +337,47 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                       required
                       value={formData.password || ''}
                       onChange={e => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="Enter secure password"
+                      placeholder="Enter a secure password"
                       className="input-glass"
                       style={{ paddingRight: '36px' }}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      style={{
-                        position: 'absolute',
-                        right: '8px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        color: '#94a3b8',
-                        cursor: 'pointer',
-                        padding: '4px'
-                      }}
-                      title={showPassword ? 'Hide password' : 'Show password'}
+                      style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
                     >
                       {showPassword ? <EyeOff style={{ width: '14px', height: '14px' }} /> : <Eye style={{ width: '14px', height: '14px' }} />}
                     </button>
                   </div>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>For account login & data sync</span>
                 </div>
               </div>
 
-              {/* Email, Native Currency & Webpage Language */}
-              <div className="grid grid-3 gap-3">
+              <div className="grid grid-2 gap-3">
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    Google / Primary Email * (For Password Reset)
+                    Google Email ID * (For Password Recovery)
                   </label>
                   <input
                     type="email"
                     required
                     value={formData.email}
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="e.g. kamesh.travel@gmail.com"
+                    onChange={e => setFormData({ ...formData, email: e.target.value, googleId: e.target.value })}
+                    placeholder="yourname@gmail.com"
                     className="input-glass"
                   />
                 </div>
 
                 <div>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    Native Currency *
+                    Native Currency (Home Country)
                   </label>
                   <select
                     value={formData.nativeCurrency}
                     onChange={e => setFormData({ ...formData, nativeCurrency: e.target.value })}
                     className="input-glass"
                   >
-                    <option value="INR" style={{ background: '#090e17' }}>INR - Indian Rupee (₹)</option>
-                    <option value="USD" style={{ background: '#090e17' }}>USD - US Dollar ($)</option>
-                    <option value="EUR" style={{ background: '#090e17' }}>EUR - Euro (€)</option>
-                    <option value="GBP" style={{ background: '#090e17' }}>GBP - British Pound (£)</option>
-                    <option value="AED" style={{ background: '#090e17' }}>AED - UAE Dirham (د.إ)</option>
-                    <option value="SGD" style={{ background: '#090e17' }}>SGD - Singapore Dollar (S$)</option>
-                    <option value="JPY" style={{ background: '#090e17' }}>JPY - Japanese Yen (¥)</option>
-                    <option value="AUD" style={{ background: '#090e17' }}>AUD - Australian Dollar (A$)</option>
-                    <option value="CAD" style={{ background: '#090e17' }}>CAD - Canadian Dollar (C$)</option>
-                    <option value="CHF" style={{ background: '#090e17' }}>CHF - Swiss Franc (Fr)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                    Webpage Language *
-                  </label>
-                  <select
-                    value={formData.preferredLanguage || 'English'}
-                    onChange={e => {
-                      const lang = e.target.value;
-                      setFormData({ ...formData, preferredLanguage: lang });
-                      saveStoredLanguage(lang);
-                    }}
-                    className="input-glass"
-                  >
-                    {Object.entries(LANG_CODE_MAP).map(([key, cfg]) => (
-                      <option key={key} value={key} style={{ background: '#090e17' }}>
-                        {cfg.flag} {cfg.nativeName ? `${cfg.name} (${cfg.nativeName})` : cfg.name}
-                      </option>
+                    {['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'MYR', 'THB', 'SAR'].map(c => (
+                      <option key={c} value={c} style={{ background: '#090e17' }}>{c}</option>
                     ))}
                   </select>
                 </div>
@@ -422,7 +385,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
               <div className="grid grid-2 gap-3">
                 <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Date of Birth (DOB) *</label>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Date of Birth *</label>
                   <input
                     type="date"
                     required
@@ -436,53 +399,41 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   <input
                     type="number"
                     readOnly
-                    value={formData.age || 0}
+                    value={formData.age || ''}
+                    placeholder="Auto-calculated from DOB"
                     className="input-glass"
-                    style={{ background: 'rgba(30, 41, 59, 0.6)', color: '#38bdf8', fontWeight: 800 }}
+                    style={{ background: 'rgba(255,255,255,0.02)', color: '#38bdf8', fontWeight: 700 }}
                   />
                 </div>
               </div>
 
-              {/* Address with Location Detection Option */}
+              {/* Current Live GPS & Home Address */}
               <div>
-                <div className="flex items-center justify-between" style={{ marginBottom: '6px' }}>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>
-                    Permanent / Hotel Address & Current Location *
-                  </label>
+                <div className="flex items-center justify-between" style={{ marginBottom: '4px' }}>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>Home / Permanent Address *</label>
                   <button
                     type="button"
                     onClick={handleDetectLocation}
                     disabled={isDetectingLocation}
                     className="btn-secondary"
-                    style={{
-                      padding: '4px 10px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      color: '#34d399',
-                      borderColor: 'rgba(52, 211, 153, 0.4)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
+                    style={{ padding: '3px 8px', fontSize: '0.7rem', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.4)' }}
                   >
-                    <Navigation style={{ width: '12px', height: '12px' }} />
-                    <span>{isDetectingLocation ? 'Detecting GPS...' : '📍 Auto-Detect Current Location'}</span>
+                    <Navigation style={{ width: '11px', height: '11px' }} />
+                    <span>{isDetectingLocation ? 'Detecting...' : '📍 Auto-Detect Location'}</span>
                   </button>
                 </div>
-                <textarea
-                  rows={2}
+                <input
+                  type="text"
                   required
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter residential or hotel address (or use Auto-Detect Location)"
+                  placeholder="Enter full address or click Auto-Detect"
                   className="input-glass"
-                  style={{ resize: 'none' }}
                 />
                 {locationDetectMsg && (
-                  <div style={{ marginTop: '4px', fontSize: '0.72rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Check style={{ width: '12px', height: '12px' }} />
-                    <span>{locationDetectMsg}</span>
-                  </div>
+                  <span style={{ fontSize: '0.7rem', color: '#34d399', display: 'block', marginTop: '4px' }}>
+                    {locationDetectMsg}
+                  </span>
                 )}
               </div>
             </div>
@@ -492,10 +443,10 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="grid grid-2 gap-3">
                 <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Blood Group *</label>
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Blood Group * (For Emergency Response)</label>
                   <select
                     value={formData.bloodGroup}
-                    onChange={e => setFormData({ ...formData, bloodGroup: e.target.value as BloodGroup })}
+                    onChange={e => setFormData({ ...formData, bloodGroup: e.target.value as any })}
                     className="input-glass"
                     style={{ fontWeight: 800, color: '#f87171' }}
                   >
@@ -513,7 +464,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     type="text"
                     value={formData.disability}
                     onChange={e => setFormData({ ...formData, disability: e.target.value })}
-                    placeholder="e.g. Wheelchair assistance (or leave blank)"
+                    placeholder="e.g. Wheelchair assistance"
                     className="input-glass"
                   />
                 </div>
@@ -526,7 +477,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                     type="text"
                     value={formData.allergies}
                     onChange={e => setFormData({ ...formData, allergies: e.target.value })}
-                    placeholder="e.g. Penicillin, Peanuts, Seafood"
+                    placeholder="e.g. Penicillin, Peanuts"
                     className="input-glass"
                   />
                 </div>
@@ -579,7 +530,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                       type="text"
                       value={formData.govtIdState}
                       onChange={e => setFormData({ ...formData, govtIdState: e.target.value })}
-                      placeholder="Tamil Nadu (TN), India"
+                      placeholder="e.g. Tamil Nadu, India"
                       className="input-glass"
                       style={{ fontSize: '0.75rem' }}
                     />
@@ -591,81 +542,12 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
           {activeStep === 3 && (
             <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <PhoneCall style={{ width: '16px', height: '16px', color: '#f87171' }} />
-                    5 Trusted SOS Contacts
-                  </h3>
-                  <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>These beloved contacts will receive your instant GPS SOS alert.</p>
-                </div>
-                {formData.trustedContacts.length < 5 && (
-                  <button
-                    type="button"
-                    onClick={addContact}
-                    className="btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '0.72rem', color: '#38bdf8' }}
-                  >
-                    <Plus style={{ width: '14px', height: '14px' }} /> Add Contact ({formData.trustedContacts.length}/5)
-                  </button>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {formData.trustedContacts.map((contact, idx) => (
-                  <div key={contact.id || idx} style={{ padding: '12px', background: 'rgba(10, 15, 29, 0.85)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#1e293b', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, flexShrink: 0 }}>
-                      {idx + 1}
-                    </span>
-                    <div className="grid grid-3 gap-2" style={{ flex: 1 }}>
-                      <input
-                        type="text"
-                        required
-                        value={contact.name}
-                        onChange={e => handleContactChange(idx, 'name', e.target.value)}
-                        placeholder="Contact Name (e.g. Father/Friend)"
-                        className="input-glass"
-                        style={{ padding: '6px 10px', fontSize: '0.78rem' }}
-                      />
-                      <input
-                        type="text"
-                        value={contact.relationship}
-                        onChange={e => handleContactChange(idx, 'relationship', e.target.value)}
-                        placeholder="Relationship (e.g. Sister, Colleague)"
-                        className="input-glass"
-                        style={{ padding: '6px 10px', fontSize: '0.78rem' }}
-                      />
-                      <input
-                        type="tel"
-                        required
-                        value={contact.phone}
-                        onChange={e => handleContactChange(idx, 'phone', e.target.value)}
-                        placeholder="Phone Number (+91 ...)"
-                        className="input-glass"
-                        style={{ padding: '6px 10px', fontSize: '0.78rem' }}
-                      />
-                    </div>
-                    {formData.trustedContacts.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeContact(idx)}
-                        style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '6px' }}
-                      >
-                        <Trash2 style={{ width: '16px', height: '16px' }} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeStep === 4 && (
-            <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff', display: 'block', marginBottom: '8px' }}>Languages Known</label>
+                <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff', display: 'block', marginBottom: '8px' }}>
+                  Languages Known (Select all you speak)
+                </label>
                 <div className="flex flex-wrap gap-1">
-                  {['Tamil', 'English', 'Hindi', 'Telugu', 'Malayalam', 'French', 'Spanish', 'German', 'Japanese'].map(lang => {
+                  {['Tamil', 'English', 'Hindi', 'Telugu', 'Malayalam', 'Kannada', 'French', 'Spanish', 'German', 'Japanese', 'Mandarin', 'Arabic', 'Russian'].map(lang => {
                     const isSelected = formData.languagesKnown.includes(lang);
                     return (
                       <button
@@ -693,7 +575,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               <div>
                 <div className="flex items-center justify-between" style={{ marginBottom: '8px' }}>
                   <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff' }}>
-                    Interested Top Picks (For Home Page Slides)
+                    Interested Top Travel Picks (Personalizes Itinerary & Spots)
                   </label>
                   <span style={{ fontSize: '0.72rem', color: '#38bdf8' }}>{formData.interestedTopPicks.length} Selected</span>
                 </div>
@@ -728,6 +610,144 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
             </div>
           )}
 
+          {activeStep === 4 && (
+            <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <PhoneCall style={{ width: '18px', height: '18px', color: '#f87171' }} />
+                    5 Trusted SOS Emergency Contacts
+                  </h3>
+                  <p style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                    These contacts will instantly receive your live GPS coordinates & SOS emergency alert during distress.
+                  </p>
+                </div>
+                {formData.trustedContacts.length < 5 && (
+                  <button
+                    type="button"
+                    onClick={addContact}
+                    className="btn-secondary"
+                    style={{ padding: '6px 14px', fontSize: '0.74rem', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)' }}
+                  >
+                    <Plus style={{ width: '14px', height: '14px' }} /> Add Contact ({formData.trustedContacts.length}/5)
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {formData.trustedContacts.map((contact, idx) => (
+                  <div 
+                    key={contact.id || idx} 
+                    style={{ 
+                      padding: '14px', 
+                      background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(10, 15, 29, 0.95) 100%)', 
+                      borderRadius: '16px', 
+                      border: idx === 0 ? '1px solid rgba(248, 113, 113, 0.4)' : '1px solid rgba(255,255,255,0.08)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px' 
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+                      <span style={{ 
+                        width: '26px', 
+                        height: '26px', 
+                        borderRadius: '50%', 
+                        background: idx === 0 ? 'rgba(239, 68, 68, 0.25)' : '#1e293b', 
+                        color: idx === 0 ? '#f87171' : '#38bdf8', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        fontSize: '12px', 
+                        fontWeight: 800 
+                      }}>
+                        {idx + 1}
+                      </span>
+                      {idx === 0 && (
+                        <span style={{ fontSize: '0.58rem', fontWeight: 800, color: '#f87171', textTransform: 'uppercase' }}>
+                          Primary
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-3 gap-2" style={{ flex: 1 }}>
+                      <div>
+                        <label style={{ fontSize: '0.66rem', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>
+                          Contact Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={contact.name}
+                          onChange={e => handleContactChange(idx, 'name', e.target.value)}
+                          placeholder="e.g. Father / Friend"
+                          className="input-glass"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.66rem', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>
+                          Relationship
+                        </label>
+                        <input
+                          type="text"
+                          value={contact.relationship}
+                          onChange={e => handleContactChange(idx, 'relationship', e.target.value)}
+                          placeholder="e.g. Mother, Spouse, Colleague"
+                          className="input-glass"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.66rem', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={contact.phone}
+                          onChange={e => handleContactChange(idx, 'phone', e.target.value)}
+                          placeholder="e.g. +91 98765 43210"
+                          className="input-glass"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem' }}
+                        />
+                      </div>
+                    </div>
+
+                    {formData.trustedContacts.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeContact(idx)}
+                        style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '6px' }}
+                        title="Remove Contact"
+                      >
+                        <Trash2 style={{ width: '16px', height: '16px' }} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Quick Guidance Alert */}
+              <div style={{
+                padding: '12px 16px',
+                borderRadius: '14px',
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <ShieldCheck style={{ width: '20px', height: '20px', color: '#38bdf8', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>
+                  You can input up to <strong>5 trusted contacts</strong>. When pressing SOS anywhere in the app, SMS & alerts with your real-time coordinates will be automatically triggered.
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Footer Controls */}
           <div style={{ display: 'flex', alignItems: 'center', justifySelf: 'stretch', justifyContent: 'space-between', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             {activeStep > 1 ? (
@@ -735,34 +755,43 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 type="button"
                 onClick={() => setActiveStep((activeStep - 1) as any)}
                 className="btn-secondary"
-                style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                style={{ padding: '8px 18px', fontSize: '0.8rem' }}
               >
-                Back
+                ← Back
               </button>
             ) : <div />}
 
-            <div>
+            <div className="flex items-center gap-3">
+              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                Step {activeStep} of 4
+              </span>
               {activeStep < 4 ? (
                 <button
                   type="button"
                   onClick={() => setActiveStep((activeStep + 1) as any)}
                   className="btn-primary"
-                  style={{ padding: '8px 20px', fontSize: '0.8rem' }}
+                  style={{ padding: '8px 22px', fontSize: '0.82rem', fontWeight: 800 }}
                 >
-                  Continue
+                  Continue to Step {activeStep + 1} →
                 </button>
               ) : (
                 <button
                   type="submit"
                   className="btn-primary"
-                  style={{ padding: '8px 24px', fontSize: '0.8rem', background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)' }}
+                  style={{ 
+                    padding: '9px 26px', 
+                    fontSize: '0.84rem', 
+                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)',
+                    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.4)'
+                  }}
                 >
                   {saveSuccess ? (
                     <span className="flex items-center gap-2">
-                      <Check style={{ width: '16px', height: '16px' }} /> Profile Saved!
+                      <Check style={{ width: '16px', height: '16px' }} /> {userProfile.isRegistered ? 'Profile Updated!' : 'Profile Saved & Activated!'}
                     </span>
                   ) : (
-                    'Save & Activate Profile'
+                    userProfile.isRegistered ? 'Update & Save Changes' : 'Save & Activate Profile'
                   )}
                 </button>
               )}

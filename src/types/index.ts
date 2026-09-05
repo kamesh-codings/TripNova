@@ -74,7 +74,7 @@ export interface BaseProviderInfo {
 
 // Category 1: Transport & Drivers
 export interface TransportProviderDetails {
-  vehicleType: 'Auto Rickshaw' | 'Sedan Cab' | 'SUV' | 'Tourist Van / Bus' | 'Bike Taxi';
+  vehicleType: string;
   vehicleRegNumber: string;
   driverLicenseNumber: string;
   commercialBadgeNumber: string;
@@ -82,13 +82,16 @@ export interface TransportProviderDetails {
   baseTariffPerKm: number;
   hasAC: boolean;
   seatingCapacity: number;
+  customVehicleType?: string;
 }
 
 // Category 2: Tour Guides
 export interface TourGuideDetails {
-  guideLicenseType: 'Govt Certified National Guide' | 'State Tourism Guide' | 'Local Heritage Expert';
+  guideLicenseType: string;
   guideBadgeNumber: string;
-  specialization: 'Heritage & Temples' | 'Hill Stations & Treks' | 'Wildlife & Eco-Tour' | 'Food & Culture';
+  specialization: string;
+  customSpecialization?: string;
+  secondarySkills?: string[];
   languagesSpoken: string[];
   experienceYears: number;
   hourlyRate: number;
@@ -98,7 +101,8 @@ export interface TourGuideDetails {
 
 // Category 3: Homestay & Hospitality
 export interface HomestayDetails {
-  propertyType: 'Heritage Cottage' | 'Mountain Villa' | 'Traditional Homestay' | 'Eco-Camp / Resort';
+  propertyType: string;
+  customPropertyType?: string;
   homestayRegNumber: string;
   totalRooms: number;
   amenities: string[];
@@ -110,7 +114,8 @@ export interface HomestayDetails {
 
 // Category 4: Emergency & Medical Assistance
 export interface EmergencyMedicalDetails {
-  serviceType: 'Private Ambulance Operator' | '24/7 Urgent Clinic / Hospital' | '24/7 Pharmacy' | 'Emergency Rescue Unit';
+  serviceType: string;
+  customServiceType?: string;
   medicalLicenseNumber: string;
   emergencyHotline: string;
   availableVehiclesOrBeds: number;
@@ -120,7 +125,8 @@ export interface EmergencyMedicalDetails {
 
 // Category 5: Rental & Activity Agency
 export interface RentalAgencyDetails {
-  agencyType: 'Trekking & Camping Gear' | 'Two-Wheeler & Bicycle Rental' | 'Boating & Safari Agency';
+  agencyType: string;
+  customAgencyType?: string;
   gstOrMsmeNumber: string;
   itemsOffered: string[];
   insuranceIncluded: boolean;
@@ -177,6 +183,8 @@ export interface TripPlan {
   startDate: string;
   endDate: string;
   durationDays: number;
+  travelerCount?: number;
+  roomsCount?: number;
   budgetType: 'manual' | 'suggested';
   budgetAmount: number;
   suggestedBudgetBreakdown?: {

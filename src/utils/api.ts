@@ -192,8 +192,9 @@ export async function fetchPlaces(locationId?: string, category?: string, search
 
   // Local fallback
   return FALLBACK_PLACES.filter(p => {
-    if (locationId && p.location_id !== locationId) return false;
-    if (category && category !== 'all' && p.category !== category) return false;
+    if (locationId && locationId !== 'all' && p.location_id !== locationId) return false;
+    if (state && state !== 'All' && p.location_state && p.location_state.toLowerCase() !== state.toLowerCase()) return false;
+    if (category && category !== 'all' && p.category.toLowerCase() !== category.toLowerCase()) return false;
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });

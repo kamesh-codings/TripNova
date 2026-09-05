@@ -56,7 +56,20 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
   useEffect(() => {
     if (isOpen) {
       setSelectedLanguage(getStoredLanguage());
-      setUserLocation(getStoredLocation());
+      const stored = getStoredLocation();
+      setUserLocation(stored);
+      if (!stored) {
+        setIsDetecting(true);
+        detectUserCurrentLocation().then(loc => {
+          if (loc) {
+            setUserLocation(loc);
+            setLocationStatus(`📍 Detected: ${loc.city}, ${loc.state}`);
+            if (onLocationDetected) onLocationDetected(loc);
+          }
+        }).finally(() => {
+          setIsDetecting(false);
+        });
+      }
     }
   }, [isOpen]);
 
@@ -75,8 +88,8 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
       setUserLocation(loc);
       setLocationStatus(`📍 Detected: ${loc.city}, ${loc.state}`);
       if (onLocationDetected) onLocationDetected(loc);
-    } catch (err: any) {
-      setLocationStatus(err.message || 'Location detection failed.');
+    } catch {
+      setLocationStatus('📍 Default location configured.');
     } finally {
       setIsDetecting(false);
     }

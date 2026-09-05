@@ -26,6 +26,7 @@ import {
   getStoredTrips, 
   saveStoredTrips 
 } from './utils/storage';
+import { getStoredLocation, detectUserCurrentLocation } from './utils/geoLocator';
 import { syncUserProfile, syncProviderProfile } from './utils/api';
 import { Sparkles, UserPlus, CheckCircle, ShieldCheck } from 'lucide-react';
 
@@ -37,6 +38,29 @@ export const App: React.FC = () => {
   const [providerProfile, setProviderProfile] = useState<ServiceProviderProfile | null>(getStoredProviderProfile);
   const [trips, setTrips] = useState<TripPlan[]>(getStoredTrips);
   
+  // Auto-detect location silently on launch if none stored yet
+  React.useEffect(() => {
+    const existing = getStoredLocation();
+    if (!existing) {
+      detectUserCurrentLocation().then(loc => {
+        if (loc) {
+          setUserProfile(prev => {
+            if (!prev.currentLocation || prev.currentLocation === 'Global / Offline') {
+              const updated = {
+                ...prev,
+                currentLocation: `${loc.city}, ${loc.state}, ${loc.country}`,
+                locationCoordinates: { latitude: loc.latitude, longitude: loc.longitude }
+              };
+              saveStoredProfile(updated);
+              return updated;
+            }
+            return prev;
+          });
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
   // Flash Toast Message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
