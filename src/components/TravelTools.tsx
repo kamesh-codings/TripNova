@@ -116,6 +116,11 @@ export const TravelTools: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [activePhraseCategory, setActivePhraseCategory] = useState<'All' | 'Emergency' | 'Transport' | 'Food' | 'Greetings'>('All');
 
+  // Loud Voice-over Audio Boost & Speed Controls
+  const [isLoudVoiceoverMode, setIsLoudVoiceoverMode] = useState<boolean>(true);
+  const [loudVolumeBoost, setLoudVolumeBoost] = useState<number>(1.8); // 1.8x amplified loud voiceover
+  const [voiceSpeechRate, setVoiceSpeechRate] = useState<number>(0.92); // 0.92x clear cadence
+
   // Conversation Mode State
   const [touristLang, setTouristLang] = useState('English');
   const [localLang, setLocalLang] = useState('Tamil');
@@ -264,7 +269,11 @@ export const TravelTools: React.FC = () => {
           result,
           toL,
           () => setIsPlayingAudio(false),
-          () => setIsPlayingAudio(false)
+          () => setIsPlayingAudio(false),
+          {
+            volumeBoost: isLoudVoiceoverMode ? loudVolumeBoost : 1.0,
+            rate: voiceSpeechRate
+          }
         );
       }
     } catch (err) {
@@ -293,6 +302,10 @@ export const TravelTools: React.FC = () => {
       (err) => {
         console.warn('Audio playback error callback:', err);
         setIsPlayingAudio(false);
+      },
+      {
+        volumeBoost: isLoudVoiceoverMode ? loudVolumeBoost : 1.0,
+        rate: voiceSpeechRate
       }
     );
 
@@ -371,12 +384,16 @@ export const TravelTools: React.FC = () => {
 
           setConversationHistory(prev => [...prev, newMsg]);
 
-          // Auto-speak translated phrase to the recipient
+          // Auto-speak translated phrase to the recipient in loud voiceover
           speakPhrase(
             translated,
             recipientLang,
             () => setIsPlayingAudio(false),
-            () => setIsPlayingAudio(false)
+            () => setIsPlayingAudio(false),
+            {
+              volumeBoost: isLoudVoiceoverMode ? loudVolumeBoost : 1.0,
+              rate: voiceSpeechRate
+            }
           );
         }
       },
@@ -559,6 +576,93 @@ export const TravelTools: React.FC = () => {
               <div className="col-span-7 lg-col-span-12" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   
+                  {/* Loud Voice-over Audio & Volume Boost Toolbar */}
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(90deg, rgba(2, 132, 199, 0.18) 0%, rgba(79, 70, 229, 0.18) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '10px'
+                  }}>
+                    <div className="flex items-center gap-2">
+                      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                        <Volume2 style={{ width: '16px', height: '16px' }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>Loud Voice-Over Engine</span>
+                          <span className="badge badge-green" style={{ fontSize: '0.62rem', padding: '1px 6px' }}>Amplified Audio</span>
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>High-fidelity TTS with 200% Gain & Clear Pronunciation</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {/* Loud Volume Boost Selector */}
+                      <div className="flex items-center gap-1">
+                        <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>Volume:</span>
+                        {[
+                          { label: 'Normal', val: 1.0 },
+                          { label: '🔊 Loud (150%)', val: 1.5 },
+                          { label: '📢 Ultra Loud (200%)', val: 2.0 }
+                        ].map(b => (
+                          <button
+                            key={b.label}
+                            type="button"
+                            onClick={() => {
+                              setIsLoudVoiceoverMode(true);
+                              setLoudVolumeBoost(b.val);
+                            }}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.65rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: loudVolumeBoost === b.val ? '#0284c7' : 'rgba(255,255,255,0.06)',
+                              color: loudVolumeBoost === b.val ? '#ffffff' : '#94a3b8',
+                              fontWeight: loudVolumeBoost === b.val ? 800 : 500
+                            }}
+                          >
+                            {b.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Speed Rate Selector */}
+                      <div className="flex items-center gap-1">
+                        <span style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>Pace:</span>
+                        {[
+                          { label: '0.85x Clear', val: 0.85 },
+                          { label: '0.95x Natural', val: 0.95 },
+                          { label: '1.15x Fast', val: 1.15 }
+                        ].map(s => (
+                          <button
+                            key={s.label}
+                            type="button"
+                            onClick={() => setVoiceSpeechRate(s.val)}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.65rem',
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: voiceSpeechRate === s.val ? '#4f46e5' : 'rgba(255,255,255,0.06)',
+                              color: voiceSpeechRate === s.val ? '#ffffff' : '#94a3b8',
+                              fontWeight: voiceSpeechRate === s.val ? 800 : 500
+                            }}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Region Filter & Swap */}
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-1">
@@ -592,7 +696,7 @@ export const TravelTools: React.FC = () => {
                           onChange={e => setAutoSpeak(e.target.checked)}
                           style={{ accentColor: '#38bdf8' }}
                         />
-                        <span>Auto-speak Translation</span>
+                        <span>Auto-speak Loud Voiceover</span>
                       </label>
 
                       <button
@@ -855,7 +959,7 @@ export const TravelTools: React.FC = () => {
                           ) : (
                             <>
                               <Volume2 style={{ width: '16px', height: '16px' }} />
-                              <span>Play Audio ({LANG_CODE_MAP[targetLang]?.flag} {targetLang})</span>
+                              <span>🔊 Play Loud Voiceover ({LANG_CODE_MAP[targetLang]?.flag} {targetLang})</span>
                             </>
                           )}
                         </button>

@@ -1,4 +1,5 @@
-// Web Speech API & Online TTS Hybrid Utility for Audio Broadcast & Voice Translation
+// Web Speech API & Online TTS Hybrid Utility with Web Audio API Loud Amplification
+// Supports all 26+ Indian & Global Languages with high-fidelity, audible voice-over
 
 export interface LanguageVoiceConfig {
   bcp47: string;
@@ -41,29 +42,65 @@ export const LANG_CODE_MAP: Record<string, LanguageVoiceConfig> = {
   'Dutch': { bcp47: 'nl-NL', ttsCode: 'nl', name: 'Dutch', nativeName: 'Nederlands', flag: '🇳🇱', region: 'Global' }
 };
 
+export interface SpeechOptions {
+  rate?: number; // Speed: 0.5 to 1.5 (default 0.92)
+  pitch?: number; // Pitch: 0.5 to 1.5 (default 1.0)
+  volume?: number; // Volume: 0.1 to 1.0 (default 1.0)
+  volumeBoost?: number; // Web Audio Gain multiplier: 1.0 to 2.5 (default 1.6 for loud voiceover)
+}
+
 let cachedVoices: SpeechSynthesisVoice[] = [];
 let activeAudioElement: HTMLAudioElement | null = null;
+let activeAudioContext: AudioContext | null = null;
+let activeUtterance: SpeechSynthesisUtterance | null = null;
 let speechTimeoutId: any = null;
+let speechKeepAliveInterval: any = null;
 
 // Preload voices when browser initializes
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   try {
-    cachedVoices = window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged = () => {
+    const updateVoices = () => {
       cachedVoices = window.speechSynthesis.getVoices();
     };
+    updateVoices();
+    window.speechSynthesis.onvoiceschanged = updateVoices;
   } catch (e) {
-    console.warn('Speech synthesis voice preloading warning:', e);
+    console.warn('Speech synthesis voice preloading notice:', e);
   }
 }
 
 /**
- * Stop any active audio or speech synthesis
+ * Initializes and unlocks AudioContext on user interaction for maximum loudness
+ */
+const getAudioContext = (): AudioContext | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!activeAudioContext) {
+      activeAudioContext = new AudioCtx();
+    }
+    if (activeAudioContext.state === 'suspended') {
+      activeAudioContext.resume().catch(() => {});
+    }
+    return activeAudioContext;
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
+ * Stop any active audio, speech synthesis, or keepalive timers
  */
 export const stopSpeech = () => {
   if (speechTimeoutId) {
     clearTimeout(speechTimeoutId);
     speechTimeoutId = null;
+  }
+
+  if (speechKeepAliveInterval) {
+    clearInterval(speechKeepAliveInterval);
+    speechKeepAliveInterval = null;
   }
 
   if (activeAudioElement) {
@@ -84,33 +121,98 @@ export const stopSpeech = () => {
       // ignore
     }
   }
+
+  activeUtterance = null;
 };
 
 /**
- * Plays online Google Translate TTS audio stream as a 100% reliable fallback
- * for all languages, especially when OS doesn't have local voice packs installed.
+ * Finds the best matching voice for a given BCP-47 tag or language name
+ */
+const findBestVoice = (targetBcp47: string, langName: string): SpeechSynthesisVoice | null => {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  if (cachedVoices.length === 0) {
+    cachedVoices = window.speechSynthesis.getVoices();
+  }
+  if (cachedVoices.length === 0) return null;
+
+  const targetLower = targetBcp47.toLowerCase();
+  const prefix = targetBcp47.split('-')[0].toLowerCase();
+  const langNameLower = langName.toLowerCase();
+
+  // 1. Exact BCP-47 match (e.g., 'ta-IN')
+  let match = cachedVoices.find(v => v.lang.toLowerCase().replace('_', '-') === targetLower);
+  if (match) return match;
+
+  // 2. Prefix match with matching region or default (e.g., 'ta' for 'ta-IN')
+  match = cachedVoices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(prefix));
+  if (match) return match;
+
+  // 3. Name contains language (e.g. "Google Tamil", "Microsoft Valluvar - Tamil (India)")
+  match = cachedVoices.find(v => v.name.toLowerCase().includes(langNameLower));
+  if (match) return match;
+
+  return null;
+};
+
+/**
+ * Plays online Google / Alternative TTS audio stream with Web Audio API Gain Amplification (LOUD Voiceover)
  */
 export const playOnlineTTS = (
   text: string,
   ttsCode: string,
+  options?: SpeechOptions,
   onEnd?: () => void,
   onError?: (err: any) => void
 ): boolean => {
   try {
-    const cleanText = encodeURIComponent(text.slice(0, 200).trim());
+    const cleanText = encodeURIComponent(text.slice(0, 300).trim());
+    if (!cleanText) {
+      onEnd?.();
+      return false;
+    }
+
     const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${ttsCode}&client=tw-ob&q=${cleanText}`;
-    
-    const audio = new Audio(audioUrl);
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    audio.src = audioUrl;
+    audio.playbackRate = options?.rate || 0.95;
     activeAudioElement = audio;
 
+    // Apply Web Audio Gain amplification for loud, audible voiceover
+    const gainFactor = options?.volumeBoost || 1.8; // Amplified loudness
+    const ctx = getAudioContext();
+    
+    if (ctx) {
+      try {
+        const source = ctx.createMediaElementSource(audio);
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = Math.min(2.5, Math.max(1.0, gainFactor));
+        source.connect(gainNode);
+        gainNode.connect(ctx.destination);
+      } catch (gainErr) {
+        // Fallback to standard audio volume if media element already bound
+        audio.volume = 1.0;
+      }
+    } else {
+      audio.volume = 1.0;
+    }
+
+    let finished = false;
+    const cleanup = () => {
+      if (!finished) {
+        finished = true;
+        activeAudioElement = null;
+      }
+    };
+
     audio.onended = () => {
-      activeAudioElement = null;
+      cleanup();
       onEnd?.();
     };
 
     audio.onerror = (e) => {
-      activeAudioElement = null;
-      console.warn('Online TTS audio error:', e);
+      cleanup();
+      console.warn('Online TTS audio error, attempting direct play fallback:', e);
       onError?.(e);
       onEnd?.();
     };
@@ -118,8 +220,8 @@ export const playOnlineTTS = (
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch((err) => {
-        console.warn('Audio play error (check autoplay/interaction):', err);
-        activeAudioElement = null;
+        console.warn('Audio play notice (autoplay policy or network):', err);
+        cleanup();
         onError?.(err);
         onEnd?.();
       });
@@ -136,14 +238,16 @@ export const playOnlineTTS = (
 };
 
 /**
- * Speaks the text aloud using browser SpeechSynthesis or high-fidelity online TTS fallback.
- * Works seamlessly across all Indian and Global languages.
+ * Speaks the text aloud in a loud, crystal-clear voiceover using browser SpeechSynthesis
+ * or amplified online TTS fallback.
+ * Works across all 26+ Indian & Global languages.
  */
 export const speakPhrase = (
   text: string,
   language: string = 'English',
   onEnd?: () => void,
-  onError?: (err: any) => void
+  onError?: (err: any) => void,
+  options?: SpeechOptions
 ): boolean => {
   if (!text || !text.trim()) {
     onEnd?.();
@@ -152,7 +256,13 @@ export const speakPhrase = (
 
   stopSpeech();
 
-  const langConfig = LANG_CODE_MAP[language] || { bcp47: 'en-US', ttsCode: 'en', name: language, flag: '🌐', region: 'Global' as const };
+  const langConfig = LANG_CODE_MAP[language] || { 
+    bcp47: 'en-US', 
+    ttsCode: 'en', 
+    name: language, 
+    flag: '🌐', 
+    region: 'Global' as const 
+  };
   const targetBcp47 = langConfig.bcp47;
   const targetTts = langConfig.ttsCode;
 
@@ -167,61 +277,75 @@ export const speakPhrase = (
     try {
       window.speechSynthesis.resume();
 
-      if (cachedVoices.length === 0) {
-        cachedVoices = window.speechSynthesis.getVoices();
-      }
-
-      const targetPrefix = targetBcp47.split('-')[0].toLowerCase();
-      const matchedVoice = cachedVoices.find(v => {
-        const vLang = v.lang.toLowerCase().replace('_', '-');
-        return vLang === targetBcp47.toLowerCase() || vLang.startsWith(targetPrefix);
-      });
+      const matchedVoice = findBestVoice(targetBcp47, langConfig.name);
 
       if (matchedVoice) {
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = targetBcp47;
+        utterance.lang = matchedVoice.lang || targetBcp47;
         utterance.voice = matchedVoice;
-        utterance.rate = 0.92;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
+        
+        // Optimize for loud, crystal-clear voiceover delivery
+        utterance.rate = options?.rate || 0.92; // slightly paced for comprehension
+        utterance.pitch = options?.pitch || 1.0;
+        utterance.volume = 1.0; // Maximum browser volume
+
+        // Prevent Chrome GC bug by storing active utterance in module scope
+        activeUtterance = utterance;
 
         let finished = false;
         const handleEnd = () => {
           if (!finished) {
             finished = true;
+            if (speechKeepAliveInterval) {
+              clearInterval(speechKeepAliveInterval);
+              speechKeepAliveInterval = null;
+            }
+            activeUtterance = null;
             onEnd?.();
           }
         };
 
         utterance.onend = handleEnd;
         utterance.onerror = (e) => {
-          console.warn('speechSynthesis error event:', e);
+          console.warn('speechSynthesis error event, streaming loud online TTS fallback:', e);
           if (!finished) {
             finished = true;
-            playOnlineTTS(text, targetTts, onEnd, onError);
+            activeUtterance = null;
+            playOnlineTTS(text, targetTts, options, onEnd, onError);
           }
         };
+
+        // Keepalive heartbeat for long speech synthesis in Chrome
+        speechKeepAliveInterval = setInterval(() => {
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          } else {
+            clearInterval(speechKeepAliveInterval);
+            speechKeepAliveInterval = null;
+          }
+        }, 12000);
 
         speechTimeoutId = setTimeout(() => {
           try {
             window.speechSynthesis.resume();
             window.speechSynthesis.speak(utterance);
           } catch (speakErr) {
-            playOnlineTTS(text, targetTts, onEnd, onError);
+            playOnlineTTS(text, targetTts, options, onEnd, onError);
           }
-        }, 40);
+        }, 30);
 
         return true;
       } else {
-        // Fallback directly to online TTS stream if no native voice installed
-        return playOnlineTTS(text, targetTts, onEnd, onError);
+        // Fallback to amplified online TTS if native OS voice is missing for regional language
+        return playOnlineTTS(text, targetTts, options, onEnd, onError);
       }
     } catch (err) {
-      console.warn('Speech synthesis error, falling back to online TTS:', err);
-      return playOnlineTTS(text, targetTts, onEnd, onError);
+      console.warn('Speech synthesis error, falling back to loud online TTS:', err);
+      return playOnlineTTS(text, targetTts, options, onEnd, onError);
     }
   } else {
-    return playOnlineTTS(text, targetTts, onEnd, onError);
+    return playOnlineTTS(text, targetTts, options, onEnd, onError);
   }
 };
 
@@ -276,7 +400,7 @@ export class VoiceRecognizer {
       this.recognition.onerror = (event: any) => {
         let msg = 'Voice recognition error';
         if (event.error === 'not-allowed') {
-          msg = 'Microphone access denied. Please click the camera/mic icon in the browser address bar to allow microphone permissions.';
+          msg = 'Microphone access denied. Please click the microphone icon in the browser address bar to allow permissions.';
         } else if (event.error === 'no-speech') {
           msg = 'No voice detected. Please speak clearly into the microphone.';
         } else if (event.error === 'network') {
