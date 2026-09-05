@@ -172,6 +172,9 @@ export interface LocalGuide {
   phone: string;
   verified: boolean;
   bio: string;
+  isPartner?: boolean;
+  badgeNumber?: string;
+  currency?: string;
 }
 
 export interface TripPlan {
