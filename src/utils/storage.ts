@@ -8,66 +8,17 @@ const PROVIDERS_LIST_KEY = 'tripnova_registered_providers_list';
 const TRIPS_KEY = 'tripnova_saved_trips';
 const SOS_HISTORY_KEY = 'tripnova_sos_logs';
 
-export const DEFAULT_DEMO_USERS: UserProfile[] = [
-  {
-    ...DEFAULT_USER_PROFILE,
-    id: 'usr_kamesh_01',
-    username: 'kamesh_explorer',
-    password: '@Kamesh06',
-    email: 'kamesh.travel@gmail.com',
-    name: 'Kameshwaram S',
-    isRegistered: true
-  },
-  {
-    ...DEFAULT_USER_PROFILE,
-    id: 'usr_kamesh_02',
-    username: 'kamesh_traveler',
-    password: 'kamesh123',
-    email: 'kamesh.traveler@tripnova.local',
-    name: 'Kameshwaram S',
-    isRegistered: true
-  }
-];
-
-export const DEFAULT_DEMO_PROVIDERS: ServiceProviderProfile[] = [
-  {
-    id: 'PRV_murugan_01',
-    username: 'murugan_travels',
-    password: 'partner123',
-    email: 'murugan.travels@gmail.com',
-    phone: '+91 98421 88492',
-    providerName: 'S. Murugan',
-    businessName: 'Nilgiri Mountain Tourist Travels',
-    category: 'transport',
-    operatingCity: 'Ooty',
-    operatingState: 'Tamil Nadu, India',
-    nativeCurrency: 'INR',
-    isVerified: true,
-    registeredAt: '2026-09-01',
-    transportDetails: {
-      vehicleType: 'Tourist Van / Bus',
-      vehicleRegNumber: 'TN 43 B 8892',
-      driverLicenseNumber: 'TN4320140009182',
-      commercialBadgeNumber: 'BG-TN-4392',
-      operatingStand: 'Ooty Central Commercial Stand',
-      baseTariffPerKm: 18,
-      hasAC: true,
-      seatingCapacity: 12
-    }
-  }
-];
-
 export const getAllRegisteredUsers = (): UserProfile[] => {
   try {
     const data = localStorage.getItem(USERS_LIST_KEY);
     if (data) {
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (e) {
     console.error('Failed to parse users list', e);
   }
-  return DEFAULT_DEMO_USERS;
+  return [];
 };
 
 export const getAllRegisteredProviders = (): ServiceProviderProfile[] => {
@@ -75,12 +26,12 @@ export const getAllRegisteredProviders = (): ServiceProviderProfile[] => {
     const data = localStorage.getItem(PROVIDERS_LIST_KEY);
     if (data) {
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (e) {
     console.error('Failed to parse providers list', e);
   }
-  return DEFAULT_DEMO_PROVIDERS;
+  return [];
 };
 
 export const getStoredProfile = (): UserProfile => {
