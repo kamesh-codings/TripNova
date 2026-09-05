@@ -8,13 +8,13 @@ The backend service for the **TripNova Tourism Platform & Tourist Safety System*
 
 ### 1. Install Dependencies
 From the `backend/` directory:
-```powershell
+```bash
 npm install
 ```
 
 ### 2. Configure Environment Variables
 Copy the `.env.example` file to `.env`:
-```powershell
+```bash
 cp .env.example .env
 ```
 
@@ -30,18 +30,15 @@ Key environment variables:
 ---
 
 ### 3. Run the Backend Server
-```powershell
-# Development / Normal start
-npm run dev
-
-# Or
-npm start
+```bash
+# Start server
+node server.js
 ```
 
 The server will automatically:
 1. Initialize the SQLite database at `backend/database/tripnova.db`.
-2. Create required tables (`users`, `locations`, `places`, `trips`, `emergency_contacts`, `safety_alerts`).
-3. Seed the tables from SQL files and CSV datasets (`places_1.csv`, `places_2.csv`, `locations_tn.csv`, `locations_kl.csv`).
+2. Create required tables (`users`, `locations`, `places`, `trips`, `safety_contacts`, `cultural_rules`).
+3. Synchronize **229 destination districts** and **1,417 tourist places** with complete metadata.
 
 ---
 
@@ -49,22 +46,23 @@ The server will automatically:
 
 ### 1. Public & Health Checks
 - `GET /` — API service info & list of endpoints
-- `GET /api/health` — Returns server uptime and database record counts
+- `GET /api/health` — Returns server uptime and loaded record counts (`locationsLoaded: 229`, `placesLoaded: 1417`)
 
 ### 2. Locations & Destinations
-- `GET /api/locations` — Get all tourist destination districts
+- `GET /api/locations` — Get all 229 destination districts
 - `GET /api/locations/:id` — Get details of a single destination
 
 ### 3. Places & Tourist Spots
 - `GET /api/places` — Query places with optional filters:
   - `?state=Tamil Nadu`
-  - `?category=heritage|nature|beach|temple`
+  - `?category=heritage|nature|beach|religious|hill_station|wildlife`
   - `?search=Ooty`
-- `GET /api/places/:id` — Get specific place details, entry fees, timings, and coordinates
+  - `?limit=2000`
+- `GET /api/places/:id` — Get specific place details, coordinates, entry fees, timings, and nearby tips
 
 ### 4. Safety & Emergency Services
-- `GET /api/safety/contacts` — Emergency helpline numbers & police station contacts
-- `GET /api/safety/alerts` — Active travel safety advisories
+- `GET /api/safety/contacts?location_id=loc-chn` — Emergency helpline numbers & police station contacts
+- `GET /api/safety/rules?location_id=loc-chn` — Cultural etiquette and safety precautions
 
 ### 5. Trips & AI Assistant
 - `POST /api/trips/plan` — Create or calculate trip plans

@@ -76,13 +76,15 @@ app.get('/', (req, res) => {
 app.get('/api/health', async (req, res) => {
   try {
     const locationCount = await db.query('SELECT COUNT(*) as count FROM locations');
+    const placeCount = await db.query('SELECT COUNT(*) as count FROM places');
     res.json({
       status: 'HEALTHY',
       timestamp: new Date().toISOString(),
       uptimeSeconds: Math.floor(process.uptime()),
       database: {
         connected: true,
-        locationsLoaded: locationCount[0]?.count || 0
+        locationsLoaded: locationCount[0]?.count || 0,
+        placesLoaded: placeCount[0]?.count || 0
       }
     });
   } catch (err) {

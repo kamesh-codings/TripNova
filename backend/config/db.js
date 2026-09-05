@@ -118,59 +118,63 @@ function parseSeedSql() {
 }
 
 // Synchronize parsed seed data into Database
-async function syncSeedDataToDatabase(queryFn, engine) {
+async function syncSeedDataToDatabase(queryFn, engine, rawDb) {
   try {
-    const { locations, places, contacts } = parseSeedSql();
+    const checkPlaces = await queryFn('SELECT COUNT(*) as cnt FROM places');
+    const placesCount = checkPlaces && checkPlaces[0] ? (checkPlaces[0].cnt || checkPlaces[0].count || 0) : 0;
+    
+    if (placesCount >= 500) {
+      const checkLocs = await queryFn('SELECT COUNT(*) as cnt FROM locations');
+      const locsCount = checkLocs && checkLocs[0] ? (checkLocs[0].cnt || checkLocs[0].count || 0) : 0;
+      console.log(`✅ Database already fully synchronized: ${locsCount} locations, ${placesCount} places.`);
+      return;
+    }
 
-    // 1. Sync Locations
-    for (const loc of locations) {
-      if (engine === 'mysql') {
-        await queryFn(`
-          INSERT INTO locations (id, name, state, country, currency_code, description)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE name=VALUES(name), state=VALUES(state), country=VALUES(country), currency_code=VALUES(currency_code), description=VALUES(description)
-        `, [loc.id, loc.name, loc.state, loc.country, loc.currency_code, loc.description]);
-      } else {
-        await queryFn(`
-          INSERT OR REPLACE INTO locations (id, name, state, country, currency_code, description)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `, [loc.id, loc.name, loc.state, loc.country, loc.currency_code, loc.description]);
+    const seedSqlPath = path.resolve(__dirname, '../database/seed.sql');
+    if (!fs.existsSync(seedSqlPath)) {
+      console.warn('⚠️ seed.sql not found at:', seedSqlPath);
+      return;
+    }
+
+    const sqlContent = fs.readFileSync(seedSqlPath, 'utf8');
+
+    if (engine === 'sqlite' && rawDb && typeof rawDb.exec === 'function') {
+      // Execute multi-statement SQL for SQLite
+      // Remove MySQL-specific variables that SQLite doesn't recognize
+      const cleanSql = sqlContent
+        .replace(/SET @OLD_[^;]+;/gi, '')
+        .replace(/SET NAMES[^;]+;/gi, '')
+        .replace(/SET FOREIGN_KEY_CHECKS[^;]+;/gi, '')
+        .replace(/SET UNIQUE_CHECKS[^;]+;/gi, '');
+
+      await new Promise((resolve, reject) => {
+        rawDb.exec(cleanSql, (err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+    } else {
+      // Split statements and execute individually
+      const statements = sqlContent
+        .split(/;\s*[\r\n]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !s.startsWith('--'));
+
+      for (const stmt of statements) {
+        if (stmt.toUpperCase().startsWith('SET ') && engine === 'sqlite') continue;
+        try {
+          await queryFn(stmt);
+        } catch (stmtErr) {
+          // ignore minor non-fatal errors
+        }
       }
     }
 
-    // 2. Sync Places
-    for (const p of places) {
-      if (engine === 'mysql') {
-        await queryFn(`
-          INSERT INTO places (id, location_id, name, category, avg_rating, review_count, entry_fee, opening_hours)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE location_id=VALUES(location_id), name=VALUES(name), category=VALUES(category), avg_rating=VALUES(avg_rating), review_count=VALUES(review_count), entry_fee=VALUES(entry_fee), opening_hours=VALUES(opening_hours)
-        `, [p.id, p.location_id, p.name, p.category, p.avg_rating, p.review_count, p.entry_fee, p.opening_hours]);
-      } else {
-        await queryFn(`
-          INSERT OR REPLACE INTO places (id, location_id, name, category, avg_rating, review_count, entry_fee, opening_hours)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [p.id, p.location_id, p.name, p.category, p.avg_rating, p.review_count, p.entry_fee, p.opening_hours]);
-      }
-    }
-
-    // 3. Sync Safety Contacts
-    for (const sc of contacts) {
-      if (engine === 'mysql') {
-        await queryFn(`
-          INSERT INTO safety_contacts (id, location_id, service_type, contact_number, operating_hours)
-          VALUES (?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE service_type=VALUES(service_type), contact_number=VALUES(contact_number), operating_hours=VALUES(operating_hours)
-        `, [sc.id, sc.location_id, sc.service_type, sc.contact_number, sc.operating_hours]);
-      } else {
-        await queryFn(`
-          INSERT OR REPLACE INTO safety_contacts (id, location_id, service_type, contact_number, operating_hours)
-          VALUES (?, ?, ?, ?, ?)
-        `, [sc.id, sc.location_id, sc.service_type, sc.contact_number, sc.operating_hours]);
-      }
-    }
-
-    console.log(`✅ Database synced with seed.sql: ${locations.length} locations, ${places.length} places, ${contacts.length} safety contacts.`);
+    const resLoc = await queryFn('SELECT COUNT(*) as cnt FROM locations');
+    const resPlc = await queryFn('SELECT COUNT(*) as cnt FROM places');
+    const locCount = resLoc && resLoc[0] ? (resLoc[0].cnt || resLoc[0].count || 0) : 0;
+    const plcCount = resPlc && resPlc[0] ? (resPlc[0].cnt || resPlc[0].count || 0) : 0;
+    console.log(`✅ Database synced with seed.sql: ${locCount} locations, ${plcCount} places.`);
   } catch (err) {
     console.warn('⚠️ Seed data sync notice:', err.message);
   }
@@ -474,6 +478,9 @@ async function bootstrapSqlite(db) {
       country TEXT NOT NULL DEFAULT 'India',
       currency_code TEXT NOT NULL DEFAULT 'INR',
       description TEXT,
+      latitude REAL,
+      longitude REAL,
+      region TEXT DEFAULT 'Southern',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -483,13 +490,22 @@ async function bootstrapSqlite(db) {
       location_id TEXT NOT NULL,
       name TEXT NOT NULL,
       category TEXT NOT NULL,
-      avg_rating REAL DEFAULT 0.00,
+      avg_rating REAL DEFAULT 0.0,
       review_count INTEGER DEFAULT 0,
-      entry_fee REAL DEFAULT 0.00,
+      entry_fee REAL DEFAULT 0.0,
       opening_hours TEXT,
+      latitude REAL,
+      longitude REAL,
+      map_url TEXT,
+      description TEXT,
+      best_season TEXT,
+      avg_visit_time TEXT,
+      transport TEXT,
+      nearby_hotels TEXT,
+      nearby_restaurants TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+      FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS safety_contacts (
@@ -525,43 +541,6 @@ async function bootstrapSqlite(db) {
       itinerary_data TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
-
-    CREATE TABLE IF NOT EXISTS locations (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      state TEXT NOT NULL DEFAULT 'Tamil Nadu',
-      country TEXT NOT NULL DEFAULT 'India',
-      currency_code TEXT NOT NULL DEFAULT 'INR',
-      description TEXT,
-      latitude REAL,
-      longitude REAL,
-      region TEXT DEFAULT 'Southern',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS places (
-      id TEXT PRIMARY KEY,
-      location_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      category TEXT NOT NULL,
-      avg_rating REAL DEFAULT 0.0,
-      review_count INTEGER DEFAULT 0,
-      entry_fee REAL DEFAULT 0.0,
-      opening_hours TEXT,
-      latitude REAL,
-      longitude REAL,
-      map_url TEXT,
-      description TEXT,
-      best_season TEXT,
-      avg_visit_time TEXT,
-      transport TEXT,
-      nearby_hotels TEXT,
-      nearby_restaurants TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
-    );
   `;
 
   const statements = ddl.split(';').map(s => s.trim()).filter(Boolean);
@@ -569,7 +548,7 @@ async function bootstrapSqlite(db) {
     await runSqliteQuery(db, stmt);
   }
 
-  await syncSeedDataToDatabase((sql, params) => runSqliteQuery(db, sql, params), 'sqlite');
+  await syncSeedDataToDatabase((sql, params) => runSqliteQuery(db, sql, params), 'sqlite', db);
 }
 
 // =============================================================================
