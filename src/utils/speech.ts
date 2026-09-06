@@ -437,3 +437,45 @@ export class VoiceRecognizer {
     }
   }
 }
+
+/**
+ * Easy 1-click helper for voice typing into any text or address input field.
+ * Handles speech recognition lifecycle, interim transcription, and cleanup.
+ */
+export const listenVoiceInput = (
+  onResultText: (text: string, isFinal: boolean) => void,
+  onStateChange?: (isListening: boolean) => void,
+  lang: string = 'English'
+): (() => void) => {
+  const recognizer = new VoiceRecognizer();
+  if (!recognizer.isSupported()) {
+    alert('Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge.');
+    if (onStateChange) onStateChange(false);
+    return () => {};
+  }
+
+  if (onStateChange) onStateChange(true);
+
+  const started = recognizer.startListening(
+    lang,
+    (text, isFinal) => {
+      onResultText(text, isFinal);
+    },
+    (err) => {
+      console.warn('Voice input notice:', err);
+      if (onStateChange) onStateChange(false);
+    },
+    () => {
+      if (onStateChange) onStateChange(false);
+    }
+  );
+
+  if (!started && onStateChange) {
+    onStateChange(false);
+  }
+
+  return () => {
+    recognizer.stopListening();
+    if (onStateChange) onStateChange(false);
+  };
+};

@@ -21,7 +21,9 @@ import {
   Radio,
   ExternalLink,
   RefreshCw,
-  Check
+  Check,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { UserProfile, TripPlan, ServiceProviderProfile, UserLocation } from '../types';
 import { TOP_PICKS_CATEGORIES, NEARBY_HOSPITALS } from '../data/mockData';
@@ -32,6 +34,7 @@ import {
   setManualUserLocation,
   KNOWN_HUBS 
 } from '../utils/geoLocator';
+import { listenVoiceInput } from '../utils/speech';
 
 interface DashboardProps {
   userProfile: UserProfile;
@@ -56,6 +59,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [isDetecting, setIsDetecting] = useState<boolean>(false);
   const [showManualPicker, setShowManualPicker] = useState<boolean>(false);
   const [manualInput, setManualInput] = useState<string>('');
+  const [isListeningLocation, setIsListeningLocation] = useState<boolean>(false);
+  const [stopVoiceFn, setStopVoiceFn] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     const handleLocUpdate = (e: any) => {
@@ -383,7 +388,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 type="text"
                 value={manualInput}
                 onChange={e => setManualInput(e.target.value)}
-                placeholder="Type city or landmark name (e.g. Ooty, Madurai, Kodaikanal, Chennai)..."
+                placeholder="Type or speak city/landmark name (e.g. Ooty, Madurai, Kodaikanal, Chennai)..."
                 className="input-glass"
                 style={{ fontSize: '0.78rem', padding: '6px 12px', flex: 1 }}
                 onKeyDown={e => {
@@ -392,6 +397,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   }
                 }}
               />
+
+              {/* Voice Input Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (isListeningLocation) {
+                    stopVoiceFn?.();
+                    setIsListeningLocation(false);
+                  } else {
+                    const stop = listenVoiceInput(
+                      (text) => {
+                        setManualInput(text);
+                        handleSetCity(text);
+                      },
+                      (listening) => setIsListeningLocation(listening),
+                      userProfile.preferredLanguage || 'English'
+                    );
+                    setStopVoiceFn(() => stop);
+                  }
+                }}
+                style={{
+                  background: isListeningLocation ? 'rgba(239, 68, 68, 0.35)' : 'rgba(56, 189, 248, 0.15)',
+                  border: isListeningLocation ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.35)',
+                  borderRadius: '8px',
+                  color: isListeningLocation ? '#f87171' : '#38bdf8',
+                  padding: '6px 12px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  whiteSpace: 'nowrap'
+                }}
+                title="Speak your city or location"
+              >
+                <Mic style={{ width: '13px', height: '13px', animation: isListeningLocation ? 'pulse 1s infinite' : 'none' }} />
+                <span>{isListeningLocation ? '🎙️ Listening...' : '🎙️ Voice'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {

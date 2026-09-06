@@ -16,12 +16,15 @@ import {
   Plus,
   Trash2,
   Edit2,
-  Share2
+  Share2,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { UserProfile, TrustedContact } from '../types';
 import { logSOSEvent } from '../utils/storage';
 import { sendSOSEmailAlert, SOSEmergencyResponse } from '../utils/api';
 import { reverseGeocodeCoordinates, detectUserCurrentLocation } from '../utils/geoLocator';
+import { listenVoiceInput } from '../utils/speech';
 
 interface SOSBroadcastModalProps {
   isOpen: boolean;
@@ -53,6 +56,10 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
   const [isDetectingGps, setIsDetectingGps] = useState<boolean>(false);
   const [isEditingLocation, setIsEditingLocation] = useState<boolean>(false);
   const [manualLocationText, setManualLocationText] = useState<string>('');
+  const [isListeningLocation, setIsListeningLocation] = useState<boolean>(false);
+  const [isListeningNote, setIsListeningNote] = useState<boolean>(false);
+  const [stopLocationVoice, setStopLocationVoice] = useState<(() => void) | null>(null);
+  const [stopNoteVoice, setStopNoteVoice] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -577,10 +584,17 @@ TripNova Tourism Safety & Navigation Platform`;
             </div>
             
             {isEditingLocation ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', background: 'rgba(0,0,0,0.4)', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                <label style={{ fontSize: '0.66rem', color: '#fbbf24', fontWeight: 700 }}>
-                  Enter Exact Landmark, Street, or City for Google Maps Link:
-                </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(0,0,0,0.4)', padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.35)' }}>
+                <div className="flex items-center justify-between">
+                  <label style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 800 }}>
+                    Type or Speak Exact Landmark for Google Maps Navigation:
+                  </label>
+                  {isListeningLocation && (
+                    <span style={{ fontSize: '0.65rem', color: '#f87171', fontWeight: 800, animation: 'pulse 1s infinite' }}>
+                      🎙️ Listening... Speak now
+                    </span>
+                  )}
+                </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <input
                     type="text"
@@ -594,11 +608,59 @@ TripNova Tourism Safety & Navigation Platform`;
                     }}
                     placeholder="e.g. Marina Beach Light House / Hotel Green Park, Vadapalani / Ooty Lake"
                     className="input-glass"
-                    style={{ fontSize: '0.74rem', padding: '5px 8px', flex: 1 }}
+                    style={{ fontSize: '0.74rem', padding: '6px 8px', flex: 1 }}
                   />
+
+                  {/* Voice Input Button */}
                   <button
                     type="button"
-                    onClick={() => setIsEditingLocation(false)}
+                    onClick={() => {
+                      if (isListeningLocation) {
+                        stopLocationVoice?.();
+                        setIsListeningLocation(false);
+                      } else {
+                        const stop = listenVoiceInput(
+                          (text) => {
+                            setManualLocationText(text);
+                            setLiveLocation(prev => ({
+                              ...prev,
+                              address: text
+                            }));
+                          },
+                          (listening) => setIsListeningLocation(listening),
+                          userProfile.preferredLanguage || 'English'
+                        );
+                        setStopLocationVoice(() => stop);
+                      }
+                    }}
+                    style={{
+                      background: isListeningLocation ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.15)',
+                      border: isListeningLocation ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.4)',
+                      borderRadius: '6px',
+                      color: isListeningLocation ? '#f87171' : '#38bdf8',
+                      padding: '4px 8px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title="Speak your location or landmark"
+                  >
+                    <Mic style={{ width: '12px', height: '12px', animation: isListeningLocation ? 'pulse 1s infinite' : 'none' }} />
+                    <span>{isListeningLocation ? 'Stop' : 'Voice'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isListeningLocation) {
+                        stopLocationVoice?.();
+                        setIsListeningLocation(false);
+                      }
+                      setIsEditingLocation(false);
+                    }}
                     className="btn-primary"
                     style={{ padding: '4px 10px', fontSize: '0.7rem', fontWeight: 800 }}
                   >
@@ -642,9 +704,44 @@ TripNova Tourism Safety & Navigation Platform`;
         {/* Custom Emergency Note Input (Optional) */}
         {!sosResponse && (
           <div>
-            <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-              Emergency Distress Note (Optional):
-            </label>
+            <div className="flex items-center justify-between" style={{ marginBottom: '4px' }}>
+              <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8' }}>
+                Emergency Distress Note (Optional):
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isListeningNote) {
+                    stopNoteVoice?.();
+                    setIsListeningNote(false);
+                  } else {
+                    const stop = listenVoiceInput(
+                      (text) => setCustomMessage(text),
+                      (listening) => setIsListeningNote(listening),
+                      userProfile.preferredLanguage || 'English'
+                    );
+                    setStopNoteVoice(() => stop);
+                  }
+                }}
+                style={{
+                  background: isListeningNote ? 'rgba(239, 68, 68, 0.3)' : 'rgba(56, 189, 248, 0.1)',
+                  border: isListeningNote ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '6px',
+                  color: isListeningNote ? '#f87171' : '#38bdf8',
+                  padding: '2px 8px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                title="Speak your emergency distress message"
+              >
+                <Mic style={{ width: '11px', height: '11px', animation: isListeningNote ? 'pulse 1s infinite' : 'none' }} />
+                <span>{isListeningNote ? '🎙️ Listening...' : '🎙️ Voice Note'}</span>
+              </button>
+            </div>
             <input
               type="text"
               value={customMessage}

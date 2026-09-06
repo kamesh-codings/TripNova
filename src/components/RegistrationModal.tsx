@@ -12,7 +12,9 @@ import {
   Navigation,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { UserProfile, BloodGroup, TrustedContact } from '../types';
 import { 
@@ -20,6 +22,7 @@ import {
   getStoredLanguage, 
   saveStoredLanguage 
 } from '../utils/geoLocator';
+import { listenVoiceInput } from '../utils/speech';
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -82,6 +85,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [locationDetectMsg, setLocationDetectMsg] = useState<string | null>(null);
+  const [isListeningAddress, setIsListeningAddress] = useState(false);
+  const [stopVoiceAddress, setStopVoiceAddress] = useState<(() => void) | null>(null);
 
   // Sync state whenever modal opens with clean state or existing user profile
   useEffect(() => {
@@ -411,23 +416,63 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               <div>
                 <div className="flex items-center justify-between" style={{ marginBottom: '4px' }}>
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8' }}>Home / Permanent Address *</label>
-                  <button
-                    type="button"
-                    onClick={handleDetectLocation}
-                    disabled={isDetectingLocation}
-                    className="btn-secondary"
-                    style={{ padding: '3px 8px', fontSize: '0.7rem', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.4)' }}
-                  >
-                    <Navigation style={{ width: '11px', height: '11px' }} />
-                    <span>{isDetectingLocation ? 'Detecting...' : '📍 Auto-Detect Location'}</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {/* Voice Input Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isListeningAddress) {
+                          stopVoiceAddress?.();
+                          setIsListeningAddress(false);
+                        } else {
+                          const stop = listenVoiceInput(
+                            (text) => {
+                              setFormData(prev => ({ ...prev, address: text, currentLocation: text }));
+                              setLocationDetectMsg(`🎙️ Captured from Voice: ${text}`);
+                            },
+                            (listening) => setIsListeningAddress(listening),
+                            formData.preferredLanguage || 'English'
+                          );
+                          setStopVoiceAddress(() => stop);
+                        }
+                      }}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: '0.7rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 700,
+                        background: isListeningAddress ? 'rgba(239, 68, 68, 0.25)' : 'rgba(56, 189, 248, 0.12)',
+                        border: isListeningAddress ? '1px solid #ef4444' : '1px solid rgba(56, 189, 248, 0.35)',
+                        color: isListeningAddress ? '#f87171' : '#38bdf8'
+                      }}
+                      title="Speak your full home address or city"
+                    >
+                      <Mic style={{ width: '11px', height: '11px', animation: isListeningAddress ? 'pulse 1s infinite' : 'none' }} />
+                      <span>{isListeningAddress ? '🎙️ Listening...' : '🎙️ Voice Input'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={isDetectingLocation}
+                      className="btn-secondary"
+                      style={{ padding: '3px 8px', fontSize: '0.7rem', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.4)' }}
+                    >
+                      <Navigation style={{ width: '11px', height: '11px' }} />
+                      <span>{isDetectingLocation ? 'Detecting...' : '📍 Auto-Detect'}</span>
+                    </button>
+                  </div>
                 </div>
                 <input
                   type="text"
                   required
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter full address or click Auto-Detect"
+                  placeholder="Enter full address, speak via Voice Input, or click Auto-Detect"
                   className="input-glass"
                 />
                 {locationDetectMsg && (
