@@ -3,20 +3,112 @@
 [![React](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20TypeScript-blue?logo=react)](https://react.dev/)
 [![Node.js](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-green?logo=node.js)](https://nodejs.org/)
 [![Database](https://img.shields.io/badge/Database-SQLite%20%2F%20MySQL%20(1%2C417%20Spots)-orange?logo=sqlite)](https://www.sqlite.org/)
-[![Coverage](https://img.shields.io/badge/Coverage-36%20States%20%26%20UTs%20Across%20India-success)](#-database--dataset-support)
+[![Coverage](https://img.shields.io/badge/Coverage-36%20States%20%26%20UTs%20Across%20India-success)](#-database--master-dataset)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-**TripNova** is a modern, high-performance web and API platform designed for tourist safety, smart AI trip planning, anti-scam fare estimation, real-time multi-language voice translation, all-India spots discovery (1,417+ attractions), and digital emergency tourist passes.
+**TripNova** is a modern, high-performance web platform designed for tourist safety, smart AI trip planning, anti-scam fare estimation, real-time multi-language voice translation, all-India destination discovery (1,417+ verified attractions), and digital emergency tourist passes.
+
+---
+
+## ⚡ How to Open & Run This Webpage (For New Users from GitHub ZIP)
+
+If you just downloaded the project as a **ZIP file** from GitHub, follow these simple steps to run the complete webpage and backend on your computer:
+
+---
+
+### 📋 Prerequisites (One-Time Setup)
+
+Make sure you have **Node.js** installed on your computer.
+- Download & install **Node.js (v18 or higher)** from [https://nodejs.org/](https://nodejs.org/)
+- *Node.js comes bundled with `npm` automatically.*
+
+---
+
+### 📥 Step 1: Download & Extract the ZIP
+
+1. On GitHub, click the green **Code** button and select **Download ZIP**.
+2. Locate the downloaded file (usually named `TripNova-main.zip` in your `Downloads` folder).
+3. **Extract / Unzip** the file:
+   - **Windows**: Right-click the `.zip` file ➔ click **Extract All...** ➔ Choose a destination folder and click **Extract**.
+   - **Mac / Linux**: Double-click the `.zip` file or run `unzip TripNova-main.zip`.
+4. Open the extracted **`TripNova`** (or `TripNova-main`) folder.
+
+---
+
+### 🖥️ Step 2: Open Terminal / Command Prompt in the Folder
+
+- **Windows**: Inside the extracted folder, click on the address bar at the top, type `cmd` or `powershell`, and press **Enter** (or open the folder in VS Code and press `Ctrl + ~` to open the integrated terminal).
+- **Mac / Linux**: Right-click the folder and choose **Open in Terminal** (or `cd path/to/TripNova`).
+
+---
+
+### 🚀 Step 3: Start the Frontend (Web Page)
+
+In your terminal, run the following commands:
+
+```bash
+# 1. Install frontend packages (takes ~10-20 seconds on first run)
+npm install
+
+# 2. Start the local web development server
+npm run dev
+```
+
+You will see output similar to:
+```text
+  VITE v6.x.x  ready in 450 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+```
+
+👉 **Open your browser (Chrome, Edge, Safari, Firefox) and go to:**  
+### **[http://localhost:5173/](http://localhost:5173/)**
+
+---
+
+### 🔌 Step 4: Start the Backend Server (For Database, AI, SOS & Registration)
+
+TripNova includes a zero-configuration SQLite backend loaded with **1,417 tourist spots and all 36 Indian States/UTs**.
+
+1. Open a **second terminal / command prompt window**.
+2. Navigate into the `backend` folder and start the server:
+
+```bash
+# 1. Navigate to backend directory
+cd backend
+
+# 2. Install backend dependencies (first time only)
+npm install
+
+# 3. Start the backend API server
+node server.js
+```
+
+You will see:
+```text
+🚀 TripNova API Server running on port 5000
+   URL: http://localhost:5000
+   Database: SQLite (Loaded 229 locations & 1417 spots)
+```
+
+The frontend will automatically connect to the backend at `http://localhost:5000/api`.
+
+---
+
+## 🎯 Quick Usage Tips for Viewers
+
+- **Explore Mode**: You can immediately browse tourist spots, use the 26-language voice translator, calculate fair taxi fares, and test the AI planner without creating an account.
+- **Registration**: Click **Register as Tourist** or **Guest Explore** to access the digital Tourist Emergency Pass and SOS broadcasts.
+- **Microphone & Voice**: Click the 🎙️ **Voice** buttons on search bars, translator, or distress notes to speak in your native language (allow microphone access when prompted by your browser).
+- **Live Location & Maps**: Click **View on Maps** or type any landmark to instantly view the exact spot on Google Maps.
 
 ---
 
 ## 📑 Table of Contents
+- [⚡ How to Open & Run (GitHub ZIP)](#-how-to-open--run-this-webpage-for-new-users-from-github-zip)
 - [✨ Key Features](#-key-features)
 - [🏗️ System Architecture](#️-system-architecture)
-- [🚀 Quick Start Guide (Run Locally)](#-quick-start-guide-run-locally)
-  - [Prerequisites](#prerequisites)
-  - [1. Running the Frontend (React + Vite)](#1-running-the-frontend-react--vite)
-  - [2. Running the Backend API Server (Node.js + Express)](#2-running-the-backend-api-server-nodejs--express)
 - [⚙️ Environment Configuration](#️-environment-configuration)
 - [📡 API Overview](#-api-overview)
 - [🗄️ Database & Master Dataset](#️-database--master-dataset)
@@ -27,14 +119,15 @@
 
 ## ✨ Key Features
 
-- 🗺️ **Smart Tourist Dashboard**: Live destination weather, SOS emergency triggers, verified safety zones, and curated destination guides.
-- 📍 **Interactive Spots & Destination Explorer**: Real-time hierarchical search (Country ➔ State ➔ District ➔ Spot) across **1,417+ verified attractions** across all 36 Indian States and Union Territories with entry fees, timings, coordinates, Google Map integration, and travel ratings.
+- 🗺️ **Smart Tourist Dashboard**: Real-time GPS location lock, dynamic Google Maps navigation, weather updates, safety zone badges, and local guide highlights.
+- 📍 **Interactive Spots & Destination Explorer**: Hierarchical search (State ➔ District ➔ Spot) across **1,417+ verified attractions** across all 36 Indian States and Union Territories with entry fees, timings, coordinates, Google Map integration, and travel ratings.
 - 🗣️ **26-Language Smart Voice & Text Translator**: Real-time translation across 10 Indian and 16 Global languages with Speech-to-Text (STT) and crystal-clear audio broadcast (TTS).
 - 📻 **Two-Way Walkie-Talkie Mode**: Speak-and-translate live conversation between tourist and local residents.
 - 🛡️ **Anti-Scam Fare Guard**: Distance calculator, official government rates vs. quoted price scam meter, and regional bargaining phrases.
 - 🪪 **Digital Emergency Tourist Pass**: Vital health data, blood group, emergency contacts, and one-tap emergency audio broadcasting.
+- 🚨 **Emergency SOS System**: Instant email distress alerts with exact location links, custom voice notes, and direct contact dispatch.
 - 📅 **AI Smart Trip Planner**: Budget estimator, duration planner, packing checklist, and customized itineraries.
-- 👤 **Profile Management**: Profile creation, view & edit, multi-tier geolocation engine, and registration management.
+- 👤 **Flexible Authentication**: Log in with either email or username and password, with persistent guest mode support.
 
 ---
 
@@ -43,17 +136,17 @@
 ```text
 TripNova/
 ├── src/                      # Frontend Application (React 18 + TypeScript + Vite)
-│   ├── components/           # UI Components (SpotsExplorer, Translator, Pass, Emergency, etc.)
-│   ├── data/                 # Static fallbacks and local datasets
-│   ├── utils/                # API client, storage helpers, geolocation & audio engine
-│   ├── App.tsx               # Main application layout and view switcher
+│   ├── components/           # UI Components (Dashboard, SpotsExplorer, Translator, Pass, SOS, etc.)
+│   ├── data/                 # Static fallbacks, mock data & regional datasets
+│   ├── utils/                # API client, storage helpers, geolocation & speech engine
+│   ├── App.tsx               # Main application layout and tab navigation
 │   └── main.tsx              # React DOM entrypoint
 ├── backend/                  # Backend API Server (Node.js + Express)
 │   ├── config/               # Database connection (SQLite zero-config + MySQL)
 │   ├── database/             # Schema, seed.sql (1,417 spots), and raw CSV/XLSX datasets
-│   ├── middleware/           # API Key authentication middleware
-│   ├── routes/               # API endpoints (locations, places, auth, trips, safety, ai)
-│   ├── scripts/              # Dataset sync & coordinate fix scripts
+│   ├── middleware/           # API Key authentication & validation middleware
+│   ├── routes/               # API endpoints (locations, places, auth, trips, safety, ai, sos)
+│   ├── scripts/              # Dataset sync & coordinate verification scripts
 │   └── server.js             # Express application entrypoint
 ├── package.json              # Frontend dependencies and scripts
 └── README.md                 # Project documentation
@@ -61,58 +154,15 @@ TripNova/
 
 ---
 
-## 🚀 Quick Start Guide (Run Locally)
-
-### Prerequisites
-Make sure you have **Node.js** (v18.0 or higher) and **npm** installed:
-- [Download Node.js](https://nodejs.org/)
-
----
-
-### 1. Running the Frontend (React + Vite)
-
-Open a terminal in the project root directory:
-
-```bash
-# 1. Install frontend dependencies
-npm install
-
-# 2. Start Vite dev server
-npm run dev
-```
-
-The frontend will start at: **`http://localhost:5173/`**
-
----
-
-### 2. Running the Backend API Server (Node.js + Express)
-
-Open a **second terminal window** and run:
-
-```bash
-# 1. Navigate into the backend directory
-cd backend
-
-# 2. Install backend dependencies
-npm install
-
-# 3. Start the Express API server
-node server.js
-```
-
-The backend server will start at: **`http://localhost:5000/`**
-
-> **Note:** On startup, the backend automatically connects to SQLite (`tripnova.db`) or MySQL and synchronizes **229 destination districts** and **1,417 tourist places** with complete coordinates and metadata!
-
----
-
 ## ⚙️ Environment Configuration
 
-The backend uses a `.env` configuration file. A template is provided at [`backend/.env.example`](backend/.env.example).
+The backend uses an optional `.env` file for custom ports and database connections. A template is provided at [`backend/.env.example`](backend/.env.example).
 
 To customize backend settings:
 ```bash
 cd backend
+# Windows: copy .env.example .env
+# Mac/Linux:
 cp .env.example .env
 ```
 
@@ -145,6 +195,8 @@ DB_FILE=./database/tripnova.db
 | `GET` | `/api/safety/contacts` | Emergency helpline numbers & police contacts by location |
 | `GET` | `/api/safety/rules` | Cultural etiquette, rules, and precautions by location |
 | `POST` | `/api/auth/register-tourist` | Tourist profile registration |
+| `POST` | `/api/auth/login` | Tourist login via email/username & password |
+| `POST` | `/api/sos/send-email` | Dispatch emergency SOS distress email to contacts |
 | `POST` | `/api/trips/plan` | Generate AI-assisted trip itineraries |
 | `POST` | `/api/ai/chat` | AI travel assistant query endpoint |
 
@@ -154,10 +206,10 @@ DB_FILE=./database/tripnova.db
 
 ## 🗄️ Database & Master Dataset
 
-TripNova supports zero-configuration local **SQLite** (`tripnova.db`) out-of-the-box as well as **MySQL** for cloud production deployment:
-- **Comprehensive Master Dataset**: Pre-loaded with **229 destination districts** and **1,417 tourist attractions** across all 36 Indian States and Union Territories.
-- **Data Attributes Included**: Exact coordinates (latitude/longitude), Google Maps URLs, categories, average ratings, visit times, best travel seasons, nearby hotel/restaurant recommendations, and local transit advice.
-- **Dataset Re-Synchronization**:
+TripNova includes an automated local **SQLite** (`tripnova.db`) database pre-configured out-of-the-box:
+- **Coverage**: **229 destination districts** and **1,417 tourist attractions** across all 36 Indian States and Union Territories.
+- **Attributes Included**: Accurate latitude/longitude coordinates, Google Maps navigation links, category classification, ticket entry fees, visiting hours, best seasons, nearby food/stay recommendations, and local transportation guidelines.
+- **Re-Syncing Datasets** (Optional):
   ```bash
   python backend/scripts/syncDatasets.py
   ```
@@ -166,14 +218,14 @@ TripNova supports zero-configuration local **SQLite** (`tripnova.db`) out-of-the
 
 ## 📦 Production Build
 
-To build the frontend for production deployment:
+To compile and optimize the frontend for production hosting:
 
 ```bash
 npm run build
 ```
-The optimized static bundle will be generated in the `dist/` directory, ready to be deployed to Vercel, Netlify, Cloudflare Pages, or an Nginx/Express server.
+The production bundle will be generated in the `dist/` directory, ready to deploy to Vercel, Netlify, Render, GitHub Pages, or an Nginx web server.
 
 ---
 
 ## 🤝 Contributing & License
-Distributed under the **MIT License**. Created with ❤️ for tourist safety and smart tourism.
+Distributed under the **MIT License**. Created with ❤️ for tourist safety, smart exploration, and frictionless travel.
