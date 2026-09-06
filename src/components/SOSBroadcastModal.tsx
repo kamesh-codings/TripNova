@@ -51,11 +51,15 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
   const [editableContacts, setEditableContacts] = useState<TrustedContact[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isDetectingGps, setIsDetectingGps] = useState<boolean>(false);
+  const [isEditingLocation, setIsEditingLocation] = useState<boolean>(false);
+  const [manualLocationText, setManualLocationText] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
       setSosSending(false);
       setSosResponse(null);
+      setIsEditingLocation(false);
+      setManualLocationText('');
       
       // Initialize contacts faithfully from user profile trusted contacts without overwriting
       let contactsList: TrustedContact[] = [];
@@ -157,9 +161,6 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     }
   };
 
-  const [isEditingLocation, setIsEditingLocation] = useState<boolean>(false);
-  const [manualAddressInput, setManualAddressInput] = useState<string>('');
-
   // Build direct client mailto URI for instant 1-click sending to trusted contacts only
   const getEmailContent = () => {
     const emailRecipients = editableContacts
@@ -169,12 +170,14 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     const toStr = emailRecipients.join(',');
     const subject = `🚨 TRIPNOVA EMERGENCY SOS: Immediate Assistance Required for ${userProfile.name || 'Traveler'}`;
     
-    // Direct Google Maps Link to the exact place typed or coordinates
-    const mapLink = liveLocation.address && liveLocation.address.trim()
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(liveLocation.address.trim())}`
-      : (liveLocation.latitude && liveLocation.longitude
-          ? `https://www.google.com/maps/search/?api=1&query=${liveLocation.latitude},${liveLocation.longitude}`
-          : 'Location unavailable');
+    // Dynamic Google Maps link: Uses exact typed address/place name or GPS coordinates
+    const mapQuery = liveLocation.address && liveLocation.address.trim()
+      ? encodeURIComponent(liveLocation.address.trim())
+      : (liveLocation.latitude && liveLocation.longitude ? `${liveLocation.latitude},${liveLocation.longitude}` : '');
+
+    const mapLink = mapQuery
+      ? `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
+      : 'Location unavailable';
 
     const bodyText = `🚨 TRIPNOVA EMERGENCY SOS DISTRESS ALERT 🚨
 ====================================================
@@ -195,9 +198,9 @@ TRAVELER DETAILS:
 - Medical Conditions: ${userProfile.medicalConditions || 'None'}
 - Timestamp: ${new Date().toLocaleString()}
 
-LIVE / SPECIFIED LOCATION:
+LIVE GPS LOCATION:
 - Location / Zone: ${liveLocation.address || 'Active Zone'}
-${liveLocation.latitude && liveLocation.longitude ? `- Coordinates: ${liveLocation.latitude.toFixed(5)}° N, ${liveLocation.longitude.toFixed(5)}° E\n` : ''}- Google Maps Direct Link: ${mapLink}
+${liveLocation.latitude && liveLocation.longitude ? `- Coordinates: ${liveLocation.latitude.toFixed(5)}° N, ${liveLocation.longitude.toFixed(5)}° E\n` : ''}- Google Maps Link: ${mapLink}
 
 NATIONAL EMERGENCY HELPLINES (INDIA):
 - National Emergency: 112
@@ -487,18 +490,44 @@ TripNova Tourism Safety & Navigation Platform`;
             ))}
           </div>
 
-          {/* Live Coordinates / Custom Location Bar */}
+          {/* Live Coordinates & Manual Place Bar */}
           <div style={{ fontSize: '0.72rem', color: '#38bdf8', display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px' }}>
             <div className="flex items-center justify-between flex-wrap gap-1">
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#38bdf8' }}>
                 <Radio style={{ width: '14px', height: '14px', color: '#38bdf8', flexShrink: 0 }} />
-                <span>Location Mode: {isDetectingGps ? 'Acquiring Satellites...' : isEditingLocation ? 'Manual Custom Place' : 'Live Satellite Fix'}</span>
+                <span>{isDetectingGps ? '🛰️ Acquiring Satellites...' : isEditingLocation ? '✏️ Custom Location Mode' : '📍 Live Location / Zone'}</span>
               </span>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
+                  onClick={() => {
+                    if (!isEditingLocation) {
+                      setManualLocationText(liveLocation.address || '');
+                    }
+                    setIsEditingLocation(!isEditingLocation);
+                  }}
+                  style={{
+                    background: isEditingLocation ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.12)',
+                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    borderRadius: '6px',
+                    color: '#fbbf24',
+                    padding: '2px 8px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Type your location or landmark manually"
+                >
+                  <Edit2 style={{ width: '10px', height: '10px' }} />
+                  <span>{isEditingLocation ? 'Done Editing' : '✏️ Type Location'}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={async () => {
-                    setIsEditingLocation(false);
                     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
                       setIsDetectingGps(true);
                       try {
@@ -517,6 +546,7 @@ TripNova Tourism Safety & Navigation Platform`;
                           longitude: lng,
                           address: geo.formattedAddress || `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`
                         });
+                        setIsEditingLocation(false);
                       } catch {
                         // ignore
                       } finally {
@@ -538,77 +568,43 @@ TripNova Tourism Safety & Navigation Platform`;
                     alignItems: 'center',
                     gap: '4px'
                   }}
-                  title="Re-run satellite GPS scan"
+                  title="Force fresh GPS detection"
                 >
                   <MapPin style={{ width: '10px', height: '10px' }} />
-                  <span>{isDetectingGps ? 'Acquiring...' : '🎯 GPS'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setManualAddressInput(liveLocation.address || '');
-                    setIsEditingLocation(!isEditingLocation);
-                  }}
-                  style={{
-                    background: isEditingLocation ? 'rgba(245, 158, 11, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                    border: isEditingLocation ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '6px',
-                    color: isEditingLocation ? '#fbbf24' : '#cbd5e1',
-                    padding: '2px 8px',
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                  title="Type your location manually if GPS is inaccurate"
-                >
-                  <Edit2 style={{ width: '10px', height: '10px' }} />
-                  <span>{isEditingLocation ? 'Close Editor' : '✏️ Type Location'}</span>
+                  <span>{isDetectingGps ? 'Acquiring...' : '🎯 Re-Detect GPS'}</span>
                 </button>
               </div>
             </div>
             
             {isEditingLocation ? (
-              <div style={{ background: 'rgba(15, 23, 42, 0.95)', padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.4)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 700 }}>
-                  Enter Your Exact Location / Street / Landmark:
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', background: 'rgba(0,0,0,0.4)', padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                <label style={{ fontSize: '0.66rem', color: '#fbbf24', fontWeight: 700 }}>
+                  Enter Exact Landmark, Street, or City for Google Maps Link:
                 </label>
-                <div className="flex items-center gap-2">
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <input
                     type="text"
-                    value={manualAddressInput}
-                    onChange={e => setManualAddressInput(e.target.value)}
-                    placeholder="e.g. Marina Beach Light House, Chennai, Tamil Nadu"
-                    className="input-glass"
-                    style={{ fontSize: '0.74rem', padding: '6px 10px', flex: 1 }}
-                    autoFocus
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && manualAddressInput.trim()) {
-                        setLiveLocation(prev => ({ ...prev, address: manualAddressInput.trim() }));
-                        setIsEditingLocation(false);
-                      }
+                    value={manualLocationText}
+                    onChange={(e) => {
+                      setManualLocationText(e.target.value);
+                      setLiveLocation(prev => ({
+                        ...prev,
+                        address: e.target.value
+                      }));
                     }}
+                    placeholder="e.g. Marina Beach Light House / Hotel Green Park, Vadapalani / Ooty Lake"
+                    className="input-glass"
+                    style={{ fontSize: '0.74rem', padding: '5px 8px', flex: 1 }}
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      if (manualAddressInput.trim()) {
-                        setLiveLocation(prev => ({ ...prev, address: manualAddressInput.trim() }));
-                        setIsEditingLocation(false);
-                      }
-                    }}
+                    onClick={() => setIsEditingLocation(false)}
                     className="btn-primary"
-                    style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)' }}
+                    style={{ padding: '4px 10px', fontSize: '0.7rem', fontWeight: 800 }}
                   >
-                    Set Location
+                    Save
                   </button>
                 </div>
-                <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
-                  💡 This exact place will be embedded into the draft mail with a direct Google Maps pin link!
-                </span>
               </div>
             ) : (
               <div style={{ color: '#ffffff', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -616,18 +612,20 @@ TripNova Tourism Safety & Navigation Platform`;
                   📍 {liveLocation.address || 'Resolving location...'}
                 </div>
                 <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>{liveLocation.latitude && liveLocation.longitude ? `Coordinates: ${liveLocation.latitude.toFixed(5)}° N, ${liveLocation.longitude.toFixed(5)}° E` : 'Manual Custom Location'}</span>
-                  {liveLocation.address && (
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(liveLocation.address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: '#34d399', textDecoration: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}
-                    >
-                      <span>View Map</span>
-                      <ExternalLink style={{ width: '9px', height: '9px' }} />
-                    </a>
-                  )}
+                  <span>
+                    {liveLocation.latitude && liveLocation.longitude 
+                      ? `Coordinates: ${liveLocation.latitude.toFixed(5)}° N, ${liveLocation.longitude.toFixed(5)}° E` 
+                      : 'Place: Manually Specified'}
+                  </span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(liveLocation.address || `${liveLocation.latitude},${liveLocation.longitude}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#34d399', textDecoration: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}
+                  >
+                    <span>Google Maps Link</span>
+                    <ExternalLink style={{ width: '9px', height: '9px' }} />
+                  </a>
                 </div>
               </div>
             )}

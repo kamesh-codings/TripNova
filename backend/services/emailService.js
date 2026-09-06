@@ -85,14 +85,16 @@ function buildEmergencyEmailHtml({
   customMessage,
   recipientName
 }) {
-  const mapLink = location.address && location.address.trim()
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address.trim())}`
-    : (location.latitude && location.longitude
-        ? `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`
-        : null);
+  const mapQuery = location.address && location.address.trim() && location.address !== 'Location unavailable'
+    ? encodeURIComponent(location.address.trim())
+    : (location.latitude && location.longitude ? `${location.latitude},${location.longitude}` : '');
+
+  const mapLink = mapQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
+    : null;
 
   const locString = location.address || (location.latitude && location.longitude 
-    ? `${location.latitude.toFixed(5)}° N, ${location.longitude.toFixed(5)}° E`
+    ? `${location.latitude.toFixed(4)}° N, ${location.longitude.toFixed(4)}° E`
     : 'Location unavailable');
 
   return `
@@ -336,14 +338,16 @@ function buildEmergencyEmailText({
   customMessage,
   recipientName
 }) {
-  const mapLink = location.address && location.address.trim()
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address.trim())}`
-    : (location.latitude && location.longitude
-        ? `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`
-        : 'Location unavailable');
+  const mapQuery = location.address && location.address.trim() && location.address !== 'Location unavailable'
+    ? encodeURIComponent(location.address.trim())
+    : (location.latitude && location.longitude ? `${location.latitude},${location.longitude}` : '');
+
+  const mapLink = mapQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${mapQuery}`
+    : 'Location unavailable';
 
   const locString = location.address || (location.latitude && location.longitude 
-    ? `${location.latitude.toFixed(5)}° N, ${location.longitude.toFixed(5)}° E`
+    ? `${location.latitude.toFixed(4)}° N, ${location.longitude.toFixed(4)}° E`
     : 'Location unavailable');
 
   return `
