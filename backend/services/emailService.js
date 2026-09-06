@@ -85,12 +85,14 @@ function buildEmergencyEmailHtml({
   customMessage,
   recipientName
 }) {
-  const mapLink = location.latitude && location.longitude
-    ? `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`
-    : null;
+  const mapLink = location.address && location.address.trim()
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address.trim())}`
+    : (location.latitude && location.longitude
+        ? `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`
+        : null);
 
   const locString = location.address || (location.latitude && location.longitude 
-    ? `${location.latitude.toFixed(4)}° N, ${location.longitude.toFixed(4)}° E`
+    ? `${location.latitude.toFixed(5)}° N, ${location.longitude.toFixed(5)}° E`
     : 'Location unavailable');
 
   return `
@@ -334,12 +336,14 @@ function buildEmergencyEmailText({
   customMessage,
   recipientName
 }) {
-  const mapLink = location.latitude && location.longitude
-    ? `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`
-    : 'Location unavailable';
+  const mapLink = location.address && location.address.trim()
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address.trim())}`
+    : (location.latitude && location.longitude
+        ? `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`
+        : 'Location unavailable');
 
   const locString = location.address || (location.latitude && location.longitude 
-    ? `${location.latitude.toFixed(4)}° N, ${location.longitude.toFixed(4)}° E`
+    ? `${location.latitude.toFixed(5)}° N, ${location.longitude.toFixed(5)}° E`
     : 'Location unavailable');
 
   return `

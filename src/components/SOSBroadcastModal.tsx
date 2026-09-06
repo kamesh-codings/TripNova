@@ -157,6 +157,9 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     }
   };
 
+  const [isEditingLocation, setIsEditingLocation] = useState<boolean>(false);
+  const [manualAddressInput, setManualAddressInput] = useState<string>('');
+
   // Build direct client mailto URI for instant 1-click sending to trusted contacts only
   const getEmailContent = () => {
     const emailRecipients = editableContacts
@@ -166,9 +169,12 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     const toStr = emailRecipients.join(',');
     const subject = `🚨 TRIPNOVA EMERGENCY SOS: Immediate Assistance Required for ${userProfile.name || 'Traveler'}`;
     
-    const mapLink = liveLocation.latitude && liveLocation.longitude
-      ? `https://www.google.com/maps/search/?api=1&query=${liveLocation.latitude},${liveLocation.longitude}`
-      : 'Location unavailable';
+    // Direct Google Maps Link to the exact place typed or coordinates
+    const mapLink = liveLocation.address && liveLocation.address.trim()
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(liveLocation.address.trim())}`
+      : (liveLocation.latitude && liveLocation.longitude
+          ? `https://www.google.com/maps/search/?api=1&query=${liveLocation.latitude},${liveLocation.longitude}`
+          : 'Location unavailable');
 
     const bodyText = `🚨 TRIPNOVA EMERGENCY SOS DISTRESS ALERT 🚨
 ====================================================
@@ -189,10 +195,9 @@ TRAVELER DETAILS:
 - Medical Conditions: ${userProfile.medicalConditions || 'None'}
 - Timestamp: ${new Date().toLocaleString()}
 
-LIVE GPS LOCATION:
+LIVE / SPECIFIED LOCATION:
 - Location / Zone: ${liveLocation.address || 'Active Zone'}
-- Coordinates: ${liveLocation.latitude?.toFixed(4) || '13.0827'}° N, ${liveLocation.longitude?.toFixed(4) || '80.2707'}° E
-- Google Maps Link: ${mapLink}
+${liveLocation.latitude && liveLocation.longitude ? `- Coordinates: ${liveLocation.latitude.toFixed(5)}° N, ${liveLocation.longitude.toFixed(5)}° E\n` : ''}- Google Maps Direct Link: ${mapLink}
 
 NATIONAL EMERGENCY HELPLINES (INDIA):
 - National Emergency: 112
@@ -482,80 +487,150 @@ TripNova Tourism Safety & Navigation Platform`;
             ))}
           </div>
 
-          {/* Live Coordinates Bar */}
+          {/* Live Coordinates / Custom Location Bar */}
           <div style={{ fontSize: '0.72rem', color: '#38bdf8', display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px' }}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-1">
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#38bdf8' }}>
                 <Radio style={{ width: '14px', height: '14px', color: '#38bdf8', flexShrink: 0 }} />
-                <span>Live GPS Status: {isDetectingGps ? 'Acquiring Satellites...' : 'Active High Accuracy Fix'}</span>
+                <span>Location Mode: {isDetectingGps ? 'Acquiring Satellites...' : isEditingLocation ? 'Manual Custom Place' : 'Live Satellite Fix'}</span>
               </span>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-                    setIsDetectingGps(true);
-                    try {
-                      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                          enableHighAccuracy: true,
-                          timeout: 10000,
-                          maximumAge: 0
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsEditingLocation(false);
+                    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+                      setIsDetectingGps(true);
+                      try {
+                        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                          navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                          });
                         });
-                      });
-                      const lat = pos.coords.latitude;
-                      const lng = pos.coords.longitude;
-                      const geo = await reverseGeocodeCoordinates(lat, lng);
-                      setLiveLocation({
-                        latitude: lat,
-                        longitude: lng,
-                        address: geo.formattedAddress || `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`
-                      });
-                    } catch {
-                      // ignore
-                    } finally {
-                      setIsDetectingGps(false);
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        const geo = await reverseGeocodeCoordinates(lat, lng);
+                        setLiveLocation({
+                          latitude: lat,
+                          longitude: lng,
+                          address: geo.formattedAddress || `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`
+                        });
+                      } catch {
+                        // ignore
+                      } finally {
+                        setIsDetectingGps(false);
+                      }
                     }
-                  }
-                }}
-                disabled={isDetectingGps}
-                style={{
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  borderRadius: '6px',
-                  color: '#38bdf8',
-                  padding: '2px 8px',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                <MapPin style={{ width: '10px', height: '10px' }} />
-                <span>{isDetectingGps ? 'Acquiring...' : '🎯 Re-Detect GPS'}</span>
-              </button>
+                  }}
+                  disabled={isDetectingGps}
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    borderRadius: '6px',
+                    color: '#38bdf8',
+                    padding: '2px 8px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Re-run satellite GPS scan"
+                >
+                  <MapPin style={{ width: '10px', height: '10px' }} />
+                  <span>{isDetectingGps ? 'Acquiring...' : '🎯 GPS'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualAddressInput(liveLocation.address || '');
+                    setIsEditingLocation(!isEditingLocation);
+                  }}
+                  style={{
+                    background: isEditingLocation ? 'rgba(245, 158, 11, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                    border: isEditingLocation ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    color: isEditingLocation ? '#fbbf24' : '#cbd5e1',
+                    padding: '2px 8px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Type your location manually if GPS is inaccurate"
+                >
+                  <Edit2 style={{ width: '10px', height: '10px' }} />
+                  <span>{isEditingLocation ? 'Close Editor' : '✏️ Type Location'}</span>
+                </button>
+              </div>
             </div>
             
-            <div style={{ color: '#ffffff', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.74rem' }}>
-                📍 {liveLocation.address || 'Resolving location...'}
-              </div>
-              {liveLocation.latitude && liveLocation.longitude && (
-                <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>Coordinates: {liveLocation.latitude.toFixed(5)}° N, {liveLocation.longitude.toFixed(5)}° E</span>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${liveLocation.latitude},${liveLocation.longitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: '#34d399', textDecoration: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}
+            {isEditingLocation ? (
+              <div style={{ background: 'rgba(15, 23, 42, 0.95)', padding: '8px 10px', borderRadius: '10px', border: '1px solid rgba(245, 158, 11, 0.4)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 700 }}>
+                  Enter Your Exact Location / Street / Landmark:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={manualAddressInput}
+                    onChange={e => setManualAddressInput(e.target.value)}
+                    placeholder="e.g. Marina Beach Light House, Chennai, Tamil Nadu"
+                    className="input-glass"
+                    style={{ fontSize: '0.74rem', padding: '6px 10px', flex: 1 }}
+                    autoFocus
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && manualAddressInput.trim()) {
+                        setLiveLocation(prev => ({ ...prev, address: manualAddressInput.trim() }));
+                        setIsEditingLocation(false);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (manualAddressInput.trim()) {
+                        setLiveLocation(prev => ({ ...prev, address: manualAddressInput.trim() }));
+                        setIsEditingLocation(false);
+                      }
+                    }}
+                    className="btn-primary"
+                    style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)' }}
                   >
-                    <span>View Map</span>
-                    <ExternalLink style={{ width: '9px', height: '9px' }} />
-                  </a>
+                    Set Location
+                  </button>
                 </div>
-              )}
-            </div>
+                <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+                  💡 This exact place will be embedded into the draft mail with a direct Google Maps pin link!
+                </span>
+              </div>
+            ) : (
+              <div style={{ color: '#ffffff', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.74rem' }}>
+                  📍 {liveLocation.address || 'Resolving location...'}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>{liveLocation.latitude && liveLocation.longitude ? `Coordinates: ${liveLocation.latitude.toFixed(5)}° N, ${liveLocation.longitude.toFixed(5)}° E` : 'Manual Custom Location'}</span>
+                  {liveLocation.address && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(liveLocation.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#34d399', textDecoration: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}
+                    >
+                      <span>View Map</span>
+                      <ExternalLink style={{ width: '9px', height: '9px' }} />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {userProfile.bloodGroup && (
