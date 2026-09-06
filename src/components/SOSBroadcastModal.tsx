@@ -21,6 +21,7 @@ import {
 import { UserProfile, TrustedContact } from '../types';
 import { logSOSEvent } from '../utils/storage';
 import { sendSOSEmailAlert, SOSEmergencyResponse } from '../utils/api';
+import { reverseGeocodeCoordinates, detectUserCurrentLocation } from '../utils/geoLocator';
 
 interface SOSBroadcastModalProps {
   isOpen: boolean;
@@ -82,24 +83,47 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
 
       setEditableContacts(contactsList);
 
-      // Attempt live GPS position grab
-      if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-        setIsDetectingGps(true);
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setLiveLocation({
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-              address: userProfile.currentLocation || `${pos.coords.latitude.toFixed(4)}° N, ${pos.coords.longitude.toFixed(4)}° E (Live GPS)`
+      // Attempt high-accuracy live GPS position grab with real-time reverse geocoding
+      const refreshLiveGps = async () => {
+        if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+          setIsDetectingGps(true);
+          try {
+            const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0 // Force fresh satellite/Wi-Fi fix
+              });
             });
+
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const geo = await reverseGeocodeCoordinates(lat, lng);
+
+            setLiveLocation({
+              latitude: lat,
+              longitude: lng,
+              address: geo.formattedAddress || `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E (${geo.city})`
+            });
+          } catch {
+            // If GPS is denied or unavailable, use resilient fallback
+            try {
+              const fallbackLoc = await detectUserCurrentLocation();
+              setLiveLocation({
+                latitude: fallbackLoc.latitude,
+                longitude: fallbackLoc.longitude,
+                address: fallbackLoc.formattedAddress
+              });
+            } catch {
+              // keep existing state
+            }
+          } finally {
             setIsDetectingGps(false);
-          },
-          () => {
-            setIsDetectingGps(false);
-          },
-          { timeout: 6000, enableHighAccuracy: true }
-        );
-      }
+          }
+        }
+      };
+
+      refreshLiveGps();
     }
   }, [isOpen, userProfile]);
 
@@ -459,12 +483,79 @@ TripNova Tourism Safety & Navigation Platform`;
           </div>
 
           {/* Live Coordinates Bar */}
-          <div style={{ fontSize: '0.72rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px' }}>
-            <Radio style={{ width: '14px', height: '14px', color: '#38bdf8', flexShrink: 0 }} />
-            <span style={{ fontWeight: 600 }}>
-              Live GPS: {liveLocation.latitude && liveLocation.longitude ? `${liveLocation.latitude.toFixed(4)}° N, ${liveLocation.longitude.toFixed(4)}° E` : ''} ({liveLocation.address})
-              {isDetectingGps && ' (Acquiring Satellites...)'}
-            </span>
+          <div style={{ fontSize: '0.72rem', color: '#38bdf8', display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px' }}>
+            <div className="flex items-center justify-between">
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#38bdf8' }}>
+                <Radio style={{ width: '14px', height: '14px', color: '#38bdf8', flexShrink: 0 }} />
+                <span>Live GPS Status: {isDetectingGps ? 'Acquiring Satellites...' : 'Active High Accuracy Fix'}</span>
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+                    setIsDetectingGps(true);
+                    try {
+                      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                          enableHighAccuracy: true,
+                          timeout: 10000,
+                          maximumAge: 0
+                        });
+                      });
+                      const lat = pos.coords.latitude;
+                      const lng = pos.coords.longitude;
+                      const geo = await reverseGeocodeCoordinates(lat, lng);
+                      setLiveLocation({
+                        latitude: lat,
+                        longitude: lng,
+                        address: geo.formattedAddress || `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`
+                      });
+                    } catch {
+                      // ignore
+                    } finally {
+                      setIsDetectingGps(false);
+                    }
+                  }
+                }}
+                disabled={isDetectingGps}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '6px',
+                  color: '#38bdf8',
+                  padding: '2px 8px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <MapPin style={{ width: '10px', height: '10px' }} />
+                <span>{isDetectingGps ? 'Acquiring...' : '🎯 Re-Detect GPS'}</span>
+              </button>
+            </div>
+            
+            <div style={{ color: '#ffffff', background: 'rgba(0,0,0,0.3)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.74rem' }}>
+                📍 {liveLocation.address || 'Resolving location...'}
+              </div>
+              {liveLocation.latitude && liveLocation.longitude && (
+                <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Coordinates: {liveLocation.latitude.toFixed(5)}° N, {liveLocation.longitude.toFixed(5)}° E</span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${liveLocation.latitude},${liveLocation.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#34d399', textDecoration: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}
+                  >
+                    <span>View Map</span>
+                    <ExternalLink style={{ width: '9px', height: '9px' }} />
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
 
           {userProfile.bloodGroup && (

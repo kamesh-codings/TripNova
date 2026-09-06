@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Compass, 
   MapPin, 
@@ -9,18 +9,29 @@ import {
   ArrowRight, 
   HeartPulse, 
   Calendar, 
-  User,
-  Edit3,
-  ShieldCheck,
-  Languages,
-  Clock,
-  CloudSun,
-  Activity,
-  Zap,
-  PhoneCall
+  User, 
+  Edit3, 
+  ShieldCheck, 
+  Languages, 
+  Clock, 
+  CloudSun, 
+  Activity, 
+  Zap, 
+  PhoneCall,
+  Radio,
+  ExternalLink,
+  RefreshCw,
+  Check
 } from 'lucide-react';
-import { UserProfile, TripPlan, ServiceProviderProfile } from '../types';
+import { UserProfile, TripPlan, ServiceProviderProfile, UserLocation } from '../types';
 import { TOP_PICKS_CATEGORIES, NEARBY_HOSPITALS } from '../data/mockData';
+import { 
+  getStoredLocation, 
+  detectUserCurrentLocation, 
+  reverseGeocodeCoordinates,
+  setManualUserLocation,
+  KNOWN_HUBS 
+} from '../utils/geoLocator';
 
 interface DashboardProps {
   userProfile: UserProfile;
@@ -41,6 +52,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenProviderRegister,
   onOpenSOS
 }) => {
+  const [currentLoc, setCurrentLoc] = useState<UserLocation | null>(() => getStoredLocation());
+  const [isDetecting, setIsDetecting] = useState<boolean>(false);
+  const [showManualPicker, setShowManualPicker] = useState<boolean>(false);
+  const [manualInput, setManualInput] = useState<string>('');
+
+  useEffect(() => {
+    const handleLocUpdate = (e: any) => {
+      if (e.detail) setCurrentLoc(e.detail);
+    };
+    window.addEventListener('tripnova_location_updated', handleLocUpdate);
+    return () => window.removeEventListener('tripnova_location_updated', handleLocUpdate);
+  }, []);
+
+  const handleRefreshGPS = async () => {
+    setIsDetecting(true);
+    try {
+      const loc = await detectUserCurrentLocation();
+      setCurrentLoc(loc);
+    } catch {
+      // ignore
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
+  const handleSetCity = (hubName: string) => {
+    const loc = setManualUserLocation(hubName);
+    setCurrentLoc(loc);
+    setShowManualPicker(false);
+  };
+
   const filteredCategories = TOP_PICKS_CATEGORIES.filter(cat => {
     if (!userProfile.interestedTopPicks || userProfile.interestedTopPicks.length === 0) return true;
     return userProfile.interestedTopPicks.some(pick => cat.title.toLowerCase().includes(pick.toLowerCase().split(' ')[0]));
@@ -185,6 +227,208 @@ export const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Live Location Radar & Precision GPS Card */}
+      <div className="glass-panel" style={{
+        padding: '16px 20px',
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 15, 29, 0.9) 100%)',
+        border: '1px solid rgba(56, 189, 248, 0.3)',
+        borderRadius: '18px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
+      }}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '12px',
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#38bdf8'
+            }}>
+              <Radio style={{ width: '20px', height: '20px', animation: isDetecting ? 'spin 1s linear infinite' : 'pulse 2s infinite' }} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                  Live Location & Tourist Safety Zone
+                </h3>
+                <span className={`badge ${currentLoc?.isApproximate ? 'badge-amber' : 'badge-green'}`} style={{ fontSize: '0.65rem' }}>
+                  {isDetecting ? '🛰️ Locking Satellites...' : currentLoc?.isApproximate ? '🌐 Network / Wi-Fi Estimated' : '📡 High-Accuracy GPS Lock'}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.74rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                Used in your Emergency SOS broadcasts, nearby emergency services, and local guide dispatch.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefreshGPS}
+              disabled={isDetecting}
+              className="btn-secondary"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.74rem',
+                color: '#38bdf8',
+                borderColor: 'rgba(56, 189, 248, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Force fresh satellite and hardware GPS detection"
+            >
+              <RefreshCw style={{ width: '12px', height: '12px', animation: isDetecting ? 'spin 1s linear infinite' : 'none' }} />
+              <span>{isDetecting ? 'Detecting...' : '🎯 Detect Live GPS'}</span>
+            </button>
+
+            <button
+              onClick={() => setShowManualPicker(!showManualPicker)}
+              className="btn-secondary"
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.74rem',
+                color: '#fbbf24',
+                borderColor: 'rgba(245, 158, 11, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Manually pick or search your exact location"
+            >
+              <MapPin style={{ width: '12px', height: '12px' }} />
+              <span>{showManualPicker ? 'Hide Selector' : '📍 Change Location'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Resolved Address Banner */}
+        <div style={{
+          padding: '10px 14px',
+          borderRadius: '12px',
+          background: 'rgba(0, 0, 0, 0.35)',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px'
+        }}>
+          <div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <MapPin style={{ width: '14px', height: '14px', flexShrink: 0, color: '#38bdf8' }} />
+              {currentLoc?.formattedAddress || currentLoc?.city || 'Resolving location...'}
+            </span>
+            {currentLoc?.latitude && currentLoc?.longitude && (
+              <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'block', marginTop: '2px', fontFamily: 'monospace' }}>
+                Coordinates: {currentLoc.latitude.toFixed(5)}° N, {currentLoc.longitude.toFixed(5)}° E
+              </span>
+            )}
+          </div>
+
+          {currentLoc?.latitude && currentLoc?.longitude && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${currentLoc.latitude},${currentLoc.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '4px 10px',
+                borderRadius: '8px',
+                background: 'rgba(56, 189, 248, 0.12)',
+                color: '#38bdf8',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <span>View on Maps</span>
+              <ExternalLink style={{ width: '11px', height: '11px' }} />
+            </a>
+          )}
+        </div>
+
+        {/* Manual Location Selector Dropdown */}
+        {showManualPicker && (
+          <div className="animate-fade" style={{
+            padding: '14px',
+            borderRadius: '14px',
+            background: 'rgba(15, 23, 42, 0.98)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+          }}>
+            <div className="flex items-center justify-between">
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase' }}>
+                Select or Search Your Active City / Tourist Zone:
+              </span>
+              <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                (Ensures 100% accuracy on PC & Wi-Fi networks)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={manualInput}
+                onChange={e => setManualInput(e.target.value)}
+                placeholder="Type city or landmark name (e.g. Ooty, Madurai, Kodaikanal, Chennai)..."
+                className="input-glass"
+                style={{ fontSize: '0.78rem', padding: '6px 12px', flex: 1 }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && manualInput.trim()) {
+                    handleSetCity(manualInput.trim());
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (manualInput.trim()) handleSetCity(manualInput.trim());
+                }}
+                className="btn-primary"
+                style={{ padding: '6px 14px', fontSize: '0.76rem', fontWeight: 800 }}
+              >
+                Set Location
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 flex-wrap" style={{ marginTop: '2px' }}>
+              <span style={{ fontSize: '0.68rem', color: '#94a3b8', marginRight: '4px' }}>Popular Hubs:</span>
+              {KNOWN_HUBS.slice(0, 10).map(hub => (
+                <button
+                  key={hub.name}
+                  type="button"
+                  onClick={() => handleSetCity(hub.name)}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    background: currentLoc?.city.includes(hub.name) ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                    border: currentLoc?.city.includes(hub.name) ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                    color: currentLoc?.city.includes(hub.name) ? '#38bdf8' : '#cbd5e1',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {currentLoc?.city.includes(hub.name) && <Check style={{ width: '10px', height: '10px', display: 'inline', marginRight: '2px' }} />}
+                  {hub.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Profile Overview Card (Dual-Mode: Tourist or Service Provider) */}

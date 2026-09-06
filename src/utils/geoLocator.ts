@@ -84,13 +84,62 @@ export function getClosestHub(lat: number, lng: number) {
 }
 
 /**
- * Reverse geocode coordinates using BigDataCloud with OpenStreetMap and Proximity fallbacks
+ * Reverse geocode coordinates using high-precision OpenStreetMap Nominatim with BigDataCloud and Proximity fallbacks
  */
 export async function reverseGeocodeCoordinates(
   lat: number, 
   lng: number
-): Promise<{ city: string; state: string; country: string; formattedAddress: string }> {
-  // 1. Try BigDataCloud (CORS friendly, fast, high accuracy)
+): Promise<{ city: string; state: string; country: string; formattedAddress: string; locality?: string; postcode?: string }> {
+  // 1. Try Nominatim (OpenStreetMap) - Richest address detail with street, suburb, city & pincode
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      {
+        signal: controller.signal,
+        headers: { 'Accept-Language': 'en' }
+      }
+    );
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      const addr = data.address || {};
+      
+      const street = addr.road || addr.pedestrian || addr.street || addr.hamlet || '';
+      const locality = addr.suburb || addr.neighbourhood || addr.quarter || addr.residential || addr.city_district || '';
+      const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || locality || 'Local City';
+      const state = addr.state || addr.region || 'Tamil Nadu';
+      const country = addr.country || 'India';
+      const postcode = addr.postcode || '';
+
+      const addressParts = [
+        street,
+        locality,
+        city !== locality ? city : null,
+        state,
+        postcode ? `PIN: ${postcode}` : null,
+        country
+      ].filter(Boolean);
+
+      const formattedAddress = addressParts.length > 0 ? addressParts.join(', ') : (data.display_name || `${city}, ${state}, ${country}`);
+
+      return { 
+        city: locality ? `${locality}, ${city}` : city, 
+        state, 
+        country, 
+        formattedAddress,
+        locality,
+        postcode
+      };
+    }
+  } catch {
+    // Continue to next fallback
+  }
+
+  // 2. Try BigDataCloud (CORS friendly, fast, high accuracy)
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3500);
@@ -103,41 +152,23 @@ export async function reverseGeocodeCoordinates(
 
     if (res.ok) {
       const data = await res.json();
-      const city = data.city || data.locality || data.principalSubdivision || 'Local City';
-      const state = data.principalSubdivision || '';
+      const locality = data.locality || '';
+      const city = data.city || locality || data.principalSubdivision || 'Local City';
+      const state = data.principalSubdivision || 'Tamil Nadu';
       const country = data.countryName || 'India';
-      const formattedAddress = [city, state, country].filter(Boolean).join(', ');
-      if (city) {
-        return { city, state, country, formattedAddress };
-      }
-    }
-  } catch {
-    // Continue to next fallback
-  }
+      const postcode = data.postcode || '';
 
-  // 2. Try Nominatim (OpenStreetMap)
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const addressParts = [locality, city !== locality ? city : null, state, postcode ? `PIN: ${postcode}` : null, country].filter(Boolean);
+      const formattedAddress = addressParts.join(', ');
 
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`,
-      {
-        signal: controller.signal,
-        headers: { 'Accept-Language': 'en' }
-      }
-    );
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const data = await response.json();
-      const addr = data.address || {};
-      const city = addr.city || addr.town || addr.village || addr.suburb || addr.county || addr.state_district || 'Local City';
-      const state = addr.state || addr.region || '';
-      const country = addr.country || 'India';
-      const formattedAddress = data.display_name || `${city}, ${state}, ${country}`;
-
-      return { city, state, country, formattedAddress };
+      return { 
+        city: locality ? `${locality}, ${city}` : city, 
+        state, 
+        country, 
+        formattedAddress,
+        locality,
+        postcode
+      };
     }
   } catch {
     // Continue to hub fallback
@@ -171,15 +202,16 @@ export async function detectIPLocation(): Promise<UserLocation> {
       const data = await res.json();
       const lat = data.latitude || 13.0827;
       const lng = data.longitude || 80.2707;
-      const city = data.city || data.locality || data.principalSubdivision || 'Chennai';
+      const locality = data.locality || '';
+      const city = data.city || locality || data.principalSubdivision || 'Chennai';
       const state = data.principalSubdivision || 'Tamil Nadu';
       const country = data.countryName || 'India';
-      const formattedAddress = [city, state, country].filter(Boolean).join(', ');
+      const formattedAddress = [locality, city !== locality ? city : null, state, country].filter(Boolean).join(', ');
 
       const loc: UserLocation = {
         latitude: lat,
         longitude: lng,
-        city,
+        city: locality ? `${locality}, ${city}` : city,
         state,
         country,
         formattedAddress,
@@ -248,8 +280,8 @@ export async function detectIPLocation(): Promise<UserLocation> {
 }
 
 /**
- * Resilient multi-tiered location detector:
- * Tier 1: Hardware Browser GPS (Fast 3.5s timeout)
+ * Resilient high-accuracy multi-tiered location detector:
+ * Tier 1: Hardware Browser GPS (Forced fresh query maximumAge: 0, high accuracy, 10s timeout)
  * Tier 2: Real-time IP Geolocation fallback
  * Tier 3: Known Hub fallback
  * Guaranteed to NEVER reject or throw an unhandled error.
@@ -263,14 +295,15 @@ export async function detectUserCurrentLocation(): Promise<UserLocation> {
           reject,
           {
             enableHighAccuracy: true,
-            timeout: 3500,
-            maximumAge: 300000 // 5 minutes cache
+            timeout: 10000,
+            maximumAge: 0 // Force fresh satellite/hardware GPS query
           }
         );
       });
 
-      const { latitude, longitude } = gpsResult.coords;
+      const { latitude, longitude, accuracy } = gpsResult.coords;
       const geoInfo = await reverseGeocodeCoordinates(latitude, longitude);
+      
       const locationData: UserLocation = {
         latitude,
         longitude,
@@ -279,13 +312,13 @@ export async function detectUserCurrentLocation(): Promise<UserLocation> {
         country: geoInfo.country,
         formattedAddress: geoInfo.formattedAddress,
         timestamp: new Date().toISOString(),
-        isApproximate: false
+        isApproximate: accuracy ? accuracy > 200 : false
       };
       saveStoredLocation(locationData);
       return locationData;
     } catch {
       // GPS permission denied, timed out, or unavailable; seamlessly fallback to IP geolocation
-      console.log('GPS unavailable or permission denied, using IP geolocation fallback...');
+      console.log('GPS unavailable or permission denied, using high-precision IP geolocation fallback...');
     }
   }
 
