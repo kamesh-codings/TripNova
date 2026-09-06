@@ -19,12 +19,26 @@ async function getTransporter() {
     return cachedTransporter;
   }
 
+  const service = process.env.EMAIL_SERVICE || process.env.SMTP_SERVICE;
   const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
   const port = parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT || '587', 10);
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+  const user = (process.env.SMTP_USER || process.env.EMAIL_USER || '').trim();
+  const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').trim();
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
 
+  // 1. Direct Gmail Service mode (if service is gmail or host is smtp.gmail.com)
+  if ((service && service.toLowerCase() === 'gmail') || (host && host.includes('gmail.com'))) {
+    if (user && pass) {
+      console.log(`📧 Initializing Gmail SMTP Service (user: ${user})...`);
+      cachedTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass }
+      });
+      return cachedTransporter;
+    }
+  }
+
+  // 2. Custom SMTP Host configuration
   if (host && user && pass) {
     console.log(`📧 Initializing custom SMTP email service (${host}:${port}, user: ${user})...`);
     cachedTransporter = nodemailer.createTransport({
@@ -37,9 +51,9 @@ async function getTransporter() {
     return cachedTransporter;
   }
 
-  // Create automatic test account with Ethereal for hackathon demos & local testing
+  // 3. Automated Ethereal demo test account for local development
   try {
-    console.log('📬 No custom SMTP credentials detected in .env. Initializing Ethereal test mailer for demo...');
+    console.log('📬 No custom SMTP credentials in backend/.env. Using Ethereal test mailer (generates web preview links)...');
     const testAccount = await nodemailer.createTestAccount();
     cachedTransporter = nodemailer.createTransport({
       host: 'smtp.ethereal.email',
@@ -50,7 +64,7 @@ async function getTransporter() {
         pass: testAccount.pass
       }
     });
-    console.log(`✅ Ethereal demo mailer ready: ${testAccount.user}`);
+    console.log(`✅ Ethereal demo mailer active: ${testAccount.user}`);
     return cachedTransporter;
   } catch (err) {
     console.warn('⚠️ Could not initialize Ethereal test account, using JSON transport fallback:', err.message);

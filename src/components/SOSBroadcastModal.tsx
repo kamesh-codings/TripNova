@@ -15,7 +15,8 @@ import {
   Loader2,
   Plus,
   Trash2,
-  Edit2
+  Edit2,
+  Share2
 } from 'lucide-react';
 import { UserProfile, TrustedContact } from '../types';
 import { logSOSEvent } from '../utils/storage';
@@ -40,12 +41,12 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     longitude?: number | null;
     address?: string;
   }>({
-    latitude: userProfile.locationCoordinates?.latitude || null,
-    longitude: userProfile.locationCoordinates?.longitude || null,
+    latitude: userProfile.locationCoordinates?.latitude || 13.0827,
+    longitude: userProfile.locationCoordinates?.longitude || 80.2707,
     address: userProfile.currentLocation || 'Chennai Tourist Safety Zone, Tamil Nadu'
   });
 
-  // Local editable copy of contacts (up to 5) for quick emergency adjustments
+  // Local editable copy of contacts (up to 5)
   const [editableContacts, setEditableContacts] = useState<TrustedContact[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isDetectingGps, setIsDetectingGps] = useState<boolean>(false);
@@ -55,18 +56,48 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
       setSosSending(false);
       setSosResponse(null);
       
-      // Initialize contacts from profile, ensuring email fallback if blank
-      const initial = (userProfile.trustedContacts && userProfile.trustedContacts.length > 0)
-        ? userProfile.trustedContacts.slice(0, 5).map((c, i) => ({
-            ...c,
-            email: c.email || (i === 0 && userProfile.email ? userProfile.email : `contact${i + 1}@example.com`)
-          }))
-        : [
-            { id: 'tc1', name: 'Primary Emergency Contact', relationship: 'Family', phone: '+91 98401 11111', email: userProfile.email || 'emergency@example.com', isPrimary: true },
-            { id: 'tc2', name: 'Secondary Contact', relationship: 'Friend', phone: '+91 98401 22222', email: 'guardian@example.com' }
-          ];
+      const userRegEmail = userProfile.email && userProfile.email.includes('@') ? userProfile.email.trim() : '';
 
-      setEditableContacts(initial);
+      // Initialize contacts ensuring user's registered email is included
+      let contactsList: TrustedContact[] = [];
+
+      if (userProfile.trustedContacts && userProfile.trustedContacts.length > 0) {
+        contactsList = userProfile.trustedContacts.slice(0, 5).map((c, idx) => ({
+          ...c,
+          email: c.email && c.email.includes('@') 
+            ? c.email.trim() 
+            : (idx === 0 && userRegEmail ? userRegEmail : `emergency_contact${idx + 1}@example.com`)
+        }));
+      }
+
+      // If user's registered email is not already in the list, ensure primary contact has user's email
+      if (userRegEmail && contactsList.length > 0 && !contactsList.some(c => c.email?.toLowerCase() === userRegEmail.toLowerCase())) {
+        contactsList[0] = {
+          ...contactsList[0],
+          email: userRegEmail,
+          name: contactsList[0].name || `${userProfile.name || 'User'} (Registered Email)`
+        };
+      } else if (contactsList.length === 0) {
+        contactsList = [
+          {
+            id: 'tc1',
+            name: `${userProfile.name || 'My Registered Email'}`,
+            relationship: 'Self / Primary',
+            phone: '+91 98401 11111',
+            email: userRegEmail || 'emergency@example.com',
+            isPrimary: true
+          },
+          {
+            id: 'tc2',
+            name: 'Emergency Guardian',
+            relationship: 'Family',
+            phone: '+91 98401 22222',
+            email: 'guardian@example.com'
+          }
+        ];
+      }
+
+      setEditableContacts(contactsList);
 
       // Attempt live GPS position grab
       if (typeof window !== 'undefined' && 'geolocation' in navigator) {
@@ -106,7 +137,7 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
           name: `Contact ${editableContacts.length + 1}`,
           relationship: 'Emergency Contact',
           phone: '',
-          email: ''
+          email: userProfile.email || ''
         }
       ]);
       setEditingIndex(editableContacts.length);
@@ -117,6 +148,66 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     if (editableContacts.length > 1) {
       setEditableContacts(editableContacts.filter((_, i) => i !== idx));
     }
+  };
+
+  // Build direct client mailto URI for instant 1-click sending from user's email client
+  const getEmailContent = () => {
+    const emailRecipients = editableContacts
+      .map(c => c.email?.trim())
+      .filter((e): e is string => !!e && e.includes('@'));
+
+    if (userProfile.email && userProfile.email.includes('@') && !emailRecipients.includes(userProfile.email.trim())) {
+      emailRecipients.unshift(userProfile.email.trim());
+    }
+
+    const toStr = emailRecipients.join(',');
+    const subject = `🚨 TRIPNOVA EMERGENCY SOS: Immediate Assistance Required for ${userProfile.name || 'Traveler'}`;
+    
+    const mapLink = liveLocation.latitude && liveLocation.longitude
+      ? `https://www.google.com/maps/search/?api=1&query=${liveLocation.latitude},${liveLocation.longitude}`
+      : 'Location unavailable';
+
+    const bodyText = `🚨 TRIPNOVA EMERGENCY SOS DISTRESS ALERT 🚨
+====================================================
+
+Hello Emergency Contacts,
+
+Traveler ${userProfile.name || 'A registered user'} has activated an emergency SOS alert and requires immediate assistance.
+
+TRAVELER DETAILS:
+- Name: ${userProfile.name || 'Not specified'}
+- Registered Email: ${userProfile.email || 'Not specified'}
+- Blood Group: ${userProfile.bloodGroup || 'Unknown'}
+- Known Allergies: ${userProfile.allergies || 'None'}
+- Medical Conditions: ${userProfile.medicalConditions || 'None'}
+- Timestamp: ${new Date().toLocaleString()}
+
+LIVE GPS LOCATION:
+- Location / Zone: ${liveLocation.address || 'Active Zone'}
+- Coordinates: ${liveLocation.latitude?.toFixed(4) || '13.0827'}° N, ${liveLocation.longitude?.toFixed(4) || '80.2707'}° E
+- Google Maps Link: ${mapLink}
+
+${customMessage ? `EMERGENCY DISTRESS NOTE:\n"${customMessage}"\n\n` : ''}
+NATIONAL EMERGENCY HELPLINES (INDIA):
+- National Emergency: 112
+- Police: 100
+- Ambulance: 108
+- Women Safety: 1091
+
+====================================================
+TripNova Tourism Safety & Navigation Platform`;
+
+    return { toStr, subject, bodyText };
+  };
+
+  const buildMailtoUri = () => {
+    const { toStr, subject, bodyText } = getEmailContent();
+    return `mailto:${toStr}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+  };
+
+  const buildGmailWebUri = () => {
+    const { toStr, subject, bodyText } = getEmailContent();
+    return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toStr)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
   };
 
   const handleTriggerSOSNow = async () => {
@@ -191,8 +282,8 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
         className="glass-panel" 
         style={{ 
           width: '100%', 
-          maxWidth: '540px', 
-          maxHeight: 'min(92vh, 720px)',
+          maxWidth: '560px', 
+          maxHeight: 'min(94vh, 740px)',
           margin: 'auto',
           padding: '24px', 
           background: '#090e17', 
@@ -251,9 +342,26 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
             EMERGENCY SOS EMAIL BROADCAST
           </h3>
           <p style={{ fontSize: '0.78rem', color: '#cbd5e1', margin: 0, lineHeight: 1.4 }}>
-            Instantly dispatches your live GPS coordinates, medical pass, and distress alert via automated high-priority email to your trusted emergency network.
+            Sends your live GPS coordinates, medical pass, and emergency distress beacon directly to your registered email and trusted contacts.
           </p>
         </div>
+
+        {/* Traveler Summary Notice */}
+        {userProfile.email && (
+          <div style={{
+            padding: '8px 12px',
+            background: 'rgba(56, 189, 248, 0.1)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.74rem'
+          }}>
+            <span style={{ color: '#94a3b8' }}>Registered User Email:</span>
+            <span style={{ color: '#38bdf8', fontWeight: 800 }}>{userProfile.email}</span>
+          </div>
+        )}
 
         {/* RECIPIENTS SECTION */}
         <div style={{ 
@@ -487,6 +595,48 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
               </div>
             )}
 
+            {/* Direct 1-Click Native Send via User's Email App */}
+            <div style={{ padding: '12px', background: 'rgba(2, 132, 199, 0.2)', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)', marginTop: '4px' }}>
+              <span style={{ fontSize: '0.72rem', color: '#bae6fd', display: 'block', marginBottom: '8px', textAlign: 'center', fontWeight: 600 }}>
+                Also send directly from your personal Gmail or local Mail app:
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <a
+                  href={buildGmailWebUri()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                  style={{
+                    padding: '8px',
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #ea4335 0%, #c5221f 100%)'
+                  }}
+                >
+                  <Mail style={{ width: '13px', height: '13px' }} />
+                  <span>🌐 Open in Web Gmail</span>
+                </a>
+
+                <a
+                  href={buildMailtoUri()}
+                  className="btn-primary"
+                  style={{
+                    padding: '8px',
+                    fontSize: '0.74rem',
+                    fontWeight: 800,
+                    textDecoration: 'none',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)'
+                  }}
+                >
+                  <Mail style={{ width: '13px', height: '13px' }} />
+                  <span>📱 Open in Mail App</span>
+                </a>
+              </div>
+            </div>
+
             <div className="flex items-center gap-2" style={{ marginTop: '8px' }}>
               <a
                 href="tel:112"
@@ -506,8 +656,8 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
 
               <button
                 onClick={handleClose}
-                className="btn-primary"
-                style={{ flex: 1, padding: '10px', fontSize: '0.82rem', fontWeight: 700 }}
+                className="btn-secondary"
+                style={{ flex: 1, padding: '10px', fontSize: '0.82rem', fontWeight: 700, justifyContent: 'center' }}
               >
                 Close SOS Radar
               </button>
@@ -541,10 +691,49 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
               ) : (
                 <>
                   <Send style={{ width: '18px', height: '18px' }} />
-                  <span>CONFIRM & SEND SOS NOW</span>
+                  <span>CONFIRM & BROADCAST SOS VIA SERVER</span>
                 </>
               )}
             </button>
+
+            {/* Direct One-Click Send via User's Email Client */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <a
+                href={buildGmailWebUri()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary"
+                style={{ 
+                  padding: '10px 8px', 
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #ea4335 0%, #c5221f 100%)',
+                  borderColor: '#fca5a5'
+                }}
+              >
+                <Mail style={{ width: '15px', height: '15px' }} />
+                <span>🌐 Open in Web Gmail</span>
+              </a>
+
+              <a
+                href={buildMailtoUri()}
+                className="btn-primary"
+                style={{ 
+                  padding: '10px 8px', 
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)',
+                  borderColor: '#38bdf8'
+                }}
+              >
+                <Mail style={{ width: '15px', height: '15px' }} />
+                <span>📱 Open in Mail App</span>
+              </a>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <a
