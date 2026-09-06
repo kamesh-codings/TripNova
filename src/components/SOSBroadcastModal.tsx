@@ -149,7 +149,11 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     const bodyText = `🚨 TRIPNOVA EMERGENCY SOS DISTRESS ALERT 🚨
 ====================================================
 
-Hello Emergency Contacts,
+${customMessage ? `🚨 EMERGENCY DISTRESS NOTE:
+"${customMessage}"
+====================================================
+
+` : ''}Hello Emergency Contacts,
 
 Traveler ${userProfile.name || 'A registered user'} has activated an emergency SOS alert and requires immediate assistance.
 
@@ -166,7 +170,6 @@ LIVE GPS LOCATION:
 - Coordinates: ${liveLocation.latitude?.toFixed(4) || '13.0827'}° N, ${liveLocation.longitude?.toFixed(4) || '80.2707'}° E
 - Google Maps Link: ${mapLink}
 
-${customMessage ? `EMERGENCY DISTRESS NOTE:\n"${customMessage}"\n\n` : ''}
 NATIONAL EMERGENCY HELPLINES (INDIA):
 - National Emergency: 112
 - Police: 100

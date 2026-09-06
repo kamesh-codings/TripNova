@@ -235,8 +235,15 @@ function buildEmergencyEmailHtml({
     <div class="content">
       <div class="alert-box">
         <strong>Hello ${recipientName || 'Trusted Contact'},</strong><br>
-        This is an automated emergency broadcast from TripNova. Traveler <strong>${traveler.name || 'A registered user'}</strong> has triggered an SOS Distress Beacon and may require immediate assistance.
+        This is an automated emergency broadcast from TripNova. Traveler <strong>${traveler.name || 'A registered user'}</strong> has triggered an SOS Distress Beacon and requires immediate assistance.
       </div>
+
+      ${customMessage ? `
+      <!-- Prominent Top Emergency Distress Note -->
+      <div class="card" style="border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.15);">
+        <div class="card-title" style="color: #f87171; font-size: 14px;">🚨 Traveler Distress Message</div>
+        <p style="margin: 4px 0 0 0; font-size: 15px; color: #ffffff; font-weight: 800; line-height: 1.4;">"${customMessage}"</p>
+      </div>` : ''}
 
       <!-- Traveler Information Card -->
       <div class="card">
@@ -295,13 +302,6 @@ function buildEmergencyEmailHtml({
         ` : ''}
       </div>
 
-      ${customMessage ? `
-      <!-- Custom SOS Note -->
-      <div class="card">
-        <div class="card-title">📝 Emergency Distress Note</div>
-        <p style="margin: 0; font-size: 13px; color: #e2e8f0; font-style: italic;">"${customMessage}"</p>
-      </div>` : ''}
-
       <!-- Emergency Helpline Numbers -->
       <div class="card">
         <div class="card-title">📞 National Emergency Helplines (India)</div>
@@ -346,7 +346,11 @@ function buildEmergencyEmailText({
 🚨 TRIPNOVA EMERGENCY SOS DISTRESS ALERT 🚨
 ====================================================
 
-Hello ${recipientName || 'Trusted Contact'},
+${customMessage ? `🚨 EMERGENCY DISTRESS NOTE:
+"${customMessage}"
+====================================================
+
+` : ''}Hello ${recipientName || 'Trusted Contact'},
 
 This is an automated emergency broadcast from TripNova.
 Traveler ${traveler.name || 'A registered user'} has activated an emergency SOS alert.
@@ -363,8 +367,6 @@ TRAVELER DETAILS:
 LOCATION DETAILS:
 - Address / Zone: ${locString}
 - Live Map Link: ${mapLink}
-
-${customMessage ? `EMERGENCY NOTE:\n"${customMessage}"\n` : ''}
 
 RECOMMENDED ACTION:
 1. Please contact the traveler immediately.
