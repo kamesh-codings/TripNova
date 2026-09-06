@@ -541,6 +541,15 @@ async function bootstrapSqlite(db) {
       itinerary_data TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS user_history (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      location_id TEXT,
+      action_type TEXT NOT NULL,
+      metadata TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `;
 
   const statements = ddl.split(';').map(s => s.trim()).filter(Boolean);
