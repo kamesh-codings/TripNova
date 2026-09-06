@@ -1,8 +1,10 @@
 import { EmergencyPhrase, SafetyPlace, CountryRule, LocalGuide, UserProfile } from '../types';
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
-  id: 'usr_guest_01',
+  id: '',
   name: '',
+  username: '',
+  password: '',
   email: '',
   googleId: '',
   avatarUrl: '',
@@ -20,7 +22,7 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   govtIdState: '',
   languagesKnown: [],
   trustedContacts: [
-    { id: 'tc1', name: '', relationship: 'Family', phone: '', isPrimary: true }
+    { id: 'tc1', name: '', relationship: '', phone: '', email: '', isPrimary: true }
   ],
   interestedTopPicks: [],
   isRegistered: false
