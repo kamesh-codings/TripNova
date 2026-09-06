@@ -24,6 +24,7 @@ interface NavbarProps {
   providerProfile?: ServiceProviderProfile | null;
   onOpenSOS: () => void;
   onOpenRegister: () => void;
+  onOpenGateway?: () => void;
   onOpenProviderRegister?: () => void;
   onOpenChatbot: () => void;
   onOpenLogin?: () => void;
@@ -37,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   providerProfile,
   onOpenSOS,
   onOpenRegister,
+  onOpenGateway,
   onOpenProviderRegister,
   onOpenChatbot,
   onOpenLogin,
@@ -200,6 +202,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => {
               if (userProfile.isRegistered || providerProfile) {
                 setActiveTab('profile');
+              } else if (onOpenGateway) {
+                onOpenGateway();
               } else {
                 onOpenRegister();
               }
@@ -210,7 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? `Tourist Profile: ${userProfile.name}` 
                 : providerProfile 
                 ? `Partner Profile: ${providerProfile.businessName}` 
-                : 'Register Tourist Profile'
+                : 'Join TripNova: Choose Registration Mode'
             }
           >
             {userProfile.isRegistered && userProfile.avatarUrl ? (
@@ -249,7 +253,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? (userProfile.nativeCurrency ? `${userProfile.nativeCurrency} • Profile` : 'Tourist Form') 
                   : providerProfile
                   ? `${providerProfile.nativeCurrency || 'INR'} • Partner`
-                  : 'Tourist Form'}
+                  : 'Get Started'}
               </span>
             </div>
           </button>

@@ -214,6 +214,7 @@ export const App: React.FC = () => {
         providerProfile={providerProfile}
         onOpenSOS={() => setIsSOSModalOpen(true)}
         onOpenRegister={() => setIsRegisterOpen(true)}
+        onOpenGateway={() => setIsGatewayOpen(true)}
         onOpenProviderRegister={() => setIsProviderRegisterOpen(true)}
         onOpenChatbot={() => setIsChatbotOpen(!isChatbotOpen)}
         onOpenLogin={() => setIsLoginOpen(true)}
@@ -261,7 +262,7 @@ export const App: React.FC = () => {
         }}>
           <span>🔍 You are browsing in <strong>Explore Mode</strong>. Register your Tourist Profile to unlock your personalized Emergency Card & Itinerary Saving.</span>
           <button
-            onClick={() => setIsRegisterOpen(true)}
+            onClick={() => setIsGatewayOpen(true)}
             className="btn-primary"
             style={{ padding: '4px 10px', fontSize: '0.7rem' }}
           >
@@ -278,7 +279,13 @@ export const App: React.FC = () => {
             providerProfile={providerProfile}
             activeTrip={activeTrip}
             onNavigateTab={setActiveTab}
-            onOpenRegister={() => setIsRegisterOpen(true)}
+            onOpenRegister={() => {
+              if (!userProfile.isRegistered && !providerProfile) {
+                setIsGatewayOpen(true);
+              } else {
+                setIsRegisterOpen(true);
+              }
+            }}
             onOpenProviderRegister={() => setIsProviderRegisterOpen(true)}
             onOpenSOS={() => setIsSOSModalOpen(true)}
           />
@@ -366,6 +373,7 @@ export const App: React.FC = () => {
       {/* 1. Welcome Gateway: 3 Options + Login */}
       <WelcomeGateway
         isOpen={isGatewayOpen}
+        onClose={() => setIsGatewayOpen(false)}
         onSelectRegister={handleSelectRegisterFromGateway}
         onSelectExplore={handleSelectExploreFromGateway}
         onSelectProviderRegister={handleSelectProviderRegisterFromGateway}

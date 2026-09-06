@@ -17,6 +17,7 @@ import {
   Check,
   AlertCircle,
   Lock,
+  X,
   User
 } from 'lucide-react';
 import { LANG_CODE_MAP } from '../utils/speech';
@@ -35,6 +36,7 @@ interface WelcomeGatewayProps {
   onSelectExplore: () => void;
   onSelectProviderRegister: () => void;
   onOpenLogin: () => void;
+  onClose?: () => void;
   onLocationDetected?: (loc: UserLocation) => void;
   onLanguageChanged?: (lang: string) => void;
 }
@@ -45,6 +47,7 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
   onSelectExplore,
   onSelectProviderRegister,
   onOpenLogin,
+  onClose,
   onLocationDetected,
   onLanguageChanged
 }) => {
@@ -110,6 +113,7 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
       backdropFilter: 'blur(20px)'
     }} className="animate-fade">
       <div className="glass-panel" style={{
+        position: 'relative',
         width: '100%',
         maxWidth: '1080px',
         maxHeight: '92vh',
@@ -124,6 +128,32 @@ export const WelcomeGateway: React.FC<WelcomeGatewayProps> = ({
         flexDirection: 'column',
         gap: '20px'
       }}>
+        {onClose && (
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '18px',
+              right: '18px',
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              zIndex: 10,
+              transition: 'all 0.2s'
+            }}
+            title="Close & Continue Exploring"
+          >
+            <X style={{ width: '16px', height: '16px' }} />
+          </button>
+        )}
+
         {/* Header Branding */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <div style={{
