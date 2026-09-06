@@ -29,9 +29,11 @@ import { UserProfile, TripPlan, ServiceProviderProfile, UserLocation } from '../
 import { TOP_PICKS_CATEGORIES, NEARBY_HOSPITALS } from '../data/mockData';
 import { 
   getStoredLocation, 
+  saveStoredLocation,
   detectUserCurrentLocation, 
   reverseGeocodeCoordinates,
   setManualUserLocation,
+  forwardGeocodePlace,
   KNOWN_HUBS 
 } from '../utils/geoLocator';
 import { listenVoiceInput } from '../utils/speech';
@@ -82,10 +84,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const handleSetCity = (hubName: string) => {
+  const handleSetCity = async (hubName: string) => {
     const loc = setManualUserLocation(hubName);
     setCurrentLoc(loc);
     setShowManualPicker(false);
+    try {
+      const resolved = await forwardGeocodePlace(hubName);
+      if (resolved) {
+        const updated: UserLocation = {
+          latitude: resolved.latitude,
+          longitude: resolved.longitude,
+          city: resolved.city,
+          state: resolved.state,
+          country: resolved.country,
+          formattedAddress: resolved.formattedAddress,
+          timestamp: new Date().toISOString(),
+          isApproximate: false
+        };
+        saveStoredLocation(updated);
+        setCurrentLoc(updated);
+      }
+    } catch {
+      // Keep initial location
+    }
   };
 
   const filteredCategories = TOP_PICKS_CATEGORIES.filter(cat => {
@@ -339,9 +360,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
 
-          {currentLoc?.latitude && currentLoc?.longitude && (
+          {(currentLoc?.formattedAddress || currentLoc?.city || (currentLoc?.latitude && currentLoc?.longitude)) && (
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${currentLoc.latitude},${currentLoc.longitude}`}
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                currentLoc.formattedAddress || currentLoc.city || `${currentLoc.latitude},${currentLoc.longitude}`
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{

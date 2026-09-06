@@ -327,6 +327,74 @@ export async function detectUserCurrentLocation(): Promise<UserLocation> {
 }
 
 /**
+ * Forward geocode any user-typed or spoken place name (landmarks, streets, cities, hotels, temples)
+ * Uses OpenStreetMap Nominatim with known hubs fallback to retrieve accurate latitude and longitude.
+ */
+export async function forwardGeocodePlace(
+  placeName: string
+): Promise<{ latitude: number; longitude: number; formattedAddress: string; city: string; state: string; country: string } | null> {
+  const clean = placeName.trim();
+  if (!clean) return null;
+
+  // 1. Check known hubs first
+  const hub = KNOWN_HUBS.find(h => 
+    h.name.toLowerCase() === clean.toLowerCase() || 
+    clean.toLowerCase().includes(h.name.toLowerCase()) ||
+    h.name.toLowerCase().includes(clean.toLowerCase())
+  );
+  if (hub) {
+    return {
+      latitude: hub.lat,
+      longitude: hub.lng,
+      formattedAddress: `${hub.name}, ${hub.state}, ${hub.country}`,
+      city: hub.name,
+      state: hub.state,
+      country: hub.country
+    };
+  }
+
+  // 2. OpenStreetMap Nominatim Forward Search (Global + India coverage)
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(clean)}&limit=1&addressdetails=1`,
+      {
+        signal: controller.signal,
+        headers: { 'Accept-Language': 'en' }
+      }
+    );
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const results = await res.json();
+      if (results && results.length > 0) {
+        const item = results[0];
+        const lat = parseFloat(item.lat);
+        const lng = parseFloat(item.lon);
+        const addr = item.address || {};
+        const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || clean;
+        const state = addr.state || addr.region || '';
+        const country = addr.country || 'India';
+
+        return {
+          latitude: lat,
+          longitude: lng,
+          formattedAddress: item.display_name || `${clean}, ${state}, ${country}`,
+          city,
+          state,
+          country
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('Forward geocoding fallback notice:', e);
+  }
+
+  return null;
+}
+
+/**
  * Manually set or override user location (e.g. from city selector or manual search)
  */
 export function setManualUserLocation(
@@ -336,7 +404,7 @@ export function setManualUserLocation(
   latitude?: number,
   longitude?: number
 ): UserLocation {
-  const hub = KNOWN_HUBS.find(h => h.name.toLowerCase().includes(city.toLowerCase()));
+  const hub = KNOWN_HUBS.find(h => h.name.toLowerCase().includes(city.toLowerCase()) || city.toLowerCase().includes(h.name.toLowerCase()));
   const finalLat = latitude ?? hub?.lat ?? 13.0827;
   const finalLng = longitude ?? hub?.lng ?? 80.2707;
   const finalState = state || hub?.state || '';
@@ -355,6 +423,26 @@ export function setManualUserLocation(
   };
 
   saveStoredLocation(locationData);
+
+  // Trigger background forward-geocoding if coordinates are unverified or generic
+  if (!latitude && !longitude && !hub) {
+    forwardGeocodePlace(city).then(resolved => {
+      if (resolved) {
+        const updated: UserLocation = {
+          latitude: resolved.latitude,
+          longitude: resolved.longitude,
+          city: resolved.city,
+          state: resolved.state,
+          country: resolved.country,
+          formattedAddress: resolved.formattedAddress,
+          timestamp: new Date().toISOString(),
+          isApproximate: false
+        };
+        saveStoredLocation(updated);
+      }
+    }).catch(() => {});
+  }
+
   return locationData;
 }
 
