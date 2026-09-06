@@ -277,6 +277,105 @@ router.post('/register-provider', async (req, res) => {
 
 // =============================================================================
 // 3. ACCOUNT LOGIN (Tourist OR Service Provider)
+// Helper to format Tourist database row into complete frontend UserProfile
+function formatTouristProfile(user) {
+  if (!user) return null;
+  let languagesKnown = ['English', 'Tamil'];
+  let trustedContacts = [];
+  let interestedTopPicks = [];
+  let locationCoordinates = null;
+
+  try {
+    if (typeof user.languages_known === 'string') languagesKnown = JSON.parse(user.languages_known);
+    else if (Array.isArray(user.languages_known)) languagesKnown = user.languages_known;
+    else if (Array.isArray(user.languagesKnown)) languagesKnown = user.languagesKnown;
+  } catch (e) {}
+
+  try {
+    if (typeof user.trusted_contacts === 'string') trustedContacts = JSON.parse(user.trusted_contacts);
+    else if (Array.isArray(user.trusted_contacts)) trustedContacts = user.trusted_contacts;
+    else if (Array.isArray(user.trustedContacts)) trustedContacts = user.trustedContacts;
+  } catch (e) {}
+
+  try {
+    if (typeof user.interested_top_picks === 'string') interestedTopPicks = JSON.parse(user.interested_top_picks);
+    else if (Array.isArray(user.interested_top_picks)) interestedTopPicks = user.interested_top_picks;
+    else if (Array.isArray(user.interestedTopPicks)) interestedTopPicks = user.interestedTopPicks;
+  } catch (e) {}
+
+  try {
+    if (typeof user.location_coordinates === 'string') locationCoordinates = JSON.parse(user.location_coordinates);
+    else if (typeof user.location_coordinates === 'object') locationCoordinates = user.location_coordinates;
+    else if (typeof user.locationCoordinates === 'object') locationCoordinates = user.locationCoordinates;
+  } catch (e) {}
+
+  return {
+    id: user.id,
+    name: user.full_name || user.name || 'Tourist User',
+    fullName: user.full_name || user.name || 'Tourist User',
+    username: user.username || '',
+    password: user.password || '',
+    email: user.email || '',
+    avatarUrl: user.avatar_url || user.avatarUrl || '',
+    dob: user.dob || '',
+    age: Number(user.age) || 0,
+    gender: user.gender || 'Male',
+    bloodGroup: user.blood_group || user.bloodGroup || 'O+',
+    allergies: user.allergies || '',
+    medicalConditions: user.medical_conditions || user.medicalConditions || '',
+    disability: user.disability || '',
+    address: user.address || '',
+    govtIdType: user.govt_id_type || user.govtIdType || 'Aadhaar Card',
+    govtIdNumber: user.govt_id_number || user.govtIdNumber || '',
+    govtIdState: user.govt_id_state || user.govtIdState || 'Tamil Nadu, India',
+    languagesKnown: languagesKnown.length > 0 ? languagesKnown : ['English', 'Tamil'],
+    preferredLanguage: user.preferred_language || user.preferredLanguage || 'English',
+    nativeCurrency: user.native_currency || user.nativeCurrency || 'INR',
+    currentLocation: user.current_location || user.currentLocation || user.address || '',
+    locationCoordinates,
+    trustedContacts,
+    interestedTopPicks,
+    isRegistered: true
+  };
+}
+
+// Helper to format Service Provider database row
+function formatProviderProfile(provider) {
+  if (!provider) return null;
+  let transportDetails = null;
+  let tourGuideDetails = null;
+  let homestayDetails = null;
+  let emergencyMedicalDetails = null;
+  let rentalAgencyDetails = null;
+
+  try { if (typeof provider.transport_details === 'string') transportDetails = JSON.parse(provider.transport_details); } catch(e){}
+  try { if (typeof provider.tour_guide_details === 'string') tourGuideDetails = JSON.parse(provider.tour_guide_details); } catch(e){}
+  try { if (typeof provider.homestay_details === 'string') homestayDetails = JSON.parse(provider.homestay_details); } catch(e){}
+  try { if (typeof provider.emergency_medical_details === 'string') emergencyMedicalDetails = JSON.parse(provider.emergency_medical_details); } catch(e){}
+  try { if (typeof provider.rental_agency_details === 'string') rentalAgencyDetails = JSON.parse(provider.rental_agency_details); } catch(e){}
+
+  return {
+    id: provider.id,
+    username: provider.username || '',
+    password: provider.password || '',
+    email: provider.email || '',
+    phone: provider.phone || '',
+    providerName: provider.provider_name || provider.providerName || provider.business_name || 'Verified Partner',
+    businessName: provider.business_name || provider.businessName || provider.provider_name || 'Verified Partner',
+    category: provider.category || 'transport',
+    operatingCity: provider.operating_city || provider.operatingCity || '',
+    operatingState: provider.operating_state || provider.operatingState || '',
+    nativeCurrency: provider.native_currency || provider.nativeCurrency || 'INR',
+    isVerified: Boolean(provider.is_verified),
+    transportDetails: transportDetails || provider.transportDetails,
+    tourGuideDetails: tourGuideDetails || provider.tourGuideDetails,
+    homestayDetails: homestayDetails || provider.homestayDetails,
+    emergencyMedicalDetails: emergencyMedicalDetails || provider.emergencyMedicalDetails,
+    rentalAgencyDetails: rentalAgencyDetails || provider.rentalAgencyDetails,
+    registeredAt: provider.registered_at || provider.registeredAt || new Date().toISOString().split('T')[0]
+  };
+}
+
 // =============================================================================
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
@@ -300,20 +399,13 @@ router.post('/login', async (req, res) => {
       const user = userRows[0];
       // Compare password safely (trimmed or exact)
       if (!user.password || user.password === cleanPass || user.password === password) {
-        // Parse JSON fields safely
-        try { if (typeof user.languages_known === 'string') user.languagesKnown = JSON.parse(user.languages_known); } catch(e){}
-        try { if (typeof user.trusted_contacts === 'string') user.trustedContacts = JSON.parse(user.trusted_contacts); } catch(e){}
-        try { if (typeof user.interested_top_picks === 'string') user.interestedTopPicks = JSON.parse(user.interested_top_picks); } catch(e){}
-        try { if (typeof user.location_coordinates === 'string') user.locationCoordinates = JSON.parse(user.location_coordinates); } catch(e){}
-
-        user.name = user.full_name;
-        user.isRegistered = true;
+        const formattedProfile = formatTouristProfile(user);
 
         return res.json({
           success: true,
           type: 'tourist',
-          profile: user,
-          message: `Logged in successfully as Tourist: ${user.full_name}`
+          profile: formattedProfile,
+          message: `Logged in successfully as Tourist: ${formattedProfile.name}`
         });
       }
     }
@@ -327,23 +419,13 @@ router.post('/login', async (req, res) => {
     if (providerRows && providerRows.length > 0) {
       const provider = providerRows[0];
       if (!provider.password || provider.password === cleanPass || provider.password === password) {
-        try { if (typeof provider.transport_details === 'string') provider.transportDetails = JSON.parse(provider.transport_details); } catch(e){}
-        try { if (typeof provider.tour_guide_details === 'string') provider.tourGuideDetails = JSON.parse(provider.tour_guide_details); } catch(e){}
-        try { if (typeof provider.homestay_details === 'string') provider.homestayDetails = JSON.parse(provider.homestay_details); } catch(e){}
-        try { if (typeof provider.emergency_medical_details === 'string') provider.emergencyMedicalDetails = JSON.parse(provider.emergency_medical_details); } catch(e){}
-        try { if (typeof provider.rental_agency_details === 'string') provider.rentalAgencyDetails = JSON.parse(provider.rental_agency_details); } catch(e){}
-
-        provider.providerName = provider.provider_name;
-        provider.businessName = provider.business_name;
-        provider.operatingCity = provider.operating_city;
-        provider.operatingState = provider.operating_state;
-        provider.isVerified = Boolean(provider.is_verified);
+        const formattedProfile = formatProviderProfile(provider);
 
         return res.json({
           success: true,
           type: 'provider',
-          profile: provider,
-          message: `Logged in successfully as Service Provider: ${provider.business_name}`
+          profile: formattedProfile,
+          message: `Logged in successfully as Service Provider: ${formattedProfile.businessName}`
         });
       }
     }

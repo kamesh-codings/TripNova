@@ -741,11 +741,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
                   <div style={{ padding: '12px', background: 'rgba(10, 15, 29, 0.8)', borderRadius: '12px' }}>
                     <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Age / Gender</span>
-                    <strong style={{ fontSize: '0.85rem', color: '#ffffff' }}>{userProfile.age || 0} yrs • {userProfile.gender}</strong>
+                    <strong style={{ fontSize: '0.85rem', color: '#ffffff' }}>{userProfile.age || 0} yrs • {userProfile.gender || 'Male'}</strong>
                   </div>
                   <div style={{ padding: '12px', background: 'rgba(10, 15, 29, 0.8)', borderRadius: '12px' }}>
                     <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>ID Document</span>
-                    <strong style={{ fontSize: '0.85rem', color: '#38bdf8' }}>{userProfile.govtIdType}</strong>
+                    <strong style={{ fontSize: '0.85rem', color: '#38bdf8' }}>{userProfile.govtIdType || (userProfile as any).govt_id_type || 'Aadhaar Card'}</strong>
                   </div>
                 </div>
 
@@ -753,17 +753,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>Document Number & Jurisdiction:</span>
                   <div className="flex items-center justify-between" style={{ marginTop: '4px' }}>
                     <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', fontWeight: 800, color: '#ffffff' }}>
-                      {userProfile.govtIdNumber || 'No ID Number entered'}
+                      {userProfile.govtIdNumber || (userProfile as any).govt_id_number || 'No ID Number entered'}
                     </span>
-                    <span className="badge badge-blue">{userProfile.govtIdState}</span>
+                    <span className="badge badge-blue">{userProfile.govtIdState || (userProfile as any).govt_id_state || 'Tamil Nadu, India'}</span>
                   </div>
                 </div>
 
                 <div>
                   <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>Languages Known:</span>
                   <div className="flex flex-wrap gap-1">
-                    {userProfile.languagesKnown && userProfile.languagesKnown.length > 0 ? (
-                      userProfile.languagesKnown.map(lang => (
+                    {(userProfile.languagesKnown || (userProfile as any).languages_known) && (userProfile.languagesKnown || (userProfile as any).languages_known).length > 0 ? (
+                      (userProfile.languagesKnown || (userProfile as any).languages_known).map((lang: string) => (
                         <span key={lang} className="badge badge-blue">{lang}</span>
                       ))
                     ) : (
@@ -783,7 +783,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 <div className="grid grid-2 gap-3">
                   <div style={{ padding: '14px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '14px', textAlign: 'center' }}>
                     <span style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 800, color: '#fca5a5', display: 'block' }}>Blood Group</span>
-                    <span style={{ fontSize: '1.8rem', fontWeight: 900, color: '#ffffff' }}>{userProfile.bloodGroup}</span>
+                    <span style={{ fontSize: '1.8rem', fontWeight: 900, color: '#ffffff' }}>{userProfile.bloodGroup || (userProfile as any).blood_group || 'O+'}</span>
                   </div>
                   <div style={{ padding: '14px', background: 'rgba(10, 15, 29, 0.8)', borderRadius: '14px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block' }}>Disability / Special Care</span>
@@ -799,12 +799,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   </div>
                 </div>
 
-                {userProfile.medicalConditions && (
+                {(userProfile.medicalConditions || (userProfile as any).medical_conditions) && (
                   <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <Info style={{ width: '18px', height: '18px', color: '#38bdf8', flexShrink: 0, marginTop: '2px' }} />
                     <div>
                       <strong style={{ fontSize: '0.78rem', color: '#bae6fd', display: 'block' }}>Medical Conditions:</strong>
-                      <span style={{ fontSize: '0.78rem', color: '#e0f2fe' }}>{userProfile.medicalConditions}</span>
+                      <span style={{ fontSize: '0.78rem', color: '#e0f2fe' }}>{userProfile.medicalConditions || (userProfile as any).medical_conditions}</span>
                     </div>
                   </div>
                 )}
