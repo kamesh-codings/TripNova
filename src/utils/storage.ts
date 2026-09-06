@@ -141,8 +141,10 @@ export const authenticateAccount = (
   // 1. Check current active tourist profile
   const activeTourist = getStoredProfile();
   if (activeTourist.isRegistered && cleanPass) {
-    const matchesUser = activeTourist.username?.toLowerCase() === cleanId || activeTourist.email?.toLowerCase() === cleanId;
-    if (matchesUser && (!activeTourist.password || activeTourist.password === cleanPass)) {
+    const matchesUser = activeTourist.username?.trim().toLowerCase() === cleanId || 
+                        activeTourist.email?.trim().toLowerCase() === cleanId ||
+                        activeTourist.name?.trim().toLowerCase() === cleanId;
+    if (matchesUser && (!activeTourist.password || activeTourist.password === cleanPass || activeTourist.password === passwordAttempt)) {
       return { type: 'tourist', profile: activeTourist };
     }
   }
@@ -150,17 +152,22 @@ export const authenticateAccount = (
   // 2. Check registered tourist registry
   const allUsers = getAllRegisteredUsers();
   const foundUser = allUsers.find(u => 
-    u.username?.toLowerCase() === cleanId || u.email?.toLowerCase() === cleanId
+    u.username?.trim().toLowerCase() === cleanId || 
+    u.email?.trim().toLowerCase() === cleanId ||
+    u.name?.trim().toLowerCase() === cleanId
   );
-  if (foundUser && (!foundUser.password || foundUser.password === cleanPass)) {
+  if (foundUser && (!foundUser.password || foundUser.password === cleanPass || foundUser.password === passwordAttempt)) {
     return { type: 'tourist', profile: foundUser };
   }
 
   // 3. Check current active provider profile
   const activeProvider = getStoredProviderProfile();
   if (activeProvider && cleanPass) {
-    const matchesProvider = activeProvider.username?.toLowerCase() === cleanId || activeProvider.email?.toLowerCase() === cleanId;
-    if (matchesProvider && (!activeProvider.password || activeProvider.password === cleanPass)) {
+    const matchesProvider = activeProvider.username?.trim().toLowerCase() === cleanId || 
+                            activeProvider.email?.trim().toLowerCase() === cleanId ||
+                            activeProvider.providerName?.trim().toLowerCase() === cleanId ||
+                            activeProvider.businessName?.trim().toLowerCase() === cleanId;
+    if (matchesProvider && (!activeProvider.password || activeProvider.password === cleanPass || activeProvider.password === passwordAttempt)) {
       return { type: 'provider', profile: activeProvider };
     }
   }
@@ -168,9 +175,12 @@ export const authenticateAccount = (
   // 4. Check registered provider registry
   const allProviders = getAllRegisteredProviders();
   const foundProvider = allProviders.find(p => 
-    p.username?.toLowerCase() === cleanId || p.email?.toLowerCase() === cleanId
+    p.username?.trim().toLowerCase() === cleanId || 
+    p.email?.trim().toLowerCase() === cleanId ||
+    p.providerName?.trim().toLowerCase() === cleanId ||
+    p.businessName?.trim().toLowerCase() === cleanId
   );
-  if (foundProvider && (!foundProvider.password || foundProvider.password === cleanPass)) {
+  if (foundProvider && (!foundProvider.password || foundProvider.password === cleanPass || foundProvider.password === passwordAttempt)) {
     return { type: 'provider', profile: foundProvider };
   }
 

@@ -290,16 +290,16 @@ router.post('/login', async (req, res) => {
     const cleanId = identifier.trim().toLowerCase();
     const cleanPass = password.trim();
 
-    // 1. Check Tourist Users
+    // 1. Check Tourist Users (Matches username OR email OR full_name)
     const userRows = await db.query(`
       SELECT * FROM users 
-      WHERE LOWER(username) = ? OR LOWER(email) = ?
-    `, [cleanId, cleanId]);
+      WHERE LOWER(TRIM(username)) = ? OR LOWER(TRIM(email)) = ? OR LOWER(TRIM(full_name)) = ?
+    `, [cleanId, cleanId, cleanId]);
 
     if (userRows && userRows.length > 0) {
       const user = userRows[0];
-      // Compare password
-      if (!user.password || user.password === cleanPass) {
+      // Compare password safely (trimmed or exact)
+      if (!user.password || user.password === cleanPass || user.password === password) {
         // Parse JSON fields safely
         try { if (typeof user.languages_known === 'string') user.languagesKnown = JSON.parse(user.languages_known); } catch(e){}
         try { if (typeof user.trusted_contacts === 'string') user.trustedContacts = JSON.parse(user.trusted_contacts); } catch(e){}
@@ -318,15 +318,15 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // 2. Check Service Providers
+    // 2. Check Service Providers (Matches username OR email OR business_name OR provider_name)
     const providerRows = await db.query(`
       SELECT * FROM service_providers 
-      WHERE LOWER(username) = ? OR LOWER(email) = ?
-    `, [cleanId, cleanId]);
+      WHERE LOWER(TRIM(username)) = ? OR LOWER(TRIM(email)) = ? OR LOWER(TRIM(business_name)) = ? OR LOWER(TRIM(provider_name)) = ?
+    `, [cleanId, cleanId, cleanId, cleanId]);
 
     if (providerRows && providerRows.length > 0) {
       const provider = providerRows[0];
-      if (!provider.password || provider.password === cleanPass) {
+      if (!provider.password || provider.password === cleanPass || provider.password === password) {
         try { if (typeof provider.transport_details === 'string') provider.transportDetails = JSON.parse(provider.transport_details); } catch(e){}
         try { if (typeof provider.tour_guide_details === 'string') provider.tourGuideDetails = JSON.parse(provider.tour_guide_details); } catch(e){}
         try { if (typeof provider.homestay_details === 'string') provider.homestayDetails = JSON.parse(provider.homestay_details); } catch(e){}
@@ -350,7 +350,7 @@ router.post('/login', async (req, res) => {
 
     return res.status(401).json({
       success: false,
-      error: 'Invalid Username/Email or Password. Please check your credentials.'
+      error: 'Invalid Email/Username or Password. Please verify your credentials or register.'
     });
   } catch (err) {
     console.error('Login error:', err);

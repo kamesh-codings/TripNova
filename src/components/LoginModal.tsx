@@ -334,21 +334,35 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               )}
 
               <div>
-                <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '6px' }}>
-                  Username or Registered Email *
-                </label>
+                <div className="flex items-center justify-between" style={{ marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.74rem', fontWeight: 700, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {identifier.includes('@') ? (
+                      <Mail style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
+                    ) : (
+                      <User style={{ width: '13px', height: '13px', color: '#38bdf8' }} />
+                    )}
+                    <span>Username or Email Address *</span>
+                  </label>
+                  <span style={{ fontSize: '0.66rem', color: '#64748b', background: 'rgba(255,255,255,0.04)', padding: '2px 6px', borderRadius: '4px' }}>
+                    Accepts Email or Username
+                  </span>
+                </div>
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
                     required
                     value={identifier}
                     onChange={e => setIdentifier(e.target.value)}
-                    placeholder={roleType === 'tourist' ? 'e.g. kamesh_traveler or email' : 'e.g. murugan_travels or email'}
+                    placeholder={roleType === 'tourist' ? 'e.g. kamesh or yourname@gmail.com' : 'e.g. provider_username or email'}
                     className="input-glass"
                     style={{ paddingLeft: '38px' }}
                     autoFocus
                   />
-                  <User style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#94a3b8' }} />
+                  {identifier.includes('@') ? (
+                    <Mail style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#38bdf8' }} />
+                  ) : (
+                    <User style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#94a3b8' }} />
+                  )}
                 </div>
               </div>
 
