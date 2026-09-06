@@ -670,7 +670,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                       )}
                     </div>
 
-                    <div className="grid grid-3 gap-2" style={{ flex: 1 }}>
+                    <div className="grid grid-4 gap-2" style={{ flex: 1 }}>
                       <div>
                         <label style={{ fontSize: '0.66rem', color: '#94a3b8', display: 'block', marginBottom: '2px' }}>
                           Contact Name *
@@ -694,7 +694,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                           type="text"
                           value={contact.relationship}
                           onChange={e => handleContactChange(idx, 'relationship', e.target.value)}
-                          placeholder="e.g. Mother, Spouse, Colleague"
+                          placeholder="e.g. Mother, Spouse"
                           className="input-glass"
                           style={{ padding: '7px 10px', fontSize: '0.78rem' }}
                         />
@@ -710,6 +710,21 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                           value={contact.phone}
                           onChange={e => handleContactChange(idx, 'phone', e.target.value)}
                           placeholder="e.g. +91 98765 43210"
+                          className="input-glass"
+                          style={{ padding: '7px 10px', fontSize: '0.78rem' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.66rem', color: '#38bdf8', display: 'block', marginBottom: '2px' }}>
+                          Email ID * (For SOS Alert)
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={contact.email || ''}
+                          onChange={e => handleContactChange(idx, 'email', e.target.value)}
+                          placeholder="contact@example.com"
                           className="input-glass"
                           style={{ padding: '7px 10px', fontSize: '0.78rem' }}
                         />

@@ -104,7 +104,15 @@ ${userProfile.trustedContacts.map((c, i) => `${i + 1}. ${c.name} (${c.relationsh
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={onTriggerSOS}
+            className="btn-sos"
+            style={{ padding: '7px 16px', fontSize: '0.78rem', fontWeight: 800 }}
+          >
+            <ShieldAlert style={{ width: '15px', height: '15px' }} />
+            <span>🚨 Broadcast SOS</span>
+          </button>
           <button
             onClick={copyEmergencyInfo}
             className="btn-secondary"

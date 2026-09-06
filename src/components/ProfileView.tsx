@@ -842,6 +842,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                         <div>
                           <strong style={{ color: '#ffffff', display: 'block' }}>{c.name || `Contact ${i + 1}`}</strong>
                           <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>({c.relationship || 'Emergency Contact'})</span>
+                          {c.email && (
+                            <span style={{ color: '#38bdf8', fontSize: '0.68rem', display: 'block', marginTop: '2px' }}>
+                              ✉️ {c.email}
+                            </span>
+                          )}
                         </div>
                         {c.phone ? (
                           <a href={`tel:${c.phone}`} style={{ color: '#34d399', fontWeight: 800, textDecoration: 'none' }}>

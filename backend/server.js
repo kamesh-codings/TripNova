@@ -22,6 +22,7 @@ const usersRoutes = require('./routes/users');
 const providersRoutes = require('./routes/providers');
 const tripsRoutes = require('./routes/trips');
 const safetyRoutes = require('./routes/safety');
+const sosRoutes = require('./routes/sos');
 const aiRoutes = require('./routes/ai');
 
 const app = express();
@@ -105,6 +106,7 @@ app.use('/api/users', optionalApiKey, usersRoutes);
 app.use('/api/providers', optionalApiKey, providersRoutes);
 app.use('/api/trips', optionalApiKey, tripsRoutes);
 app.use('/api/safety', optionalApiKey, safetyRoutes);
+app.use('/api/sos', optionalApiKey, sosRoutes);
 app.use('/api/ai', optionalApiKey, aiRoutes);
 
 // 7. 404 Handler
