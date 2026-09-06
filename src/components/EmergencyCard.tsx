@@ -243,16 +243,25 @@ ${userProfile.trustedContacts.map((c, i) => `${i + 1}. ${c.name} (${c.relationsh
                       <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#1e293b', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '10px' }}>
                         {idx + 1}
                       </span>
-                      <strong style={{ color: '#ffffff' }}>{contact.name}</strong>
-                      <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>({contact.relationship})</span>
+                      <div>
+                        <strong style={{ color: '#ffffff' }}>{contact.name}</strong>
+                        <span style={{ color: '#94a3b8', fontSize: '0.72rem', marginLeft: '6px' }}>({contact.relationship})</span>
+                        {contact.email && (
+                          <span style={{ color: '#38bdf8', fontSize: '0.68rem', display: 'block' }}>
+                            ✉️ {contact.email}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <a 
-                      href={`tel:${contact.phone}`}
-                      style={{ color: '#34d399', fontWeight: 800, fontFamily: 'monospace', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      <PhoneCall style={{ width: '13px', height: '13px' }} />
-                      {contact.phone}
-                    </a>
+                    {contact.phone && (
+                      <a 
+                        href={`tel:${contact.phone}`}
+                        style={{ color: '#34d399', fontWeight: 800, fontFamily: 'monospace', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <PhoneCall style={{ width: '13px', height: '13px' }} />
+                        {contact.phone}
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>

@@ -56,43 +56,26 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
       setSosSending(false);
       setSosResponse(null);
       
-      const userRegEmail = userProfile.email && userProfile.email.includes('@') ? userProfile.email.trim() : '';
-
-      // Initialize contacts ensuring user's registered email is included
+      // Initialize contacts faithfully from user profile trusted contacts without overwriting
       let contactsList: TrustedContact[] = [];
 
       if (userProfile.trustedContacts && userProfile.trustedContacts.length > 0) {
-        contactsList = userProfile.trustedContacts.slice(0, 5).map((c, idx) => ({
+        contactsList = userProfile.trustedContacts.slice(0, 5).map((c) => ({
           ...c,
-          email: c.email && c.email.includes('@') 
-            ? c.email.trim() 
-            : (idx === 0 && userRegEmail ? userRegEmail : `emergency_contact${idx + 1}@example.com`)
+          name: c.name || '',
+          relationship: c.relationship || 'Emergency Contact',
+          phone: c.phone || '',
+          email: c.email && c.email.includes('@') ? c.email.trim() : (c.email || '')
         }));
-      }
-
-      // If user's registered email is not already in the list, ensure primary contact has user's email
-      if (userRegEmail && contactsList.length > 0 && !contactsList.some(c => c.email?.toLowerCase() === userRegEmail.toLowerCase())) {
-        contactsList[0] = {
-          ...contactsList[0],
-          email: userRegEmail,
-          name: contactsList[0].name || `${userProfile.name || 'User'} (Registered Email)`
-        };
-      } else if (contactsList.length === 0) {
+      } else {
         contactsList = [
           {
             id: 'tc1',
-            name: `${userProfile.name || 'My Registered Email'}`,
-            relationship: 'Self / Primary',
-            phone: '+91 98401 11111',
-            email: userRegEmail || 'emergency@example.com',
+            name: 'Emergency Contact 1',
+            relationship: 'Primary Contact',
+            phone: '',
+            email: '',
             isPrimary: true
-          },
-          {
-            id: 'tc2',
-            name: 'Emergency Guardian',
-            relationship: 'Family',
-            phone: '+91 98401 22222',
-            email: 'guardian@example.com'
           }
         ];
       }

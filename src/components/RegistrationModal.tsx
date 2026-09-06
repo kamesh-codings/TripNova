@@ -71,7 +71,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     govtIdState: userProfile.govtIdState || '',
     languagesKnown: userProfile.languagesKnown || [],
     trustedContacts: userProfile.trustedContacts?.length ? userProfile.trustedContacts : [
-      { id: 'tc1', name: '', relationship: '', phone: '', isPrimary: true }
+      { id: 'tc1', name: '', relationship: '', phone: '', email: '', isPrimary: true }
     ],
     interestedTopPicks: userProfile.interestedTopPicks || [],
     isRegistered: userProfile.isRegistered || false
@@ -111,7 +111,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         govtIdState: userProfile.govtIdState || '',
         languagesKnown: userProfile.languagesKnown || [],
         trustedContacts: userProfile.trustedContacts?.length ? userProfile.trustedContacts : [
-          { id: 'tc1', name: '', relationship: '', phone: '', isPrimary: true }
+          { id: 'tc1', name: '', relationship: '', phone: '', email: '', isPrimary: true }
         ],
         interestedTopPicks: userProfile.interestedTopPicks || [],
         isRegistered: userProfile.isRegistered || false
