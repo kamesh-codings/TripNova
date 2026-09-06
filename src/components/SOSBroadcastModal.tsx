@@ -133,15 +133,11 @@ export const SOSBroadcastModal: React.FC<SOSBroadcastModalProps> = ({
     }
   };
 
-  // Build direct client mailto URI for instant 1-click sending from user's email client
+  // Build direct client mailto URI for instant 1-click sending to trusted contacts only
   const getEmailContent = () => {
     const emailRecipients = editableContacts
       .map(c => c.email?.trim())
       .filter((e): e is string => !!e && e.includes('@'));
-
-    if (userProfile.email && userProfile.email.includes('@') && !emailRecipients.includes(userProfile.email.trim())) {
-      emailRecipients.unshift(userProfile.email.trim());
-    }
 
     const toStr = emailRecipients.join(',');
     const subject = `🚨 TRIPNOVA EMERGENCY SOS: Immediate Assistance Required for ${userProfile.name || 'Traveler'}`;
